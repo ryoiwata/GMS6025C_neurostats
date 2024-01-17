@@ -491,27 +491,70 @@ filter(flights %>% arrange(arr_delay), arr_delay > 2)
 ### 1  
 Compare dep_time, sched_dep_time, and dep_delay. How would you expect those three numbers to be related?
 
+** `dep_delay = sched_dep_time - dep_time` **
+
 ### 2
 Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
 
+** TODO: Figure out what is meant by select **
+
+```{r}
+select(flights, dep_time, dep_delay, arr_time, arr_delay)
+```
+
 ### 3
 What happens if you specify the name of the same variable multiple times in a select() call?
+
+**Answer: It only shows up once **
+
+```{r}
+select(flights, dep_time, dep_time)
+```
+
 
 ### 4
 What does the any_of() function do? Why might it be helpful in conjunction with this vector?
 
 variables <- c("year", "month", "day", "dep_delay", "arr_delay")
 
+** Answer: `any_of() function allows you to select for multiple items. In this case, it can be used to filter for all columns that are in the vector without raising an error if a column in the vector is missing in the tibble. **
+
+```{r}
+?any_of
+
+variables <- c("year", "month", "day", "dep_delay", "arr_delay")
+
+
+flights %>% select(any_of(variables))
+```
+
 ### 5
 Does the result of running the following code surprise you? How do the select helpers deal with upper and lower case by default? How can you change that default?
 
 flights |> select(contains("TIME"))
 
+** Answer: the code selects for all columns that have the "TIME" string in the name regardless of the casing. Casing is ignored by default but can be changed to filter for it too by changing the `ignore.case` argument. **
+
+```{r}
+flights |> select(contains("TIME"))
+
+flights |> select(contains("TIME", ignore.case=FALSE))
+
+```
+
 ### 6 
 Rename air_time to air_time_min to indicate units of measurement and move it to the beginning of the data frame.
 
+```{r}
+rename(flights, air_time_min = air_time) %>% select(air_time_min, everything())
+
+```
+
 ### 7
 Why doesn’t the following work, and what does the error mean?
+
+** Answer: The code doesn't work because only the column `tailnum` was selected for, and `arr_delay` was no longer part of the new tibble. So it wouldn't have been able to filter by `arr_delay`. The error shows what function caused the error which is `arrange()`, and that the error was because `arr_delay` was not in the tibble.
+
 ```{r}
 # remove comments by selecting all desired lines of code and using ctrl-C (control-shift-c) i.e. comment/uncomment line
 # 
@@ -522,6 +565,7 @@ Why doesn’t the following work, and what does the error mean?
 # #> i In argument: `..1 = arr_delay`.
 # #> Caused by error:
 # #> ! object 'arr_delay' not found
+
 ```
 
 ## 3.5.7 Exercises
@@ -529,6 +573,11 @@ Why doesn’t the following work, and what does the error mean?
 ### 1
 Which carrier has the worst average delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights |> group_by(carrier, dest) |> summarize(n()))
 ```{r}
+flights %>%
+  group_by(carrier) %>%
+  summarize(
+    avg_dep_delay = mean(dep_delay, na.rm = TRUE)
+  ) 
 
 ```
 
@@ -536,17 +585,32 @@ Which carrier has the worst average delays? Challenge: can you disentangle the e
 Find the flights that are most delayed upon departure from each destination.
 ```{r}
 
+flights %>%
+  group_by(dest) %>%
+  summarize(
+    avg_dep_delay = mean(dep_delay, na.rm = TRUE)
+  ) 
+
+
 ```
 
 ### 3
 How do delays vary over the course of the day. Illustrate your answer with a plot.
 
+** Answer: 
+
 ```{r}
+
+ggplot(data = flights, aes(x = dep_time, y = dep_delay)) +
+  geom_point()
 
 ```
 
 ### 4 
 What happens if you supply a negative n to slice_min() and friends?
+
+** TODO: Ask what friends are?**
+
 ```{r}
 
 ```
@@ -554,69 +618,106 @@ What happens if you supply a negative n to slice_min() and friends?
 ### 5
 Explain what count() does in terms of the dplyr verbs you just learned. What does the sort argument to count() do?
 
+** Answer: `count()` function counts the number of rows that have a given value in a specified column. Then it creates a new table with the counts of each group.
+
+```{r}
+flights %>% count(carrier, sort=TRUE)
+```
+
 ### 6
 Suppose we have the following tiny data frame:
 ```{r}
-    # df <- tibble(
-    #   x = 1:5,
-    #   y = c("a", "b", "a", "a", "b"),
-    #   z = c("K", "K", "L", "L", "K")
-    # )
+    df <- tibble(
+      x = 1:5,
+      y = c("a", "b", "a", "a", "b"),
+      z = c("K", "K", "L", "L", "K")
+    )
 ```
 
 #### 6.a
 Write down what you think the output will look like, then check if you were correct, and describe what group_by() does.
 
+
+** Answer: It looks like the `group_by()` function will create groups based on the rows that share the same `y` value from `df`. According to the documentation, `group_by`creates a new table that is grouped where operations can performed per group. 
+
 ```{r}
-# df |>
-#   group_by(y)
+df |>
+  group_by(y)
 ```
 
 #### 6.b 
 Write down what you think the output will look like, then check if you were correct, and describe what arrange() does. Also comment on how it’s different from the group_by() in part (a)?
+
+** Answer: The output might be a table that is the sorted view of `df` based on the `y` value. It's different than `group_by()` because there seems to be no group functionality with the output of this code. **
+
 ```{r}
-# 
-# df |>
-#   arrange(y)
+
+df |>
+  arrange(y)
 ```
 
 #### 6.c
 Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does.
 
+** Answer: The output will probably be a table that has a row for each group of rows from `df` that had a given `y` value. Then the mean of `x` was calculated for all rows in a given group. 
+
+The pipeline outputs all of the `df` table into `group_by(y)` function, which creates a group of rows that had a given `y` value. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group. **
+
+
 ```{r}
-# df |>
-#   group_by(y) |>
-#   summarize(mean_x = mean(x))
+df |>
+  group_by(y) |>
+  summarize(mean_x = mean(x))
 ```
 
 
 #### 6.d
 Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. Then, comment on what the message says.
+
+** Answer: The output will probably be a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. 
+
+The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group.** 
+
 ```{r}
-# df |>
-#   group_by(y, z) |>
-#   summarize(mean_x = mean(x))
+df |>
+  group_by(y, z) |>
+  summarize(mean_x = mean(x))
 ```
 
 #### 6.e
 
 Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. How is the output different from the one in part (d).
 
+** Answer: The output will probably be similar to the output from problem 6.d with a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. 
+
+The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group.
+
+The main difference is that the `group` functionality is removed in this output, and new tibble is created. ** 
+**
+
 ```{r}
-# df |>
-#   group_by(y, z) |>
-#   summarize(mean_x = mean(x), .groups = "drop")
+df |>
+  group_by(y, z) |>
+  summarize(mean_x = mean(x), .groups = "drop")
 ```
 
 #### 6.f
 Write down what you think the outputs will look like, then check if you were correct, and describe what each pipeline does. How are the outputs of the two pipelines different?
 
+** Answer: 
+
+Pipeline 1 was already discussed in question 6.d, so please reference that.
+
+For Pipeline 2 output will probably be similar to the output from problem 6.d with a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. The main difference is the usage of the `mutate` function which may indicate that a new dataframe is not created like for the `summarize` function. 
+
+The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the `mutate(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group. This information of the mean is placed in the original table with the mean of each group going to all the items in that group.** 
+
 ```{r}
-# df |>
-#   group_by(y, z) |>
-#   summarize(mean_x = mean(x))
-# 
-# df |>
-#   group_by(y, z) |>
-#   mutate(mean_x = mean(x))
+df |>
+  group_by(y, z) |>
+  summarize(mean_x = mean(x))
+
+df |>
+  group_by(y, z) |>
+  mutate(mean_x = mean(x))
 ```
