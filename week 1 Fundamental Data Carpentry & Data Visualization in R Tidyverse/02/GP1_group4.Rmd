@@ -220,21 +220,22 @@ How are the following two plots different? Which aesthetic, color or fill, is mo
 ### 3 
 What does the bins argument in geom_histogram() do?
 
-** The bins argument determines the number of bins in the histogram.
+** The bins argument determines the number of bins in the histogram. **
+
 
 ### 4
 Make a histogram of the carat variable in the diamonds dataset that is available when you load the tidyverse package. Experiment with different binwidths. What binwidth reveals the most interesting patterns?
 
-
-    ggplot(penguins, aes(x = species)) +
-      geom_bar(color = "red")
-
+** Answer: Setting the binwidth to 0.01 shows that there are sudden jumps in count in carats that are divisible by 0.25. This may reflect carats being rounded or cut to this size. **
 
 
 ```{r}
-ggplot 
+ 
 
-diamonds
+
+
+ggplot(diamonds, aes(carat)) +
+  geom_histogram(binwidth = 0.01)
 
 ```
 
@@ -244,14 +245,88 @@ diamonds
 ### 1
 The mpg data frame that is bundled with the ggplot2 package contains 234 observations collected by the US Environmental Protection Agency on 38 car models. Which variables in mpg are categorical? Which variables are numerical? (Hint: Type ?mpg to read the documentation for the dataset.) How can you see this information when you run mpg?
 
+** 
+
+Categorical: manufacturer, model, trans, dry, cty, class
+Numerical: displ, year, cyl, hwy, fl
+
+You can see if a variable is categorical or numerical by using the `str` function on the tibble.
+
+**
+
+
+manufacturer: chr [1:234] "audi" "audi" "audi" "audi" ...
+ $ model       : chr [1:234] "a4" "a4" "a4" "a4" ...
+ $ displ       : num [1:234] 1.8 1.8 2 2 2.8 2.8 3.1 1.8 1.8 2 ...
+ $ year        : int [1:234] 1999 1999 2008 2008 1999 1999 2008 1999 1999 2008 ...
+ $ cyl         : int [1:234] 4 4 4 4 6 6 6 4 4 4 ...
+ $ trans       : chr [1:234] "auto(l5)" "manual(m5)" "manual(m6)" "auto(av)" ...
+ $ drv         : chr [1:234] "f" "f" "f" "f" ...
+ $ cty         : int [1:234] 18 21 20 21 16 18 18 18 16 20 ...
+ $ hwy         : int [1:234] 29 29 31 30 26 26 27 26 25 28 ...
+ $ fl          : chr [1:234] "p" "p" "p" "p" ...
+ $ class  
+
+```{r}
+?mpg
+
+str(mpg)
+
+```
+
 ### 2
 Make a scatterplot of hwy vs. displ using the mpg data frame. Next, map a third, numerical variable to color, then size, then both color and size, then shape. How do these aesthetics behave differently for categorical vs. numerical variables?
+
+** color: For numerical there is a gradient of lighter to darker blue as the number changes. For categorical there are different colors that are associated with each category. 
+
+size: For numerical there is a gradient of sizes as the number changes. For categorical there are different discrete sizes that are associated with each category.
+
+**
+
+
+```{r}
+ 
+ggplot(mpg, aes(x=hwy, y=displ, colour=year)) + geom_point()
+
+ggplot(mpg, aes(x=hwy, y=displ, size=year)) + geom_point()
+
+ggplot(mpg, aes(x=hwy, y=displ, colour=year, size=year)) + geom_point()
+
+ggplot(mpg, aes(x=hwy, y=displ, colour=class)) + geom_point()
+
+ggplot(mpg, aes(x=hwy, y=displ, size=class)) + geom_point()
+
+ggplot(mpg, aes(x=hwy, y=displ, colour=class, size=class)) + geom_point()
+
+
+```
 
 ### 3
 In the scatterplot of hwy vs. displ, what happens if you map a third variable to linewidth?
 
+**TODO: figure out what line width is**
+
+```{r}
+ 
+ggplot(mpg, aes(x=hwy, y=displ, linewidth=year)) + geom_point()
+
+
+
+```
+
+
 ### 4
 What happens if you map the same variable to multiple aesthetics?
+
+**TODO: figure out what line width is**
+
+```{r}
+ 
+ggplot(mpg, aes(x=hwy, y=displ, linewidth=year)) + geom_point()
+
+
+
+```
 
 ### 5
 Make a scatterplot of bill_depth_mm vs. bill_length_mm and color the points by species. What does adding coloring by species reveal about the relationship between these two variables? What about faceting by species?
@@ -291,6 +366,8 @@ Why does this code not work?
 
 Look carefully! (This may seem like an exercise in pointlessness, but training your brain to notice even the tiniest difference will pay off when programming.)
 
+** Answer: my_varıable is spelled differently than the variable that was defined, so my_varıable was not defined
+
 ### 2
 Tweak each of the following R commands so that they run correctly:
 ```{r}
@@ -300,13 +377,23 @@ Tweak each of the following R commands so that they run correctly:
 # ggplot(dTA = mpg) +
 #   geom_point(maping = aes(x = displ y = hwy)) +
 #   geom_smooth(method = "lm)
+
+library(tidyverse)
+
+ggplot(data = mpg, aes(x = displ, y = hwy)) +
+  geom_point()
+ geom_smooth(method = "lm")
 ```
 
 ### 3
 Press Option + Shift + K / Alt + Shift + K. What happens? How can you get to the same place using the menus?
 
+** Answer: The keyboard shortcuts appear. You can go to `Help >> Keyboard Shortcuts Help` **
+
 ### 4
 Let’s revisit an exercise from the Section 1.6. Run the following lines of code. Which of the two plots is saved as mpg-plot.png? Why?
+
+** `my_bar_plot` is saved because it is speficied in the `ggsave` function under the `plot` variable. **
 
 ```{r}
 my_bar_plot <- ggplot(mpg, aes(x = class)) +
@@ -326,37 +413,74 @@ In a single pipeline for each condition, find all flights that meet the conditio
         Departed in summer (July, August, and September)
         Arrived more than two hours late, but didn’t leave late
         Were delayed by at least an hour, but made up over 30 minutes in flight
+        
+        
+** TODO: figure out if each is one condition and what is departure delay?**
 ```{r}
+str(flights)
+
+unique(flights$carrier)
+
+filter(flights, arr_delay > 2, dest%in%c("IAH", "HOU"), carrier%in%c("UA", "AA", "DL"), month%in%c(7,8,9), arr_delay>120, dep_delay<0, dep_delay )
 
 ```
 
 ### 2
 Sort flights to find the flights with longest departure delays. Find the flights that left earliest in the morning.
 ```{r}
+# sort(flights, dep_delay)
+
+flights %>% 
+  arrange(desc(dep_delay))
+
+filter(flights, dep_time > 800) %>% 
+  arrange(dep_time)
 
 ```
 
 ### 3
 Sort flights to find the fastest flights. (Hint: Try including a math calculation inside of your function.)
 ```{r}
-
+flights %>% 
+  arrange(distance / air_time)
 ```
 
 ### 4
 Was there a flight on every day of 2013?
+
+** Answer: Yes, because there are 365 pairs of months and days for all flights that were in 2013. **
+
+
 ```{r}
+
+flights_2013 <- filter(flights, year == 2013) %>%
+  distinct(month, day)
+
+str(flights_2013)
 
 ```
 
 ### 5
 Which flights traveled the farthest distance? Which traveled the least distance?
 ```{r}
+flights %>% 
+  arrange(distance)
 
+flights %>% 
+  arrange(desc(distance))
 ```
 
 ### 6
 Does it matter what order you used filter() and arrange() if you’re using both? Why/why not? Think about the results and how much work the functions would have to do.
+
+** It does not matter, because filtering and sorting are both maintained when followed by the other function **
+
+
 ```{r}
+filter(flights, arr_delay > 2) %>%
+  arrange(arr_delay)
+
+filter(flights %>% arrange(arr_delay), arr_delay > 2)
 
 ```
 
