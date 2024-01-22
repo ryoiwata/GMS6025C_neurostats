@@ -1,8 +1,6 @@
 ---
-title: "Group 1-4 Project 1 - Data Carpentry & Visualization Basics"
-
-
-author: "Ryo Iwata Stephan Quintin Zachary Strickland "
+title: "Group 04 Project 1 - Data Carpentry & Visualization Basics"
+author: "Stephan Quintin, Ryo Iwata, Zachary Strickland"
 output:
   pdf_document: default
   html_document:
@@ -17,9 +15,9 @@ library(palmerpenguins)
 library(nycflights13)
 ```
 
-# Group GROUPNUMBERHERE members:
-names here 
-Note who is assigned leader
+# Group 4 members:
+names here Stephan Quintin, Ryo Iwata, Zachary Strickland
+Note who is assigned leader: Stephan Quintin
 
 # Group Assignment 1
 Instructions - Everyone should work on their own computer on a separate copy of this, then work together to create a single very well polished version to submit for the assignment. The assigned group leader should submit the assignment for the group, but every individual should thoroughly understand every answer. In most cases, everyone should roughly be on the same question as the same time when working together simultaneously (e.g., in class or during group meetings). When asked, you (all) need to be ready to explain the thought process behind the plan, approach, revisions, and final code that was written. Now is the time to build your understanding of the language and approach to these data carpentry and visualization methods. My expectation is that every submitted assignment will be nearly perfect given how we will be approaching this series of problems both in class and out.
@@ -268,7 +266,7 @@ manufacturer: chr [1:234] "audi" "audi" "audi" "audi" ...
  $ class  
 
 ```{r}
-?mpg
+
 
 str(mpg)
 
@@ -304,27 +302,26 @@ ggplot(mpg, aes(x=hwy, y=displ, colour=class, size=class)) + geom_point()
 ### 3
 In the scatterplot of hwy vs. displ, what happens if you map a third variable to linewidth?
 
-**TODO: figure out what line width is**
-
+**Nothing, because there are no lines in the scatterplot**
 ```{r}
- 
-ggplot(mpg, aes(x=hwy, y=displ, linewidth=year)) + geom_point()
-
-
-
+#simple scatter plot of hwy MPG (x axis) vs engine displacement volume (y axis).
+ggplot(data = mpg, aes(x = hwy, y = displ)) +
+  geom_point()
+#added a third variable to linewidth
+#simple scatter plot of hwy MPG (x axis) vs engine displacement volume (y axis).
+ggplot(data = mpg, aes(x = hwy, y = displ, linewidth = cty)) +
+  geom_point()
 ```
 
 
 ### 4
 What happens if you map the same variable to multiple aesthetics?
 
-**TODO: figure out what line width is**
-
+**Then the same variable will be mapped to multiple aesthetics**
 ```{r}
- 
-ggplot(mpg, aes(x=hwy, y=displ, linewidth=year)) + geom_point()
-
-
+#let's try it out...
+ggplot(data = mpg, aes(x = hwy, y = displ, color = cty, size = cty)) +
+  geom_point()
 
 ```
 
@@ -400,7 +397,7 @@ my_bar_plot <- ggplot(mpg, aes(x = class)) +
   geom_bar()
 my_scatter_plot <- ggplot(mpg, aes(x = cty, y = hwy)) +
   geom_point()
-ggsave(filename = "mpg-plot.png", plot = my_bar_plot)
+#ggsave(filename = "mpg-plot.png", plot = my_bar_plot)
 ```
 
 ## 3.2.5 Exercises
@@ -415,14 +412,28 @@ In a single pipeline for each condition, find all flights that meet the conditio
         Were delayed by at least an hour, but made up over 30 minutes in flight
         
         
-** TODO: figure out if each is one condition and what is departure delay?**
 ```{r}
+#for my own edification view/str 
+View(flights)
 str(flights)
-
-unique(flights$carrier)
-
-filter(flights, arr_delay > 2, dest%in%c("IAH", "HOU"), carrier%in%c("UA", "AA", "DL"), month%in%c(7,8,9), arr_delay>120, dep_delay<0, dep_delay )
-
+#flights with arrival delay of >120min
+flights |> 
+  filter(arr_delay > 120)
+# Filter flights to those with destination of IAH or HOU 
+flights |> 
+  filter(dest == "IAH"|dest == "HOU")
+# filter to flights operated by UA, AA, & DL
+flights |>
+  filter(carrier == "UA" | carrier == "AA" | carrier == "DL")
+# filter to months July-Sept
+flights |>
+  filter(month == 7| month == 8| month == 9)
+# flights that arrived >120min late, but left on time
+flights |>
+  filter(dep_delay == 0 & arr_delay > 120)
+#flights that left at least an hour late but arrived within 30 minutes of their scheduled arrival time. THis isn't perfect but its the best I can do at this time.
+flights |>
+  filter(dep_delay > 60 & arr_delay <30)
 ```
 
 ### 2
@@ -441,46 +452,44 @@ filter(flights, dep_time > 800) %>%
 ### 3
 Sort flights to find the fastest flights. (Hint: Try including a math calculation inside of your function.)
 ```{r}
-flights %>% 
-  arrange(distance / air_time)
+flights %>%
+  arrange(desc(air_time / distance))
+
 ```
 
 ### 4
 Was there a flight on every day of 2013?
-
-** Answer: Yes, because there are 365 pairs of months and days for all flights that were in 2013. **
-
+**Answer: When we counted all flights that occurred in month day pair there are 365 rows corresponding to data points for each day of the year.
 
 ```{r}
-
-flights_2013 <- filter(flights, year == 2013) %>%
-  distinct(month, day)
-
-str(flights_2013)
-
+# Filtering for all flights that occured in 2013
+# Piping all 2013 flights and looking at all the unique month day pairings
+flights %>%
+  count(month,day)
 ```
 
 ### 5
 Which flights traveled the farthest distance? Which traveled the least distance?
+**Answer: Least distance was flight 1632, Farthest distance was 51.**
 ```{r}
-flights %>% 
-  arrange(distance)
 
-flights %>% 
+flights %>%
+  arrange(distance)
+flights %>%
   arrange(desc(distance))
 ```
 
 ### 6
-Does it matter what order you used filter() and arrange() if you’re using both? Why/why not? Think about the results and how much work the functions would have to do.
-
-** It does not matter, because filtering and sorting are both maintained when followed by the other function **
-
-
+Does it matter what order you used filter() and arrange() if you’re using both? Why/why not? Think about the results and how much work the functions would have to do. 
+**Answer:The order that the functions are used does not change the output of the data because filtering and arranging are both maintained when followed by the other respective function.**
 ```{r}
-filter(flights, arr_delay > 2) %>%
-  arrange(arr_delay)
+flights %>%
+filter(arr_delay>2) %>%
+arrange(arr_delay)
 
-filter(flights %>% arrange(arr_delay), arr_delay > 2)
+flights %>%
+  arrange(arr_delay) %>%
+filter(arr_delay>2) 
 
 ```
 
@@ -490,194 +499,161 @@ filter(flights %>% arrange(arr_delay), arr_delay > 2)
 
 ### 1  
 Compare dep_time, sched_dep_time, and dep_delay. How would you expect those three numbers to be related?
-
-** `dep_delay = sched_dep_time - dep_time` **
-
+**dep_time minus sched_dep_time equals dep_delay **
+ 
+```{r}
+flights %>%
+  select(dep_time, sched_dep_time, dep_delay)
+```
 ### 2
 Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
-
-** TODO: Figure out what is meant by select **
-
 ```{r}
-select(flights, dep_time, dep_delay, arr_time, arr_delay)
+flights %>%
+select(dep_time, dep_delay, arr_time, arr_delay)
+flights %>%
+select(starts_with("dep"), starts_with("arr") )
+flights %>%
+  select(contains("time"),contains("delay"),-contains("sched"),-contains("air"),-contains("hour"))
+flights %>%
+  select(c(4,6,7,9))
 ```
-
 ### 3
 What happens if you specify the name of the same variable multiple times in a select() call?
-
-**Answer: It only shows up once **
-
+It ignores redundant column calls.
 ```{r}
-select(flights, dep_time, dep_time)
+flights %>%
+  select(dep_time, dep_time)
 ```
-
-
 ### 4
 What does the any_of() function do? Why might it be helpful in conjunction with this vector?
-
 variables <- c("year", "month", "day", "dep_delay", "arr_delay")
-
 ** Answer: `any_of() function allows you to select for multiple items. In this case, it can be used to filter for all columns that are in the vector without raising an error if a column in the vector is missing in the tibble. **
-
+ 
 ```{r}
-?any_of
-
 variables <- c("year", "month", "day", "dep_delay", "arr_delay")
-
-
+ 
+ 
 flights %>% select(any_of(variables))
 ```
-
 ### 5
 Does the result of running the following code surprise you? How do the select helpers deal with upper and lower case by default? How can you change that default?
-
-flights |> select(contains("TIME"))
-
-** Answer: the code selects for all columns that have the "TIME" string in the name regardless of the casing. Casing is ignored by default but can be changed to filter for it too by changing the `ignore.case` argument. **
-
+**Answer=The select function defaults to ignoring case so despite being in all caps the function still calls all columns that contain "time". To change the default you change the ignore.case argument to False.**
 ```{r}
 flights |> select(contains("TIME"))
 
-flights |> select(contains("TIME", ignore.case=FALSE))
-
+flights |> select(contains("TIME",ignore.case=FALSE))
 ```
-
 ### 6 
 Rename air_time to air_time_min to indicate units of measurement and move it to the beginning of the data frame.
-
 ```{r}
-rename(flights, air_time_min = air_time) %>% select(air_time_min, everything())
-
+flights %>%
+  rename(air_time_min=air_time) %>%
+  relocate(air_time_min)
 ```
-
 ### 7
 Why doesn’t the following work, and what does the error mean?
-
-** Answer: The code doesn't work because only the column `tailnum` was selected for, and `arr_delay` was no longer part of the new tibble. So it wouldn't have been able to filter by `arr_delay`. The error shows what function caused the error which is `arrange()`, and that the error was because `arr_delay` was not in the tibble.
-
+**Answer: The code doesn't work because only the column `tailnum` was selected for, and `arr_delay` was no longer part of the new tibble. So it wouldn't have been able to filter by `arr_delay`. The error shows what function caused the error which is `arrange()`, and that the error was because `arr_delay` was not in the tibble.**
 ```{r}
 # remove comments by selecting all desired lines of code and using ctrl-C (control-shift-c) i.e. comment/uncomment line
 # 
-# flights |> 
-#   select(tailnum) |> 
+#flights |> 
+#  select(tailnum) 
 #   arrange(arr_delay)
 # #> Error in `arrange()`:
 # #> i In argument: `..1 = arr_delay`.
 # #> Caused by error:
 # #> ! object 'arr_delay' not found
-
 ```
 
 ## 3.5.7 Exercises
 
 ### 1
 Which carrier has the worst average delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights |> group_by(carrier, dest) |> summarize(n()))
+**Answer: F9 airline is the worst**
 ```{r}
 flights %>%
   group_by(carrier) %>%
-  summarize(
-    avg_dep_delay = mean(dep_delay, na.rm = TRUE)
-  ) 
+  summarise(avg = mean(dep_delay, na.rm = TRUE) + mean(arr_delay, na.rm = TRUE)) %>%
+  arrange(desc(avg))
 
 ```
 
 ### 2
 Find the flights that are most delayed upon departure from each destination.
 ```{r}
-
-flights %>%
+flights %>% 
   group_by(dest) %>%
-  summarize(
-    avg_dep_delay = mean(dep_delay, na.rm = TRUE)
-  ) 
-
-
+  slice_max(dep_delay, n = 1) %>%
+  relocate(dest)
 ```
 
 ### 3
 How do delays vary over the course of the day. Illustrate your answer with a plot.
-
-** Answer: 
-
+**Answer: Delays get progressively longer throughout the day**
 ```{r}
-
-ggplot(data = flights, aes(x = dep_time, y = dep_delay)) +
-  geom_point()
-
+flights %>%
+  mutate(delay=arr_delay+dep_delay) %>%
+  ggplot() + geom_point(aes(x = dep_time, y = delay))
 ```
 
 ### 4 
 What happens if you supply a negative n to slice_min() and friends?
-
-** TODO: Ask what friends are?**
-
+**answer: with a negative n, functions like slice_min() will return all rows instead of a specified number.**
 ```{r}
-
+flights %>%
+slice_min(dep_delay, n = 1)
+flights %>%
+slice_min(dep_delay, n = -1)
 ```
 
 ### 5
 Explain what count() does in terms of the dplyr verbs you just learned. What does the sort argument to count() do?
-
-** Answer: `count()` function counts the number of rows that have a given value in a specified column. Then it creates a new table with the counts of each group.
-
+**Answer: `count()` function counts the number of rows that have a given value in a specified column. Then it creates a new table with the counts of each group.The sort argument order the rows in decending value.** 
+ 
 ```{r}
 flights %>% count(carrier, sort=TRUE)
 ```
-
 ### 6
 Suppose we have the following tiny data frame:
 ```{r}
-    df <- tibble(
-      x = 1:5,
-      y = c("a", "b", "a", "a", "b"),
-      z = c("K", "K", "L", "L", "K")
+     df <- tibble(
+       x = 1:5,
+       y = c("a", "b", "a", "a", "b"),
+       z = c("K", "K", "L", "L", "K")
     )
 ```
 
 #### 6.a
 Write down what you think the output will look like, then check if you were correct, and describe what group_by() does.
-
-
-** Answer: It looks like the `group_by()` function will create groups based on the rows that share the same `y` value from `df`. According to the documentation, `group_by`creates a new table that is grouped where operations can performed per group. 
-
+**Answer: It looks like the `group_by()` function will create groups based on the rows that share the same `y` value from `df`. According to the documentation, `group_by`creates a new table that is grouped where operations can performed per group.**
 ```{r}
-df |>
+
+ df |>
   group_by(y)
 ```
 
 #### 6.b 
 Write down what you think the output will look like, then check if you were correct, and describe what arrange() does. Also comment on how it’s different from the group_by() in part (a)?
-
-** Answer: The output might be a table that is the sorted view of `df` based on the `y` value. It's different than `group_by()` because there seems to be no group functionality with the output of this code. **
-
+**Answer: The output might be a table that is the sorted view of `df` based on the `y` value. It's different than `group_by()` because there seems to be no group functionality with the output of this code. **
+ 
 ```{r}
-
+ 
 df |>
   arrange(y)
 ```
-
 #### 6.c
 Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does.
-
-** Answer: The output will probably be a table that has a row for each group of rows from `df` that had a given `y` value. Then the mean of `x` was calculated for all rows in a given group. 
-
-The pipeline outputs all of the `df` table into `group_by(y)` function, which creates a group of rows that had a given `y` value. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group. **
-
-
+**Answer: The output will probably be a table that has a row for each group of rows from `df` that had a given `y` value. Then the mean of `x` was calculated for all rows in a given group.The pipeline outputs all of the `df` table into `group_by(y)` function, which creates a group of rows that had a given `y` value. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group. **
 ```{r}
-df |>
-  group_by(y) |>
-  summarize(mean_x = mean(x))
+ df |>
+   group_by(y) |>
+   summarize(mean_x = mean(x))
 ```
 
 
 #### 6.d
 Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. Then, comment on what the message says.
-
-** Answer: The output will probably be a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. 
-
-The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group.** 
-
+**Answer: The output will probably be a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group.The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group.**
 ```{r}
 df |>
   group_by(y, z) |>
@@ -687,37 +663,22 @@ df |>
 #### 6.e
 
 Write down what you think the output will look like, then check if you were correct, and describe what the pipeline does. How is the output different from the one in part (d).
-
-** Answer: The output will probably be similar to the output from problem 6.d with a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. 
-
-The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group.
-
-The main difference is that the `group` functionality is removed in this output, and new tibble is created. ** 
-**
-
+**Answer: The output will probably be similar to the output from problem 6.d with a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group.The main difference is that the `group` functionality is removed in this output, and new tibble is created. ** 
 ```{r}
 df |>
-  group_by(y, z) |>
-  summarize(mean_x = mean(x), .groups = "drop")
+   group_by(y, z) |>
+   summarize(mean_x = mean(x), .groups = "drop")
 ```
 
 #### 6.f
 Write down what you think the outputs will look like, then check if you were correct, and describe what each pipeline does. How are the outputs of the two pipelines different?
-
-** Answer: 
-
-Pipeline 1 was already discussed in question 6.d, so please reference that.
-
-For Pipeline 2 output will probably be similar to the output from problem 6.d with a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. The main difference is the usage of the `mutate` function which may indicate that a new dataframe is not created like for the `summarize` function. 
-
-The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the `mutate(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group. This information of the mean is placed in the original table with the mean of each group going to all the items in that group.** 
-
+**Answer: The output will probably be similar to the output from problem 6.d with a table that has a row for each group of rows from `df` that had a given `y` and `z` unique pair. Then the mean of `x` was calculated for all rows in a given group. The pipeline outputs all of the `df` table into `group_by(y, z)` function, which creates a group of rows that had a given `y` and `z` unique pair. These groupings are outputted to the   `summarize(mean_x = mean(x))` where the mean `x` was calculated for all rows in a given group. The main difference is that the `group` functionality is removed in this output, and new tibble is created.**
 ```{r}
-df |>
+ df |>
   group_by(y, z) |>
   summarize(mean_x = mean(x))
 
 df |>
-  group_by(y, z) |>
-  mutate(mean_x = mean(x))
+ group_by(y, z) |>
+ mutate(mean_x = mean(x))
 ```

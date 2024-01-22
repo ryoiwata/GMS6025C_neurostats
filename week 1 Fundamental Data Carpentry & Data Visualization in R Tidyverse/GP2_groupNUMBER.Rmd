@@ -1,0 +1,412 @@
+a---
+title: "Group 1 Project 2 - Data Carpentry & Visualization Basics"
+author: "Ryo Iwata"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(nycflights13)
+library(styler)
+```
+
+# Group 2.1 members:
+names here Janna Jernigan, Ryo Iwata, Sequioa Smith
+Note who is assigned leader Janna Jernigan
+
+# Group Assignment 2
+Instructions - Everyone should work on their own computer on a separate copy of this, then work together to create a single very well polished version to submit for the assignment. The assigned group leader should submit the assignment for the group, but every individual should thoroughly understand every answer. In most cases, everyone should roughly be on the same question as the same time when working together simultaneously (e.g., in class or during group meetings). When asked, you (all) need to be ready to explain the thought process behind the plan, approach, revisions, and final code that was written. Now is the time to build your understanding of the language and approach to these data carpentry and visualization methods. My expectation is that every submitted assignment will be nearly perfect given how we will be approaching this series of problems both in class and out.
+
+I have copied together all the questions in one place so everyone doesn't have to waste their time doing so, but these are directly from the reading (R4DS 2E). I am leaving the formatting plain, so refer to the book itself for the example plots and pretty formatting.
+
+Please make it easy to grade this! Your text answers should be in the main document (i.e., not in a code chunk), and **please make them bold so they stand out**. Write code, including using comments, as if you are writing code that will be published. Build good habits now!
+
+**Important note: These chapters cover important advice but contain few exercises. As with all these chapters, please read them carefully as the information contained will be extremely helpful moving forward! You'll hopefully notice we've already discussed much of this once, hopefully the repetition helps reinforce the importance.**
+
+## 4.6
+### 1
+Restyle the following pipelines following the guidelines above.
+```{r}
+# flights|>filter(dest=="IAH")|>group_by(year,month,day)|>summarize(n=n(),
+# delay=mean(arr_delay,na.rm=TRUE))|>filter(n>10)
+# 
+# flights|>filter(carrier=="UA",dest%in%c("IAH","HOU"),sched_dep_time>
+# 0900,sched_arr_time<2000)|>group_by(flight)|>summarize(delay=mean(
+# arr_delay,na.rm=TRUE),cancelled=sum(is.na(arr_delay)),n=n())|>filter(n>10)
+
+flights |>
+  filter(dest == "IAH") |>
+  group_by(
+    year, 
+    month, 
+    day) |>
+  summarize(
+    n = n(),
+    delay = mean(arr_delay, na.rm = TRUE)) |>
+  filter(n > 10)
+
+flights |>
+  filter(
+    carrier == "UA", 
+    dest%in%c("IAH", "HOU"), 
+    sched_dep_time > 0900, 
+    sched_arr_time < 2000) |>
+  group_by(flight) |>
+  summarize(
+    delay = mean(arr_delay, na.rm = TRUE), 
+    cancelled = sum(is.na(arr_delay)), 
+    n = n()) |>
+  filter(n > 10)
+```
+
+## 5.2.1
+### 1
+For each of the sample tables, describe what each observation and each column represents.
+
+** Answer: Table 1: observation number of cases and the population for a given country and a given year. country- Name of country of data point. year- Calendar year of data point. cases- Number of TB cases in the associated country and year. population- Number of people in the associated country
+
+Table 2: 
+
+**
+
+
+### 2
+Sketch out the process you’d use to calculate the rate for table2 and table3. You will need to perform four operations: 
+**You haven’t yet learned all the functions you’d need to actually perform these operations, but you should still be able to think through the transformations you’d need.**
+
+**Answer: Table 2: Filter the `type` column by values that are equal to `case` into a new tibble. And then filter the original tibble for values that are equal to `population` into a new tibble. Arrange both filtered tibbles by `country` and `year`. Then divide the `counts` of the `case` tibble by the `counts` of the `population` tibble and mutate those values into a `rate` variable for one of the tibbles.
+**
+
+#### a 
+Extract the number of TB cases per country per year.
+
+** Answer: Table 2
+
+
+
+#### b 
+Extract the matching population per country per year.
+#### c 
+Divide cases by population, and multiply by 10000.
+#### d 
+Store back in the appropriate place.
+
+**You can skip chapter 7 (though it can be useful, we will not rely on it within the constraints of this course). Chapter 8 contains some advice I disagree with that I've seen severely hinder students in the past.**
+
+## 9.3.1
+
+### 4 
+Recreate the R code necessary to generate the following graphs. Note that wherever a categorical variable is used in the plot, it’s drv. (see book for images. Note this is 6 separate plots)
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(aes(color = drv), show.legend = FALSE) +
+  geom_point()
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(show.legend = FALSE) +
+  geom_point()
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(aes(color = drv), show.legend = FALSE) +
+  geom_point(aes(color = drv))
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(show.legend = FALSE) +
+  geom_point(aes(color = drv))
+
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_smooth(aes(color = drv), show.legend = FALSE, linetype="dashed") +
+  geom_point(aes(color = drv))
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(aes(color = drv), colour = "white", size = 5, , stroke = 5)
+
+```
+
+## 9.4.1
+### 1
+What happens if you facet on a continuous variable?
+
+** Answer: Facet is when you split a plot into subplots that each display one subset of the data based on a categorical variable. **
+
+### 2
+What do the empty cells in the plot above with facet_grid(drv ~ cyl) mean? Run the following code. How do they relate to the resulting plot?
+
+** Answer: The empty cells indicate that there are no data points with that combination of `cyl` and `drv`. The following code is related because there are no dots at the intersection of the `cyl` and `drv` pair that had an empty cell in the plot above. **
+
+```{r}
+ggplot(mpg) +
+   geom_point(aes(x = drv, y = cyl))
+```
+
+### 3
+What plots does the following code make? What does . do?
+
+** Answer: Plot 1 makes a facet grid that splits vertically the scatter plot of `displ` as x and `hwy` as y by the different `drv`. Plot 2 makes a facet grid that splits horizontally the scatter plot of `displ` as x and `hwy` as y by the different `cyl`. The `.` makes it so that the `facet_grid` does not split in the dimension that `.` is in.
+
+```{r}
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ .)
+
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy)) +
+  facet_grid(. ~ cyl)
+```
+
+### 4
+Take the first faceted plot in this section:
+
+
+
+```{r}
+ggplot(mpg) +
+  geom_point(aes(x = displ, y = hwy)) +
+  facet_wrap(~ class, nrow = 2)
+```
+What are the advantages to using faceting instead of the color aesthetic? What are the disadvantages? How might the balance change if you had a larger dataset?
+
+** Answer: The advantage of using faceting instead of coloring the different labels is that if there's a lot of overlap between the different groups for the variables being plotted, then some groups might hide other groups depending on the order plotted. **
+
+### 5
+Read ?facet_wrap. What does nrow do? What does ncol do? What other options control the layout of the individual panels? Why doesn’t facet_grid() have nrow and ncol arguments?
+
+```{r}
+#?facet_wrap
+```
+
+** Answer: `nrow` sets the number of rows in the facet wrap plot and `ncol` sets the number of columns in the facet grid. You can also change the layout by putting different variables in different orders as the facet. `facet_grid` does not have `nrow` and `ncol` because the number of rows and columns are determined by the number of groups in the variables that are being grouped by. **
+
+
+### 6
+Which of the following plots makes it easier to compare engine size (displ) across cars with different drive trains? What does this say about when to place a faceting variable across rows or columns?
+```{r}
+ggplot(mpg, aes(x = displ)) + 
+  geom_histogram() + 
+  facet_grid(drv ~ .)
+
+ggplot(mpg, aes(x = displ)) + 
+  geom_histogram() +
+  facet_grid(. ~ drv)
+```
+** Answer: The first plot is easier to compare `displ` because all the values are aligned for each group. Comparison would be a matter of looking vertically at each `displ` bin to see how it varies across drive trains. This suggests that facetting should happen with columns if you're comparing across rows for a given value or with rows if you're comparing across columns for a given value.
+
+### 7
+Recreate the following plot using facet_wrap() instead of facet_grid(). How do the positions of the facet labels change?
+
+```{r}
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ .)
+
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy)) +
+  facet_wrap(~ drv, nrow=3)
+```
+
+## 9.5.1 Exercises
+
+### 1
+What is the default geom associated with stat_summary()? How could you rewrite the previous plot to use that geom function instead of the stat function?
+
+**geom_pointrange() is the default geom associated with `stat_summary()`. You could rewrite the function with `geom_pointrange` by calculating the min, max, and median of depths for each cut. Then you would plot using these values with the aesthetic mapping of `aes(ymin = lower, ymax = upper)` TODO: Figure out what to do for median.**
+
+```{r}
+
+ggplot(diamonds) + 
+  stat_summary(
+    aes(x = cut, y = depth),
+    fun.min = min,
+    fun.max = max,
+    fun = median
+  )
+
+```
+
+### 2
+What does geom_col() do? How is it different from geom_bar()?
+
+**Answer: `geom_col` uses the value in the data directly as the height of bars. `geom_bar` instead uses the count of each group as the height for the bar of the group. **
+
+### 3
+Most geoms and stats come in pairs that are almost always used in concert. Make a list of all the pairs. What do they have in common? (Hint: Read through the documentation.)
+
+** Answer: geom_bar() and stat_count(). geom_histogram() and stat_bin(). geom_point() and stat_identity().     geom_smooth() and stat_smooth(). geom_density() and stat_density(). geom_boxplot() and stat_boxplot().**
+
+**What they have in common is that the geom visualizes the outcome of the statistical transformation performed by the stat, often with the stat being the default for that geom, allowing for direct data visualization with minimal specification.**
+
+### 4
+What variables does stat_smooth() compute? What arguments control its behavior?
+
+** Answer: `stat_smooth` computes a smooth regression line fitting the data. The main variables it computes include the fitted values (y) and the confidence interval bounds for these fitted values. `method`: Specifies the smoothing method. `formula`: Defines the formula to use in the smoothing function. `se`: Determines whether to display the confidence interval around the smooth.**
+
+### 4
+In our proportion bar chart, we needed to set group = 1. Why? In other words, what is the problem with these two graphs?
+
+```{r}
+ggplot(diamonds, aes(x = cut, y = after_stat(prop))) + 
+      geom_bar()
+
+ggplot(diamonds, aes(x = cut, fill = color, y = after_stat(prop))) + 
+      geom_bar()
+
+ggplot(diamonds, aes(x = cut, y = after_stat(prop), group = 1)) + 
+  geom_bar()
+
+```
+** Answer: The issue with plot 1. Setting group = 1 in the proportion bar chart ensures that the proportion calculations are done over the entire dataset rather than separately within each group defined by another aesthetic. Without group = 1, the first graph would treat each cut as a separate group for proportion calculation. The issue with plot 2 is, each combination of cut and color would be treated as a separate group, leading to incorrect proportion calculations where proportions are calculated within each cut and color combination, not globally across all cut values. **
+
+
+## 9.6.1 Exercises
+
+### 1
+What is the problem with the following plot? How could you improve it?
+```{r}
+    ggplot(mpg, aes(x = cty, y = hwy)) + 
+      geom_point()
+```
+
+** Answer: If looking at the relationship of all cars' `cty` and `hwy`, this would be adequate. But improvements could include utilizing color or shape to distinguish between different groups, or incorporating a trend line to highlight any relationship between `cty` and `hwy`. ** 
+
+
+### 2
+What, if anything, is the difference between the two plots? Why?
+```{r}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point()
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(position = "identity")
+```
+** Answer: There seems to be no difference between the plots. The position = "identity" argument in the geom_point() function is the default behavior, **
+
+### 3
+What parameters to geom_jitter() control the amount of jittering?
+
+** Answer: `width` and `height` controls the amount of jittering. **
+
+### 4
+Compare and contrast geom_jitter() with geom_count().
+
+** Answer: They are both variations of `geom_point`. `geom_jitter` creates a scatter plot using `geom_point` and adds a small random variation which helps with distinguishing between multiple points that are on the same location in a plot. `geom_count` creates a scatter plot using `geom_point` that creates dots that are different sizes based on the number of data points that occupy a given area. **
+
+### 5
+What’s the default position adjustment for geom_boxplot()? Create a visualization of the mpg dataset that demonstrates it.
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_boxplot(aes(colour = drv))
+```
+
+** Answer: The default position adjustment for `geom_boxplot` is `dodge2` which automatically configures the boxplots so that they don't overlap. **
+
+## 9.7.1 Exercises
+
+### 1
+Turn a stacked bar chart into a pie chart using coord_polar().
+
+```{r}
+bar <- ggplot(data = mpg) + 
+  geom_bar(
+    mapping = aes(x = manufacturer, fill = manufacturer), 
+    show.legend = FALSE,
+    width = 1
+  ) + 
+  theme(aspect.ratio = 1)
+
+bar + coord_flip()
+bar + coord_polar()
+```
+
+### 2
+What’s the difference between coord_quickmap() and coord_map()?
+
+** Answer: `coord_map()` projects spherical areas onto a 2D map without preserving the straight lines. It can handle larger geographic areas with more precision than `coord_quickmap()`. `coord_quickmap()` is used for more approximate plots that preserve straight lines from maps which requires less computation at the cost of accuracy. It is most suitable for mapping smaller areas that are closer to the equator. 
+
+that use the Mercator projection, suitable for data that spans a small area (like a city or small country). It's faster and less accurate, intended for exploratory data analysis.
+
+### 3
+What does the following plot tell you about the relationship between city and highway mpg? Why is coord_fixed() important? What does geom_abline() do?
+```{r}
+    ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+      geom_point() + 
+      geom_abline() +
+      coord_fixed()
+```
+
+## 10.3.3 Exercises
+
+### 1    
+Explore the distribution of each of the x, y, and z variables in diamonds. What do you learn? Think about a diamond and how you might decide which dimension is the length, width, and depth.
+
+### 2
+Explore the distribution of price. Do you discover anything unusual or surprising? (Hint: Carefully think about the binwidth and make sure you try a wide range of values.)
+
+### 3
+How many diamonds are 0.99 carat? How many are 1 carat? What do you think is the cause of the difference?
+
+### 4
+Compare and contrast coord_cartesian() vs. xlim() or ylim() when zooming in on a histogram. What happens if you leave binwidth unset? What happens if you try and zoom so only half a bar shows?
+
+
+## 10.4.1 Exercises
+
+### 1
+What happens to missing values in a histogram? What happens to missing values in a bar chart? Why is there a difference in how missing values are handled in histograms and bar charts?
+
+### 2
+What does na.rm = TRUE do in mean() and sum()?
+
+### 3
+Recreate the frequency plot of scheduled_dep_time colored by whether the flight was cancelled or not. Also facet by the cancelled variable. Experiment with different values of the scales variable in the faceting function to mitigate the effect of more non-cancelled flights than cancelled flights.
+
+## 10.5.2.1 Exercises
+
+### 1
+How could you rescale the count dataset above to more clearly show the distribution of cut within color, or color within cut?
+
+### 2
+What different data insights do you get with a segmented bar chart if color is mapped to the x aesthetic and cut is mapped to the fill aesthetic? Calculate the counts that fall into each of the segments.
+
+### 3
+Use geom_tile() together with dplyr to explore how average flight departure delays vary by destination and month of year. What makes the plot difficult to read? How could you improve it?
+
+
+## 10.5.3.1 Exercises
+
+### 1
+Instead of summarizing the conditional distribution with a boxplot, you could use a frequency polygon. What do you need to consider when using cut_width() vs. cut_number()? How does that impact a visualization of the 2d distribution of carat and price?
+
+### 2
+Visualize the distribution of carat, partitioned by price.
+
+### 3
+How does the price distribution of very large diamonds compare to small diamonds? Is it as you expect, or does it surprise you?
+
+### 4
+Combine two of the techniques you’ve learned to visualize the combined distribution of cut, carat, and price.
+
+### 5
+Two dimensional plots reveal outliers that are not visible in one dimensional plots. For example, some points in the following plot have an unusual combination of x and y values, which makes the points outliers even though their x and y values appear normal when examined separately. Why is a scatterplot a better display than a binned plot for this case?
+
+```{r}
+diamonds |> 
+      filter(x >= 4) |> 
+      ggplot(aes(x = x, y = y)) +
+      geom_point() +
+      coord_cartesian(xlim = c(4, 11), ylim = c(4, 11))
+```
+
+### 6
+Instead of creating boxes of equal width with cut_width(), we could create boxes that contain roughly equal number of points with cut_number(). What are the advantages and disadvantages of this approach?
+``` {r}
+ggplot(smaller, aes(x = carat, y = price)) + 
+  geom_boxplot(aes(group = cut_number(carat, 20)))
+```
