@@ -1,6 +1,6 @@
 ---
-title: "Group ## Project 3 - Data Carpentry Data Transformations"
-author: "NAMES HERE"
+title: "Group  Project 3 - Data Carpentry Data Transformations"
+author: "Ryo Iwata, Stephan Quintin, Zachary Strickland"
 output:
   pdf_document: default
   html_document:
@@ -16,8 +16,8 @@ library(nycflights13)
 ```
 
 # Group GROUPNUMBERHERE members:
-names here 
-Note who is assigned leader
+names here: Ryo Iwata, Stephan Quintin, Zachary Strickland
+Note who is assigned leader: Ryo IwatA
 
 # Group Assignment 3
 Instructions - 
