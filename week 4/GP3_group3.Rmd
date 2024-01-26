@@ -1,0 +1,175 @@
+---
+title: "Group ## Project 3 - Data Carpentry Data Transformations"
+author: "NAMES HERE"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(nycflights13)
+```
+
+# Group GROUPNUMBERHERE members:
+names here 
+Note who is assigned leader
+
+# Group Assignment 3
+Instructions - 
+There are fewer assigned problems this time because you are expected to spend time going back and carefully re-reading (r4ds 2e ch 1-19, but elide over ch 8). 
+**Be sure to go back and carefully read all chapters previously covered as well as those covered in these exercises. It is important that you get to a point of being able to relatively quickly approach whatever data problem comes your way, and this is the foundation for that.**
+
+# Ch 11
+## 11.4.6
+### 3
+Change the display of the presidential terms by:
+
+  Combining the two variants that customize colors and x axis breaks.
+  Improving the display of the y axis.
+  Labelling each term with the name of the president.
+  Adding informative plot labels.
+  Placing breaks every 4 years (this is trickier than it seems!).
+
+### 4
+First, create the following plot. Then, modify the code using override.aes to make the legend easier to see.
+```{r}
+ggplot(diamonds, aes(x = carat, y = price)) +
+  geom_point(aes(color = cut), alpha = 1/20)
+```
+
+
+## 11.6.1
+### 1 What happens if you omit the parentheses in the following plot layout. Can you explain why this happens?
+
+p1 <- ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  labs(title = "Plot 1")
+p2 <- ggplot(mpg, aes(x = drv, y = hwy)) + 
+  geom_boxplot() + 
+  labs(title = "Plot 2")
+p3 <- ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point() + 
+  labs(title = "Plot 3")
+
+(p1 | p2) / p3
+
+### 2
+Using the three plots from the previous exercise, recreate the following patchwork.
+
+## 12.2.4 
+
+### 1
+How does dplyr::near() work? Type near to see the source code. Is sqrt(2)^2 near 2?
+
+### 2
+Use mutate(), is.na(), and count() together to describe how the missing values in dep_time, sched_dep_time and dep_delay are connected.
+
+## 12.3.4 
+
+### 1    
+Find all flights where arr_delay is missing but dep_delay is not. Find all flights where neither arr_time nor sched_arr_time are missing, but arr_delay is.
+
+### 2    
+How many flights have a missing dep_time? What other variables are missing in these rows? What might these rows represent?
+
+### 3
+Assuming that a missing dep_time implies that a flight is cancelled, look at the number of cancelled flights per day. Is there a pattern? Is there a connection between the proportion of cancelled flights and the average delay of non-cancelled flights?
+
+
+## 12.4.4 Exercises
+
+### 1
+What will sum(is.na(x)) tell you? How about mean(is.na(x))?
+
+### 2
+
+What does prod() return when applied to a logical vector? What logical summary function is it equivalent to? What does min() return when applied to a logical vector? What logical summary function is it equivalent to? Read the documentation and perform a few experiments.
+
+## 12.5.4 Exercises
+
+### 1
+A number is even if it’s divisible by two, which in R you can find out with x %% 2 == 0. Use this fact and if_else() to determine whether each number between 0 and 20 is even or odd.
+```{r}
+one_to_twenty <- 1:20
+
+```
+
+### 4   
+Write a case_when() statement that uses the month and day columns from flights to label a selection of important US holidays (e.g., New Years Day, 4th of July, Thanksgiving, and Christmas). First create a logical column that is either TRUE or FALSE, and then create a character column that either gives the name of the holiday or is NA.
+
+
+## 13.3.1 Exercises
+
+# 1 
+How can you use count() to count the number rows with a missing value for a given variable?
+
+# 2
+Expand the following calls to count() to instead use group_by(), summarize(), and arrange(): 
+
+  flights |> count(dest, sort = TRUE)
+
+  flights |> count(tailnum, wt = distance)
+
+
+## 13.4.8 Exercises
+
+## 1
+Explain in words what each line of the code used to generate Figure 13.1 does.
+
+## 13.5.4 Exercises
+
+# 1   
+Find the 10 most delayed flights using a ranking function. How do you want to handle ties? Carefully read the documentation for min_rank().
+
+#2   
+Which plane (tailnum) has the worst on-time record?
+
+## 13.6.7 Exercises
+
+# 1
+Brainstorm at least 5 different ways to assess the typical delay characteristics of a group of flights. When is mean() useful? When is median() useful? When might you want to use something else? Should you use arrival delay or departure delay? Why might you want to use data from planes?
+
+## 16.3.1 Exercise
+
+### 1 
+Explore the distribution of rincome (reported income). What makes the default bar chart hard to understand? How could you improve the plot?
+
+### 2
+What is the most common relig in this survey? What’s the most common partyid?
+
+### 3
+Which relig does denom (denomination) apply to? How can you find out with a table? How can you find out with a visualization?
+
+##  16.4.1 Exercises
+
+### 1
+There are some suspiciously high numbers in tvhours. Is the mean a good summary?
+
+### 2
+For each factor in gss_cat identify whether the order of the levels is arbitrary or principled.
+
+### 3
+Why did moving “Not applicable” to the front of the levels move it to the bottom of the plot?
+
+
+## 19.3.4 Exercises
+
+### 1
+Find the 48 hours (over the course of the whole year) that have the worst delays. Cross-reference it with the weather data. Can you see any patterns?
+
+### 2
+Imagine you’ve found the top 10 most popular destinations using this code:
+```{r}
+top_dest <- flights2 |>
+  count(dest, sort = TRUE) |>
+  head(10)
+```
+How can you find all flights to those destinations?
+
+### 4
+What do the tail numbers that don’t have a matching record in planes have in common? (Hint: one variable explains ~90% of the problems.)

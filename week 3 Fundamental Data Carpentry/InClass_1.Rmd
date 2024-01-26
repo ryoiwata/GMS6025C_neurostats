@@ -1,0 +1,185 @@
+---
+title: "In Class 1 - Basics"
+author: "Ryo Iwata"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# leave this chunk in place. It lets you set the default settings for the subsequent chunks of code. Read more in the markdown documentation and/or cheat sheet.
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+# could instead be set to (for example): 
+# knitr::opts_chunk$set(echo = FALSE, error=FALSE, warning=FALSE)
+# which will suppress the code and all errors or warnings.
+
+# Don't put anything you want included in the output file here (the include option set to false)
+
+# We can indicate which libraries we wish to use here, which makes running code in place (without knitting) a bit more convenient.
+library(tidyverse)
+# For the few times we add other libraries, e.g. car, it is generally a good idea to add them here.
+```
+
+# In Class Assignment
+
+1. Create a r project specifically for this assignment in its own directory with a data subdirectory containing the sample data files.
+
+2. Read and run each chunk in this Rmd (R Markdown) file in the RStudio environment. Answer questions and add answers or code where indicated.
+
+3. Knit this file to pdf.
+
+## Overview
+
+This document is a very simplified example of how your homework should be created. You should have a mix of embedded R code (chunks) to do things surrounded by the written components of the work. 
+Be aware that whitespace does have an impact on typesetting, as rmarkdown/knitr translate into \LaTeX (or html) via pandoc and so must impute your desires.
+
+When compiled, the above headings, indicated by # or ## at the start of a line, become bookmarked as well as nicely typeset. This is very convenient for jumping around large analysis files, and thus for you while reviewing your submission and us when we grade. A knowledgeable user of RMarkdown/Knitr can control detailed characteristics of the typesetting and thus create effective documents with ease. In the lab, some of our analyses are a couple hundred pages long, so even the basic bookmarking is very helpful. Careful organization pays off!
+
+## Example Data Import
+
+I strongly prefer all data importing, data 'carpentry' or manipulation (the good kind!) is done in the first included chunk or in a series of chunks at the top of the file. In some cases, some additional calculations or creation of new tibbles/dataframes could take place farther down, but those too should be consolidated. **Raw data should NOT be edited in situ** - i.e., if you have a few csv/xlsx/whatever data files with raw data, **they should be left exactly as is** and imported/loaded/read before being interacted with by your code. That way you have a record of exactly what modification/restructuring/calculated variables/etc. have been done to the data. This is critical for data provenance and the rigor and reproducibility of science. There are a few exceptions to consider: Data that is very, very badly structured might be easiest to adjust elsewhere or in the source format. In that case, **retain both the raw and restructured data and keep a detailed record of what was done to the data**, then import the restructured file. In this course you are expected to load raw data as is from the files provided unless explicitly instructed to deviate from this, which is expected to be never.
+
+You've heard this already, but it bears repeating. This practice helps prevent very common problems arising from re-application of calculations or modifications to data and ensures your analyses can be repeated by others (increasingly a publication requirement) from your raw data. Consider what happens if one variable needs to be converted from cm to m and you achieved that conversion in the data file itself, but then did it again the next day. Another common occurrence is having code which performs critical modification of a dataframe on line 1500 of your Rmd file, but you then work with that dataframe to fit a statistical model or make a figure on line 1100. While in your working environment, this may work as desired, but when you knit and make your report, it creates spurious results or fails.
+
+```{r thisitjustachunkname}
+# Note - we will use a data subdirectory (relative to the project directory, for all assignments.
+#  When we run your code, that is the only location that the data files will exist.
+
+# note this requires the readxl library, but is referring directly to the function read_xlsx
+sampledata_raw <- readxl::read_xlsx("./data/InClass1_sampledata.xlsx")
+# 
+
+# If we were loading from a csv file with read_csv, we have to consider many other arguments as well.
+
+# we won't use this, so let's remove it. Look at the data list in your environment before and after.
+
+# Here, we would modify or adjust the tibble as needed. 
+# We rename the variables based on some outside data dictionary. 
+sampledata <- rename(.data = sampledata_raw, 
+                     `AB level` = Variable1,
+                     `CD level` = Variable2,
+                     BRVD = Variable3)
+
+# Let's say that we know the BRVD is recorded in the wrong units, say mol rather than mmol
+# we can use magrittr piping to pass the data from one function to the next.
+sampledata <- rename(.data = sampledata, 
+                     `BRVD (mol)` = BRVD) %>%
+              mutate(`BRVD (mmol)`= `BRVD (mol)` * 1000 )
+
+# Note - the %>% passes the result of the first function to the next into .data.
+# Also, we are overwriting sampledata. This can be dangrous if you're not careful.
+
+# now my data is well named and the units are sensible. 
+
+# we can remove the sampledata from our environment
+rm(sampledata_raw)
+```
+
+### Question 1
+
+**Make a long version of this data, with one row per measurement. You may assume each row or the original data is a single biological sample.**
+
+```{r}
+# sample_columns = select(sampledata, everything())
+
+longer_sampledata <- mutate(sampledata, sample_number = row_number()) |>
+pivot_longer(-sample_number)
+
+```
+
+\newpage
+## Hypotheses, Background, Planned Analyses, etc.
+
+If this were a data analysis report in a research text, here we would write out the background information for this question/section including the biological/system hypotheses and the statistical hypotheses. In some cases, this is quite long. If you are doing 'data mining' and do not have a clear *a priori* hypothesis, that radically changes how you must report your results and how you should interpret any findings, especially statistical findings. Our planned analyses, inclusive of measures, statistical models and and tests should all be clearly specified in advance of evaluation of data for strictly designed studies with clear *a priori* hypotheses. Consider how pre-registered studies, particularly clinical trials, must communicate their study design and planned analyses.
+
+### Question 2a
+**Make all possible simple bivariate scatterplots for this data as independent figures. Change the settings necessary to ensure that your code is not displayed in your final pdf for this and remaining chunks, but not all chunks in this document.**
+
+```{r echo=FALSE}
+ggplot(sampledata, aes(x= `AB level`, y=`CD level`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `AB level`, y=`BRVD (mol)`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `AB level`, y=`BRVD (mmol)`)) + 
+  geom_point()
+
+ggplot(sampledata, aes(x= `CD level`, y=`AB level`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `CD level`, y=`BRVD (mol)`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `CD level`, y=`BRVD (mmol)`)) + 
+  geom_point()
+
+ggplot(sampledata, aes(x= `BRVD (mol)`, y=`AB level`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `BRVD (mol)`, y=`CD level`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `BRVD (mol)`, y=`BRVD (mmol)`)) + 
+  geom_point()
+
+ggplot(sampledata, aes(x= `BRVD (mmol)`, y=`AB level`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `BRVD (mmol)`, y=`CD level`)) + 
+  geom_point()
+ggplot(sampledata, aes(x= `BRVD (mmol)`, y=`BRVD (mol)`)) + 
+  geom_point()
+
+```
+
+### Question 2b
+
+**Make a single faceted plot that shows the distribution of each variable**
+
+```{r}
+# ggplot(longer_sampledata, aes(value)) +
+#   geom_histogram()
+
+ggplot(longer_sampledata, aes(value)) +
+  geom_histogram() +
+  facet_wrap(. ~ name, scales = "free")
+
+
+```
+
+p <- ggplot(sampledata, aes(displ, hwy)) + geom_point()
+
+# Use vars() to supply faceting variables:
+p + facet_wrap(vars(class))
+
+### Question 3
+
+**a. What do you think the relationships between the 3 variables might be and why?**
+
+**Answer: CD and BRVD probably have no relationship. AB and BRVD **
+
+```{r}
+sampledata
+
+```
+
+
+**b. What other ways of visually evaluating this data might help you understand the relationship(s) that may or may not exist between these variables?**
+
+**Answer: **
+
+```{r}
+ggplot(sampledata, aes(x=`AB level`, y=`CD level`, size=`BRVD (mol)`, color=`BRVD (mol)`)) +
+ geom_point() +
+  geom_smooth()
+
+ggplot(sampledata, aes(x=`AB level`, y=`BRVD (mol)`, size=`CD level`, color=`CD level`)) +
+ geom_point() +
+    geom_smooth()
+
+```
+
+**c. What other (non-visual) methods might you use?**
+
+### Question 4 
+
+**Create 3 additional plots; ideally, try to achieve your Q 2.b visualization ideas if possible.**
+
+**Explain what each shows and why you chose the mappings you did.**
+
+**If you could change anything about them to make them 'better', what would you change?**
+

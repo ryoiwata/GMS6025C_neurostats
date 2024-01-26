@@ -1,0 +1,99 @@
+---
+title: "In Class 2 - Data Complexity"
+author: "DL"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include = FALSE}
+
+knitr::opts_chunk$set(echo  =  TRUE, warning  =  FALSE)
+# could instead be set to (for example): 
+# knitr::opts_chunk$set(echo  =  FALSE, error = FALSE, warning = FALSE)
+# which will suppress the code and all errors or warnings.
+
+# Don't put anything you want included in the output file here (the include option set to false)
+
+# We can indicate which libraries we wish to use here, which makes running code in place (without knitting) a bit more convenient.
+library(tidyverse)
+# For the few times we add other libraries, e.g. car, it is generally a good idea to add them here.
+```
+
+# In Class Assignment 
+
+Follow the normal steps to get started. The data is the InClass2_Restructure.
+
+
+### Question 1
+
+**What is going on with this data? Make a useful version of it.**
+
+Questions will be added as we progress.
+
+```{r}
+resdata <- readxl::read_excel("./data/InClass2_Restructure.xlsx")
+
+#str(resdata)
+
+```
+
+## Step 1. Splitting the table
+
+```{r}
+normal_patients <- select(resdata, c("...1", "Before Treatment...2"))
+overweight_patients <- select(resdata, c("...3", "Before Treatment...4", "After Treatment...5"))
+obese_patients <- select(resdata, c("...6", "Before Treatment...7", "After Treatment...8"))
+
+```
+
+## Step 2. 
+
+```{r}
+renamed_normal_patients <- rename(normal_patients, 
+                                  patient_id = "...1", 
+                                  before_treatment = "Before Treatment...2")
+
+renamed_overweight_patients <- rename(overweight_patients, 
+                                      patient_id = "...3",  
+                                      before_treatment = "Before Treatment...4", 
+                                      after_treatment = "After Treatment...5")
+
+renamed_obese_patients <- rename(obese_patients, 
+                                 patient_id = "...6",  
+                                 before_treatment = "Before Treatment...7",  
+                                 after_treatment = "After Treatment...8")
+
+
+```
+
+
+## Step 4 Concattenating tibbles
+
+```{r}
+binded_patients <- bind_rows(renamed_normal_patients, renamed_overweight_patients, renamed_obese_patients)
+```
+
+
+## Step 5
+
+```{r}
+separate_patients <- separate_wider_delim(binded_patients, cols=patient_id, delim=" Patient ", names=c("group", "id"))
+```
+
+
+## Step 6
+
+```{r}
+str(separate_patients)
+
+final_patients <- mutate(separate_patients, group_and_id = case_when(
+  group == "Normal" ~ str_c("N", id),
+  group == "Overweight" ~ str_c("Ov", id),
+  group == "Obese" ~ str_c("Ob", id)))
+```
+
+
+\newpage
+
+
