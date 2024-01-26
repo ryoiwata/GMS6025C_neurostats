@@ -1,0 +1,134 @@
+---
+title: "S01_L03_Publication_Figures"
+author: "Damon G. Lamb"
+date: "Spring 2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Publication Worthy Figures
+
+This lecture will focus on publication-worthy figures and then will briefly touch on how to take ggplot well beyond what we are going require for this course. We will start with a brief consideration of the workflow we are following - an RMarkdown file in a RStudio Project being knit into a pdf via automagic (mostly) transmutation into a \LaTeX file is a potent tool for preparing data analysis reports and lab reports and updates. It is far easier than compiling your own documents from disparate figures and text by writing your own \LaTeX files or word documents with embedded files. There are, of course, many other great tools that follow a live/dynamic notebook structure (e.g., Jupyter Notebook) and that can be used to build similar reports efficiently. When we write a paper, book or other final publication product, it is possible to build on RMarkdown via [bookdown](https://www.bookdown.org/home/) and other tools, however we often need to also export figures for submission to publishers separately.
+
+## Raster and Vector
+
+This subsection's information is for you to take with you to apply outside of the class, as in nearly all cases we will be using RMarkdown and only adjusting figures in terms of their mappings, scales, themes, and other construction elements, and not the final encoding.
+
+Bottom line: When exporting figures you create with tools such as ggplot2, export as vector formats unless it is otherwise absolutely impossible to achieve your objective.
+
+There are two core methods to encode 2D images - as pixels (raster graphics/bitmap graphics) wherein an image is represented by a matrix of a particular resolution, or # of pixels along each dimension, of sets of scalars that capture a property, typically color in RGB or CMYK color models, of each pixel. Other color models beyond pixels and RGB or CMYK, e.g. HSV, HSL, and reprographical models like halftone an semitone, as well as non-color models such as what we use in MRI/MRS, exist and are well beyond the scope of this course. In most cases, pictures are raster images. A major shortcoming of raster images is the data/size of the files. Even incredibly simple images, such as basic lines and dots, will require the same amount of data unless compressed. Sometimes compressed via decomposition into another representational feature space and truncated (e.g., JPEG compression), which necessarily loses some information. There are compression methods which do not lose any information, but the resulting files are still fairly large. The final result is that raster format files such as bitmap, tiff, jpeg, etc. will always result in a trade-off between quality and file size.
+
+Thankfully, there is a simple solution: vector format. Unlike in raster formats, where pixels of values are described, vector format files contain what is essentially a recipe book of instructions indicating where elemental geometric features are to be rendered in your image. We can even embed raster format images as objects within vector format files. In a vector format, a line is described by properties such as the start (X1, Y1), end (X2, Y2), thickness, color, transparency, layer/relative position above or below other elements. This should sound familiar - it is essentially what we do when we create these figures in the first place, and it takes substantially less data to achieve and has essentially unlimited resolution. 
+To reiterate our bottom line: When exporting figures you create with tools such as ggplot2, export as vector formats unless it is otherwise absolutely impossible to achieve your objective.
+
+```{r}
+# To save a figure:
+# Note: we typically need to be careful with file-exporting code in RMarkdown files.
+fig1_Diamonds = ggplot(diamonds, aes(carat, price))+
+  facet_wrap(facets=vars(color))+
+  geom_density2d_filled(alpha=1, contour_var = "ndensity")+
+  geom_point( shape='.', alpha=0.25)+
+  geom_smooth(size=0.25)
+
+# Let's make a double column figure (190mm wide)
+
+# eps is often a good choice of a vector format, however some may not have the appropriate tools to use it thereafter (e.g., Adobe Illustrator). This is my typical choice of output file format.
+ggsave(filename="./fig1_Diamonds_Carat_Price_FacetDColor.eps",
+       plot=fig1_Diamonds,
+       width=190,
+       height=140,
+       units = "mm"
+       )
+
+# There is a rendering issue with points in the pdf output (known issue)
+ggsave(filename="./fig1_Diamonds_Carat_Price_FacetDColor.pdf",
+       plot=fig1_Diamonds,
+       width=190,
+       height=140,
+       units = "mm"
+       )
+
+# # On windows, this is probably the easiest - and you can embed it in a word document
+# ggsave(filename="./fig1_Diamonds_Carat_Price_FacetDColor.wmf",
+#        plot=fig1_Diamonds,
+#        width=190,
+#        height=140,
+#        units = "mm"
+#        )
+
+# Raster format outputs:
+# This is somewhat 'cheating' as 72 dpi is 'screen' resolution, however it illustrates the point
+ggsave(filename="./fig1_Diamonds_Carat_Price_FacetDColor.jpeg",
+       plot=fig1_Diamonds,
+       width=190,
+       height=140,
+       dpi=72,
+       units = "mm"
+       )
+ggsave(filename="./fig1_Diamonds_Carat_Price_FacetDColor.tiff",
+       plot=fig1_Diamonds,
+       width=190,
+       height=140,
+       dpi=72,
+       units = "mm"
+       )
+
+# zoom in and bask in how terrible they are.
+
+# Finally, since we are knitting this - we may as well include the figure in our knitted pdf:
+fig1_Diamonds
+```
+
+## A Matter of Style and Theme
+
+The style or theme we wish to achieve with our figures is often a blend of being a matter of taste and the requirements of our target for a figure. ggsave, along with other export methods, allow us to create a final rendering of our figures with font sizes, colors, and other characteristics set as we wish. Be sure your final figures capture what you want yet are parsimonious. 
+
+```{r}
+ggplot(diamonds, aes(carat, price))+
+  facet_wrap(facets=vars(color))+
+  geom_density2d_filled(alpha=1, contour_var = "ndensity")+
+  geom_point( shape='.', alpha=0.25)+
+  geom_smooth(size=0.25)
+
+# We have too many points to usefully view all, so we should stick to the ndensity.
+# The smoothed stat/line geometry can be useful, but we're not being careful
+# with the gam which is being used. We should drop it, too.
+# Let's also improve our scale (x,y,fill) labels
+
+ggplot(diamonds, aes(carat, price))+
+  facet_wrap(facets=vars(color))+
+  geom_density2d_filled(alpha=1, contour_var = "ndensity")+
+  labs(
+    x="Size (Carats)",
+    y="Price (USD, $)",
+    fill="Density (within Color)"
+  )+
+  theme(axis.text.x = element_text(colour="#FEFEFE",size=8, angle=0, hjust = 1), 
+        axis.title.x= element_text(colour="#FEFEFE",size=9),
+        axis.text.y = element_text(colour="#FEFEFE",size=8), 
+        axis.title.y= element_text(colour="#FEFEFE",size=9),
+        axis.line = element_line(linewidth=0.1, colour="#7E7E7E"),
+        axis.ticks = element_line(linewidth = 0.2, colour="#CECECE"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        plot.margin = unit(c(1,1,1,1), "mm"),
+        panel.background = element_rect(fill="#000000", colour= NA), #,"colour = #000000", size=1, linetype=1
+        plot.background = element_rect(fill="#000000", colour = NA),
+        strip.background = element_rect(fill="#000000"),
+        legend.background = element_rect(fill="#000000", colour = NA),
+        legend.key =  element_rect(fill="#000000", colour = NA),
+        legend.text = element_text(colour="#FEFEFE",size=8),
+        legend.title = element_text(colour="#FEFEFE",size=9),
+        panel.spacing = unit(1, "pt"),
+        strip.text= element_text(colour="#FEFEFE",size=9))
+  
+
+```
+
+
