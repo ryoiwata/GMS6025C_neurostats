@@ -33,6 +33,8 @@ Questions will be added as we progress.
 
 ```{r}
 resdata <- readxl::read_excel("./data/InClass2_Restructure.xlsx")
+sheet_3 <- readxl::read_excel("./data/InClass2_Restructure.xlsx", sheet = "Data Set 3")
+sheet_4 <- readxl::read_excel("./data/InClass2_Restructure.xlsx", sheet = "Data Set 4")
 
 #str(resdata)
 
@@ -92,6 +94,24 @@ final_patients <- mutate(separate_patients, group_and_id = case_when(
   group == "Overweight" ~ str_c("Ov", id),
   group == "Obese" ~ str_c("Ob", id)))
 ```
+## 
+```{r}
+bmi_ldl_compliance = inner_join(x=sheet_3, y=sheet_4, by="Patient ID")
+  
+```
+
+```{r}
+filter(bmi_ldl_compliance, Classification.x != Classification.y)
+```
+
+
+
+```{r}
+bmi_ldl_compliance.column
+# str(bmi_ldl_compliance)
+# ggplot(bmi_ldl_compliancebmi_ldl_compliance, aes("BMI Before Trial")) + geom_density()
+```
+
 
 
 \newpage

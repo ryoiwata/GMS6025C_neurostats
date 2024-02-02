@@ -13,6 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(palmerpenguins)
 library(nycflights13)
+library(ggplot2)
+# Added to do plot operations
+# install.packages("patchwork") 
+library(patchwork)
 ```
 
 # Group GROUPNUMBERHERE members:
@@ -34,12 +38,50 @@ Change the display of the presidential terms by:
   Labelling each term with the name of the president.
   Adding informative plot labels.
   Placing breaks every 4 years (this is trickier than it seems!).
+  
+```{r}
+presidential |>
+  mutate(id = 33 + row_number()) |>
+  ggplot(aes(x = start, y = id, color = party)) +
+  geom_point() +
+  geom_segment(aes(xend = end, yend = id)) +
+  scale_color_manual(values = c(Republican = "#E81B23", Democratic = "#00AEF3"))
+```
+
+```{r}
+# Calculate breaks every 4 years
+start_year <- year(min(presidential$start))
+end_year <- year(max(presidential$end))
+year_breaks <- seq(from = start_year, to = end_year, by = 4)
+
+presidential |>
+  mutate(id = 33 + row_number()) |>
+  ggplot(aes(x = start, y = id, color = party)) +
+  geom_point() +
+
+  # Combining the two variants that customize colors and x axis breaks.
+  geom_segment(aes(xend = end, yend = id)) +
+  scale_color_manual(values = c(Republican = "#E81B23", Democratic = "#00AEF3")) +
+  # Improving the display of the y axis.
+  scale_y_continuous(breaks = presidential$id) +
+  # Labelling each term with the name of the president.
+  geom_text(aes(label = name), vjust = -0.5, hjust = 0.5) + 
+
+  labs(title = "Presidential Terms in the United States",
+       x = "Year",
+       y = "President #")
+  # Placing breaks every 4 years (this is trickier than it seems!).
+  # scale_x_continuous(limits = c(start_year, end_year), n.break = (end_year - start_year) / 4
+
+
+```
 
 ### 4
 First, create the following plot. Then, modify the code using override.aes to make the legend easier to see.
 ```{r}
 ggplot(diamonds, aes(x = carat, y = price)) +
-  geom_point(aes(color = cut), alpha = 1/20)
+  geom_point(aes(color = cut), alpha = 1/20) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
 ```
 
 
@@ -58,6 +100,22 @@ p3 <- ggplot(mpg, aes(x = cty, y = hwy)) +
 
 (p1 | p2) / p3
 
+```{r}
+p1 <- ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  labs(title = "Plot 1")
+p2 <- ggplot(mpg, aes(x = drv, y = hwy)) + 
+  geom_boxplot() + 
+  labs(title = "Plot 2")
+p3 <- ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point() + 
+  labs(title = "Plot 3")
+
+(p1 | p2) / p3
+
+p1 | p2 / p3
+```
+
 ### 2
 Using the three plots from the previous exercise, recreate the following patchwork.
 
@@ -65,6 +123,15 @@ Using the three plots from the previous exercise, recreate the following patchwo
 
 ### 1
 How does dplyr::near() work? Type near to see the source code. Is sqrt(2)^2 near 2?
+
+**Answer: **
+
+```{r}
+dplyr::near()
+```
+
+
+
 
 ### 2
 Use mutate(), is.na(), and count() together to describe how the missing values in dep_time, sched_dep_time and dep_delay are connected.
@@ -74,11 +141,46 @@ Use mutate(), is.na(), and count() together to describe how the missing values i
 ### 1    
 Find all flights where arr_delay is missing but dep_delay is not. Find all flights where neither arr_time nor sched_arr_time are missing, but arr_delay is.
 
+```{r}
+filter(flights, is.na(arr_delay) & !is.na(dep_delay))
+
+filter(flights, is.na(arr_delay) & !is.na(dep_delay) & !is.na(sched_arr_time))
+
+```
+
+
+
 ### 2    
 How many flights have a missing dep_time? What other variables are missing in these rows? What might these rows represent?
 
+```{r}
+```
+
 ### 3
 Assuming that a missing dep_time implies that a flight is cancelled, look at the number of cancelled flights per day. Is there a pattern? Is there a connection between the proportion of cancelled flights and the average delay of non-cancelled flights?
+
+```{r}
+
+cancelled_flights <- filter(flights, is.na(dep_time)) |>
+  group_by(year, month, day) |>
+  summarise(cancelled_flight_num = n())
+
+total_flight <- flights |>
+group_by(year, month, day) |>
+  summarise(total_flight_num = n())
+
+averaged_delay <- filter(flights, !is.na(dep_time)) |>
+  group_by(year, month, day) |>
+  summarise(avg_delay = mean(dep_delay))
+
+joined_flights <- inner_join(cancelled_flights, total_flight, by=c("year", "month", "day"))
+
+joined_flights <- inner_join(joined_flights, averaged_delay, by=c("year", "month", "day"))
+
+joined_flights <- mutate(joined_flights, cancelled_proportions = cancelled_flights / total_flight_num)
+
+```
+
 
 
 ## 12.4.4 Exercises
@@ -97,16 +199,31 @@ A number is even if it’s divisible by two, which in R you can find out with x 
 ```{r}
 one_to_twenty <- 1:20
 
+even_odd <- if_else(one_to_twenty %% 2 == 0, "Even", "Odd")
+tibble(one_to_twenty, even_odd)
+
+
 ```
 
 ### 4   
 Write a case_when() statement that uses the month and day columns from flights to label a selection of important US holidays (e.g., New Years Day, 4th of July, Thanksgiving, and Christmas). First create a logical column that is either TRUE or FALSE, and then create a character column that either gives the name of the holiday or is NA.
 
+```{r}
+case_when()
+```
 
 ## 13.3.1 Exercises
 
 # 1 
 How can you use count() to count the number rows with a missing value for a given variable?
+
+**Answer: Filter for rows that have a missing value with `filter()` and then**
+
+```{r}
+count(filter(flights, is.na(dep_delay)))
+
+```
+
 
 # 2
 Expand the following calls to count() to instead use group_by(), summarize(), and arrange(): 
@@ -114,6 +231,23 @@ Expand the following calls to count() to instead use group_by(), summarize(), an
   flights |> count(dest, sort = TRUE)
 
   flights |> count(tailnum, wt = distance)
+  
+```{r}
+flights |> count(dest, sort = TRUE)
+
+flights |> 
+  group_by(dest) |>
+  summarize(total_flight = n()) |>
+  arrange(desc(total_flight))
+
+flights |> count(tailnum, wt = distance)
+
+flights |> 
+  group_by(tailnum) |>
+  summarize(weighted_tailnum = sum(distance)) |>
+  arrange(tailnum)
+
+```
 
 
 ## 13.4.8 Exercises
@@ -123,11 +257,55 @@ Explain in words what each line of the code used to generate Figure 13.1 does.
 
 ## 13.5.4 Exercises
 
+```{r}
+flights |> 
+  group_by(hour = sched_dep_time %/% 100) |> 
+  summarize(prop_cancelled = mean(is.na(dep_time)), n = n()) |> 
+  filter(hour > 1) |> 
+  ggplot(aes(x = hour, y = prop_cancelled)) +
+  geom_line(color = "grey50") + 
+  geom_point(aes(size = n))
+```
+
+
 # 1   
 Find the 10 most delayed flights using a ranking function. How do you want to handle ties? Carefully read the documentation for min_rank().
 
+**Answer: I want to handle ties like done in min_rank() where we rank all the ties to have the same (smallest) rank. **
+
+```{r}
+
+flights |> 
+  mutate(delay_rank = min_rank(desc(dep_delay))) |>
+  arrange(delay_rank) |>
+  filter(delay_rank <= 10)
+
+
+#?min_rank
+
+```
+
 #2   
 Which plane (tailnum) has the worst on-time record?
+
+```{r}
+
+arr_delay_flights <- flights |>
+  filter(arr_delay >= 1) |>
+  group_by(tailnum) |>
+  summarize(arr_delay_num = n())
+
+total_flights <- flights |>
+  group_by(tailnum) |>
+  summarize(total_flights_num = n())
+
+
+joined_delay_flights <- inner_join(arr_delay_flights, total_flights, by="tailnum")
+
+joined_delay_flights <- 
+  mutate()
+
+```
 
 ## 13.6.7 Exercises
 
