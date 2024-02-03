@@ -1,0 +1,88 @@
+---
+title: "In Class 2.5 - Data Complexity"
+author: "DL"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+# could instead be set to (for example): 
+# knitr::opts_chunk$set(echo = FALSE, error=FALSE, warning=FALSE)
+# which will suppress the code and all errors or warnings.
+
+# Don't put anything you want included in the output file here (the include option set to false)
+
+# We can indicate which libraries we wish to use here, which makes running code in place (without knitting) a bit more convenient.
+library(tidyverse)
+# For the few times we add other libraries, e.g. car, it is generally a good idea to add them here.
+```
+
+# In Class Assignment 
+
+Follow the normal steps to get started. The data is the InClass2_Restructure.
+
+
+### Question 1
+
+**What is going on with this data? Make a useful version of it.**
+
+Questions will be added as we progress.
+
+\newpage
+
+```{r}
+resdata <- readxl::read_excel("./data/distributions.xlsx")
+```
+
+```{r}
+str(resdata)
+
+retyped_resdata <- resdata |>
+  mutate(n2 = as_factor(n2),
+         n5 = as_factor(n5),
+         n10 = as_factor(n10),
+         n25 = as_factor(n25),
+         n100 = as_factor(n100),
+         normdata = parse_number(normdata),
+         unifdata = parse_number(unifdata),
+         multdata = parse_number(multdata))
+```
+
+```{r}
+long_data <- pivot_longer(retyped_resdata, cols = c(normdata, unifdata, multdata))
+```
+
+```{r}
+long_data |> ggplot(aes(value, color=n100)) +
+  geom_density(show.legend = FALSE) +
+  facet_wrap(vars(name))
+```
+
+```{r}
+summarized_data <- long_data |> 
+  group_by(n100, name) |>
+  summarize(mean_value = mean(value), sd_value = sd(value))  
+
+
+
+
+```
+
+```{r}
+summarized_data |>
+  ggplot(aes(mean_value, color = name)) +
+  geom_density()
+```
+
+```{r}
+## looking at the norm data get the std
+mean_loss_data <- long_data |> 
+  filter(name == "normdata") |>
+  mutate(.by = n2,
+         mean_n2 = mean(value),
+         loss_n2 = (value - mean_n2)^2)
+```
+

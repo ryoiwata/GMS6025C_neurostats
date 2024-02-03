@@ -1,6 +1,6 @@
 ---
 title: "Group  Project 3 - Data Carpentry Data Transformations"
-author: "Ryo Iwata, Stephan Quintin, Zachary Strickland"
+author: "Group 3: Ryo Iwata, Stephan Quintin, Zachary Strickland"
 output:
   pdf_document: default
   html_document:
@@ -19,9 +19,9 @@ library(ggplot2)
 library(patchwork)
 ```
 
-# Group GROUPNUMBERHERE members:
+# Group 3 members:
 names here: Ryo Iwata, Stephan Quintin, Zachary Strickland
-Note who is assigned leader: Ryo IwatA
+Note who is assigned leader: Ryo Iwata
 
 # Group Assignment 3
 Instructions - 
@@ -48,39 +48,39 @@ presidential |>
   scale_color_manual(values = c(Republican = "#E81B23", Democratic = "#00AEF3"))
 ```
 
-```{r}
-# Calculate breaks every 4 years
-start_year <- year(min(presidential$start))
-end_year <- year(max(presidential$end))
-year_breaks <- seq(from = start_year, to = end_year, by = 4)
 
-presidential |>
-  mutate(id = 33 + row_number()) |>
+```{r}
+
+numbered_presidential <- presidential |>
+  mutate(id = 33 + row_number())
+
+numbered_presidential |>
   ggplot(aes(x = start, y = id, color = party)) +
   geom_point() +
-
+  labs(title = "Presidential Terms in the United States",
+       x = "Year",
+       y = "President #") + 
   # Combining the two variants that customize colors and x axis breaks.
   geom_segment(aes(xend = end, yend = id)) +
   scale_color_manual(values = c(Republican = "#E81B23", Democratic = "#00AEF3")) +
-  # Improving the display of the y axis.
-  scale_y_continuous(breaks = presidential$id) +
   # Labelling each term with the name of the president.
   geom_text(aes(label = name), vjust = -0.5, hjust = 0.5) + 
-
-  labs(title = "Presidential Terms in the United States",
-       x = "Year",
-       y = "President #")
   # Placing breaks every 4 years (this is trickier than it seems!).
-  # scale_x_continuous(limits = c(start_year, end_year), n.break = (end_year - start_year) / 4
-
+  scale_x_date(name = "Presidential Term Start year", 
+               breaks = numbered_presidential$start, date_labels = "'%y") +
+  # Improving the display of the y axis.
+  scale_y_continuous(name = "Presidential #", 
+               breaks = numbered_presidential$id)
 
 ```
 
 ### 4
 First, create the following plot. Then, modify the code using override.aes to make the legend easier to see.
+
 ```{r}
 ggplot(diamonds, aes(x = carat, y = price)) +
   geom_point(aes(color = cut), alpha = 1/20) +
+  # Making the transparency lower
   guides(colour = guide_legend(override.aes = list(alpha = 1)))
 ```
 
@@ -88,17 +88,7 @@ ggplot(diamonds, aes(x = carat, y = price)) +
 ## 11.6.1
 ### 1 What happens if you omit the parentheses in the following plot layout. Can you explain why this happens?
 
-p1 <- ggplot(mpg, aes(x = displ, y = hwy)) + 
-  geom_point() + 
-  labs(title = "Plot 1")
-p2 <- ggplot(mpg, aes(x = drv, y = hwy)) + 
-  geom_boxplot() + 
-  labs(title = "Plot 2")
-p3 <- ggplot(mpg, aes(x = cty, y = hwy)) + 
-  geom_point() + 
-  labs(title = "Plot 3")
-
-(p1 | p2) / p3
+**Answer: Omitting the parentheses changes the order of operation of the plot layout. Instead of p3 being placed below both p1 and p2, it is only under p2 with p1 to the next on the left.**
 
 ```{r}
 p1 <- ggplot(mpg, aes(x = displ, y = hwy)) + 
@@ -119,22 +109,63 @@ p1 | p2 / p3
 ### 2
 Using the three plots from the previous exercise, recreate the following patchwork.
 
+```{r}
+
+p1 <- ggplot(mpg, aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  labs(tag = "Fig A:", title = "Plot 1")
+p2 <- ggplot(mpg, aes(x = drv, y = hwy)) + 
+  geom_boxplot() + 
+  labs(tag = "Fig B:", title = "Plot 2")
+p3 <- ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point() + 
+  labs(tag = "Fig C:", title = "Plot 3")
+
+p1 / (p2 | p3)
+
+```
+
 ## 12.2.4 
 
 ### 1
 How does dplyr::near() work? Type near to see the source code. Is sqrt(2)^2 near 2?
 
-**Answer: **
+**Answer: near() is a way of comparing if two numbers are (pairwise) equal which includes a tolerance into its calculation which accounts for differences between the two numbers that are allowed. This is useful for seeing if sqrt(2)^2 near 2, because there are a limited number of numbers after the decimal that is stored. So the computer will think that this equation is not true because there are missing numbers when storing the `sqrt(2)`**
 
 ```{r}
-dplyr::near()
+sqrt(2)^2 == 2
+
+near(sqrt(2) ^ 2, 2)
+
 ```
-
-
-
 
 ### 2
 Use mutate(), is.na(), and count() together to describe how the missing values in dep_time, sched_dep_time and dep_delay are connected.
+
+**Answer: All flights have a `sched_dep_time`. `dep_time` and `dep_delay` are always missing together.**
+
+```{r}
+#This demonstrates that every flight has a scheduled departure time
+flights |> 
+  count(is.na(sched_dep_time))
+
+# There are same amount of missing values in dep_time and dep_delay
+flights |> 
+  count(is.na(dep_time))
+
+
+flights |>
+  count(is.na(dep_delay))
+
+# This demonstrates that whenever a dep_time is missig, del_delay is missing as well.
+flights |>
+  mutate(dep_time_is.na = is.na(dep_time),
+         sched_dep_time_is.na = is.na(sched_dep_time),
+         dep_delay_is.na = is.na(dep_delay)) |>
+  count(dep_time_is.na, sched_dep_time_is.na, dep_delay_is.na)
+
+```
+
 
 ## 12.3.4 
 
@@ -142,45 +173,83 @@ Use mutate(), is.na(), and count() together to describe how the missing values i
 Find all flights where arr_delay is missing but dep_delay is not. Find all flights where neither arr_time nor sched_arr_time are missing, but arr_delay is.
 
 ```{r}
-filter(flights, is.na(arr_delay) & !is.na(dep_delay))
+filter(flights, is.na(arr_delay) & !is.na(dep_delay)) |>
+  relocate(arr_delay) |>
+  relocate(dep_delay)
 
-filter(flights, is.na(arr_delay) & !is.na(dep_delay) & !is.na(sched_arr_time))
+filter(flights, is.na(arr_delay) & !is.na(dep_delay) & !is.na(sched_arr_time)) |>
+  relocate(arr_delay) |>
+  relocate(dep_delay) |>
+  relocate(sched_arr_time)
 
 ```
-
 
 
 ### 2    
 How many flights have a missing dep_time? What other variables are missing in these rows? What might these rows represent?
 
-```{r}
-```
+**Answer: The number of flights with a missing `dep_time` is 8255. The other missing variables for flights that have a missing `dep_time` is `dep_delay` `arr_time`  `arr_delay` `tailnum`   `air_time` . This likely represents flights that are cancelled.**
 
+```{r}
+
+# Create a subset of flights with missing dep_time
+flights_missing_dep_time<- flights |>
+  filter(is.na(dep_time)) 
+
+# Count the number of flights with missing dep_time
+num_flights_missing_dep_time <- flights_missing_dep_time |>
+  nrow()
+
+num_flights_missing_dep_time
+
+# Getting all the columns that also have only missing values
+flights_missing_dep_time |>
+  select(where(~all(is.na(.)))) |>
+  names()
+
+```
 ### 3
 Assuming that a missing dep_time implies that a flight is cancelled, look at the number of cancelled flights per day. Is there a pattern? Is there a connection between the proportion of cancelled flights and the average delay of non-cancelled flights?
 
+**Answer: There seems to be a positive correlation between the average delay and the proportion of cancelled flights**
+
 ```{r}
+# Getting the number of cancelled flights
+cancelled_flights <- flights |>
+  filter(is.na(dep_time)) |>
+  group_by(month, day) |>
+  summarise(cancelled_flights_num = n())
 
-cancelled_flights <- filter(flights, is.na(dep_time)) |>
-  group_by(year, month, day) |>
-  summarise(cancelled_flight_num = n())
+cancelled_flights
 
-total_flight <- flights |>
-group_by(year, month, day) |>
-  summarise(total_flight_num = n())
+# Getting the number of total flights
+total_flights <- flights |>
+  group_by(month, day) |>
+  summarise(total_flights_num = n())
 
-averaged_delay <- filter(flights, !is.na(dep_time)) |>
-  group_by(year, month, day) |>
-  summarise(avg_delay = mean(dep_delay))
+# Getting the proportion of cancelled flights
+proportion_flights <- inner_join(cancelled_flights, total_flights, by=c("month", "day")) |>
+  mutate(cancelled_flights_ratio = cancelled_flights_num / total_flights_num)
 
-joined_flights <- inner_join(cancelled_flights, total_flight, by=c("year", "month", "day"))
+proportion_flights
 
-joined_flights <- inner_join(joined_flights, averaged_delay, by=c("year", "month", "day"))
+# Calculating the average delay
+proportion_flights <- flights |>
+  filter(!is.na(dep_time)) |>
+  group_by(month, day) |>
+  summarise(average_delay = mean(dep_delay, na.rm = TRUE)) |>
+  inner_join(proportion_flights, by = c("month", "day"))
 
-joined_flights <- mutate(joined_flights, cancelled_proportions = cancelled_flights / total_flight_num)
-
+# Graph proportion of cancelled flights and average delay
+proportion_flights |>
+ggplot(aes(average_delay, cancelled_flights_ratio)) +
+  geom_point() +
+  geom_smooth(se = TRUE) +
+  labs(title = "Scatter Plot of Proportion Cancelled vs. Average Delay",
+       x = "Average Delay",
+       y = "Proportion Cancelled") +
+  scale_y_continuous(trans='log10')
 ```
-
 
 
 ## 12.4.4 Exercises
@@ -188,28 +257,86 @@ joined_flights <- mutate(joined_flights, cancelled_proportions = cancelled_fligh
 ### 1
 What will sum(is.na(x)) tell you? How about mean(is.na(x))?
 
+**Answer: `sum(is.na(x))` gets the number of items that are `Nan` in vector. While `mean(is.na(x))` gets the proportions of items that are `nan` in the vector.**
+
+```{r}
+sum(is.na(flights$dep_delay))
+
+mean(is.na(flights$dep_delay))
+
+flights |> 
+  filter(is.na(dep_delay)) |>
+  nrow()
+
+nrow(filter(flights, is.na(dep_delay))) / nrow(flights)
+
+```
+
 ### 2
 
 What does prod() return when applied to a logical vector? What logical summary function is it equivalent to? What does min() return when applied to a logical vector? What logical summary function is it equivalent to? Read the documentation and perform a few experiments.
+
+**Answer: When prod() is applied to a logical vector, it returns the product of the vector's elements, treating TRUE as 1 and FALSE as 0. Therefore, if any value in the logical vector is FALSE (equivalent to 0), prod() will return 0 because 1 times 0 is 0 no matter the number if 1s and 0s. If all values are TRUE (equivalent to 1), prod() will return 1. This behavior makes prod() on a logical vector equivalent to the logical all() function, which checks if all values are TRUE.**
+
+**On the other hand, min() applied to a logical vector returns the minimum value of the vector, treating TRUE as 1 and FALSE as 0. Therefore, if any value in the vector is FALSE, min() will return 0 If all values are TRUE, min() will return 1 because 0 is smaller than 1. This behavior makes min() on a logical vector equivalent to the logical all() function, which checks if all values are TRUE.**
+
+```{r}
+# ?prod
+
+prod(c(TRUE, TRUE))
+
+prod(c(TRUE, FALSE, TRUE))
+
+all(c(TRUE, FALSE, TRUE))
+
+# ?min
+min(c(TRUE, TRUE))
+
+min(c(TRUE, FALSE, TRUE))
+
+
+```
 
 ## 12.5.4 Exercises
 
 ### 1
 A number is even if it’s divisible by two, which in R you can find out with x %% 2 == 0. Use this fact and if_else() to determine whether each number between 0 and 20 is even or odd.
+
 ```{r}
 one_to_twenty <- 1:20
 
 even_odd <- if_else(one_to_twenty %% 2 == 0, "Even", "Odd")
 tibble(one_to_twenty, even_odd)
-
-
 ```
 
 ### 4   
 Write a case_when() statement that uses the month and day columns from flights to label a selection of important US holidays (e.g., New Years Day, 4th of July, Thanksgiving, and Christmas). First create a logical column that is either TRUE or FALSE, and then create a character column that either gives the name of the holiday or is NA.
 
 ```{r}
-case_when()
+# Define a function to check if a date is a specific holiday
+is_holiday <- function(month, day) {
+  case_when(
+    month == 1 & day == 1 ~ TRUE,          # New Year's Day
+    month == 7 & day == 4 ~ TRUE,          # 4th of July
+    month == 11 & day == 28 ~ TRUE,        # Thanksgiving
+    month == 12 & day == 25 ~ TRUE,        # Christmas
+    TRUE ~ FALSE                          # Other days
+  )
+}
+
+# Apply the function to create a logical column
+flights |>
+  mutate(is_holiday = is_holiday(month, day),
+         holiday_name = case_when(
+           is_holiday & month == 1 & day == 1 ~ "New Year's Day",
+           is_holiday & month == 7 & day == 4 ~ "4th of July",
+           is_holiday & month == 11 & day == 28 ~ "Thanksgiving",
+           is_holiday & month == 12 & day == 25 ~ "Christmas",
+           TRUE ~ NA_character_
+         )) |>
+  relocate(is_holiday) |>
+  relocate(holiday_name)
+
 ```
 
 ## 13.3.1 Exercises
@@ -217,7 +344,7 @@ case_when()
 # 1 
 How can you use count() to count the number rows with a missing value for a given variable?
 
-**Answer: Filter for rows that have a missing value with `filter()` and then**
+**Answer: Filter for rows that have a missing value with `filter()` and then use count() to get the number of filtered rows**
 
 ```{r}
 count(filter(flights, is.na(dep_delay)))
@@ -257,21 +384,41 @@ Explain in words what each line of the code used to generate Figure 13.1 does.
 
 ## 13.5.4 Exercises
 
+
+
 ```{r}
-flights |> 
-  group_by(hour = sched_dep_time %/% 100) |> 
-  summarize(prop_cancelled = mean(is.na(dep_time)), n = n()) |> 
-  filter(hour > 1) |> 
+# Pipes in data
+flights |>
+# Groups the data by the hour of the scheduled departure time. 
+# The sched_dep_time %/% 100 extracts the hour by integer division (ignoring the minutes). 
+# The result is a grouped dataframe with an additional column named hour. 
+  group_by(hour = sched_dep_time %/% 100) |>
+# Calculates summary statistics within each group. 
+# It calculates the mean of the logical vector 
+# is.na(dep_time) (proportion of cancelled flights) and 
+# counts the total number of flights (n) within each hour.
+  summarize(prop_cancelled = mean(is.na(dep_time)), n = n()) |>
+# Filters out rows where the hour is less than or equal to 1. 
+# This is done to exclude any potential outliers or data issues.
+  filter(hour > 1) |>
+# Initializes a ggplot object, setting the aesthetics (aes) 
+# for the x-axis as hour and the y-axis as prop_cancelled.
   ggplot(aes(x = hour, y = prop_cancelled)) +
-  geom_line(color = "grey50") + 
+# Adds a line layer to the ggplot. 
+# This line connects the proportion of cancelled flights across different hours. 
+# The color is set to "grey50".
+  geom_line(color = "grey50") +
+# Adds a point layer to the ggplot. Points represent the individual hours, 
+# and the size of each point is determined by the number of flights (n) in that hour.
   geom_point(aes(size = n))
+
 ```
 
 
 # 1   
 Find the 10 most delayed flights using a ranking function. How do you want to handle ties? Carefully read the documentation for min_rank().
 
-**Answer: I want to handle ties like done in min_rank() where we rank all the ties to have the same (smallest) rank. **
+**Answer: I want to handle ties like done in min_rank() where we rank all the ties by having them the smallest rank between all numbers that were in tie as if they all had different values that wouldn't change the order of the numbers. **
 
 ```{r}
 
@@ -280,74 +427,307 @@ flights |>
   arrange(delay_rank) |>
   filter(delay_rank <= 10)
 
-
-#?min_rank
-
 ```
 
 #2   
 Which plane (tailnum) has the worst on-time record?
 
-```{r}
+**Answer: N240AT, N392SW, N635SW has all delayed flights and the most number of delayed flights**
 
+```{r}
+# Getting the counts of delayed flights per tailnum
 arr_delay_flights <- flights |>
   filter(arr_delay >= 1) |>
   group_by(tailnum) |>
   summarize(arr_delay_num = n())
 
+# Getting the counts of all flights for each tailnum
 total_flights <- flights |>
   group_by(tailnum) |>
   summarize(total_flights_num = n())
 
-
+# Combining the tibbles by tailnum
 joined_delay_flights <- inner_join(arr_delay_flights, total_flights, by="tailnum")
 
-joined_delay_flights <- 
-  mutate()
+# Getting the proportion of delayed flights
+joined_delay_flights <- joined_delay_flights |>
+  mutate(delay_ratio = arr_delay_num / total_flights_num)
+
+# Getting the tailnum with the worst delay ratio
+# Then the most number of delays if there are ties
+joined_delay_flights |>
+  filter(delay_ratio == max(delay_ratio)) |>
+  filter(arr_delay_num == max(arr_delay_num))
 
 ```
 
 ## 13.6.7 Exercises
 
 # 1
-Brainstorm at least 5 different ways to assess the typical delay characteristics of a group of flights. When is mean() useful? When is median() useful? When might you want to use something else? Should you use arrival delay or departure delay? Why might you want to use data from planes?
+Brainstorm at least 5 different ways to assess the typical delay characteristics of a group of flights. 
+
+**Answer: Mean and Median of departure delays, distribution of delay times (via histograms, density plots or box plots), percentage of flights with delays, variability metrics (Standard dev, IQR, etc), time trends (do delays vary across different times of day, day of week/month, etc)**
+
+When is mean() useful? 
+
+**Answer: `mean()` is useful when you want to understand the central tendency of the delays. Mean is most appropriate if you are analyzing data that is symmetrically distributed and does not contain outliers that can skew the average. The mean is also useful when comparing different distributions.**
+
+When is median() useful? 
+
+**Answer: Median is useful when you want to understand the central tendency of the delays and the distribution contains outliers that can skew the average. Median is robust because it is based on ranking of the numbers. **
+
+When might you want to use something else? 
+
+**Answer: Using standard deviation allows you to better understand the overall spread of your data. **
+
+Should you use arrival delay or departure delay? 
+
+**Answer: Using arrival or departure delay depends on what insights you are focusing on. Such as if you are seeing how long the flight takes off from the scheduled time or how different the arrival time is from the scheduled time.**
+
+Why might you want to use data from planes?
+
+**Answer: Looking at planes will give you insights into specific aircraft or aircraft types. This may help us better understand why some flights have frequent or long delays.**
+
 
 ## 16.3.1 Exercise
 
 ### 1 
 Explore the distribution of rincome (reported income). What makes the default bar chart hard to understand? How could you improve the plot?
 
+**Answer: The default bar chart is difficult to understand because the x-labels are long and overlap each other. This makes reading the label for any bar difficult. You can improve the plot by rotating the x-labels**
+
+```{r}
+gss_cat |>
+  ggplot(aes(x=rincome)) +
+  geom_bar()
+
+gss_cat |>
+  ggplot(aes(x=rincome)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
 ### 2
 What is the most common relig in this survey? What’s the most common partyid?
 
+**Answer: Protestant is the most common `relig` and independent is the most common `partyid`**
+
+```{r}
+gss_cat |>
+  group_by(relig) |>
+  summarise(relig_num = n()) |>
+  filter(relig_num == max(relig_num))
+
+gss_cat |>
+  group_by(partyid) |>
+  summarise(partyid_num = n()) |>
+  filter(partyid_num == max(partyid_num))
+
+```
+
 ### 3
 Which relig does denom (denomination) apply to? How can you find out with a table? How can you find out with a visualization?
+
+**Answer: Denomination mainly applies to Protestant.**
+
+```{r}
+grouped_relig_denom <- gss_cat |>
+  group_by(relig, denom) |>
+  summarise(relig_num = n())
+
+grouped_relig_denom
+
+grouped_relig_denom |>
+  ggplot(aes(y = relig, fill = denom, x = relig_num)) +
+  geom_col()
+```
 
 ##  16.4.1 Exercises
 
 ### 1
 There are some suspiciously high numbers in tvhours. Is the mean a good summary?
 
+**Answer: Yes, there is a datapoint with 24 hours which is unlikely for the number of hours watched per day. Mean might not be a good summary if there's a potential outlier such as this**
+
+```{r}
+gss_cat |>
+  ggplot(aes(tvhours)) +
+  geom_histogram(na.rm=TRUE)
+
+max(gss_cat$tvhours, na.rm=TRUE)
+
+mean(gss_cat$tvhours, na.rm=TRUE)
+
+median(gss_cat$tvhours, na.rm=TRUE)
+```
+
 ### 2
 For each factor in gss_cat identify whether the order of the levels is arbitrary or principled.
+
+**Answer: Arbitrary: Marital(depending on whether marriage status can be ordered), race, partid, relig, denom. Principled: rincome**
+
+```{r}
+str(gss_cat)
+
+factored_gss_cat <- gss_cat |>
+  mutate(marital_num = as.integer(marital)) |>
+  mutate(race_num = as.integer(race)) |>
+  mutate(rincome_num = as.integer(rincome)) |>
+  mutate(partyid_num = as.integer(partyid)) |>
+  mutate(relig_num = as.integer(relig)) |>
+  mutate(denom_num = as.integer(denom)) 
+
+factored_gss_cat |>
+  group_by(marital_num, marital) |>
+  summarize(marital_count = n())
+
+factored_gss_cat |>
+  group_by(race_num, race) |>
+  summarize(race_count = n())
+
+factored_gss_cat |>
+  group_by(rincome_num, rincome) |>
+  summarize(rincome_count = n())
+
+factored_gss_cat |>
+  group_by(partyid_num, partyid) |>
+  summarize(partyid_count = n())
+
+factored_gss_cat |>
+  group_by(relig_num, relig) |>
+  summarize(relig_count = n())
+
+factored_gss_cat |>
+  group_by(denom_num, denom) |>
+  summarize(denom_count = n())
+```
 
 ### 3
 Why did moving “Not applicable” to the front of the levels move it to the bottom of the plot?
 
+**Answer: Moving “Not applicable” to the front of the levels moved it to the bottom because the plot is plotted from bottom to top going from first in the factor to the last factor.**
+
+```{r}
+
+rincome_summary <- gss_cat |>
+  group_by(rincome) |>
+  summarize(
+    age = mean(age, na.rm = TRUE),
+    n = n()
+  )
+
+# ?fct_reorder
+
+ggplot(rincome_summary, aes(x = age, y = fct_reorder(rincome, age))) + 
+  geom_point()
+
+# ?fct_relevel
+
+ggplot(rincome_summary, aes(x = age, y = fct_relevel(rincome, "Not applicable"))) +
+  geom_point()
+```
 
 ## 19.3.4 Exercises
 
 ### 1
 Find the 48 hours (over the course of the whole year) that have the worst delays. Cross-reference it with the weather data. Can you see any patterns?
 
+**Answer: Given time constraints we were only able to see that there might be a difference in wind speed**
+
+```{r}
+# Grouping each flight by month/day
+
+worst_flights <- flights |>
+  filter(dep_delay < 0) |>
+  group_by(month, day) |>
+  summarise(n_flights = n(), .groups = "drop")
+
+# Grouping by every 48 hours
+
+worst_flights <- worst_flights |> 
+  mutate(row = row_number()) |>
+  mutate(index_48_hours_second = row_number() %/% 2) |>
+  mutate(index_48_hours_first = ceiling(row_number() / 2) + 1000)
+
+# Adding the index to worst flights
+
+worst_flights <- inner_join(flights, worst_flights, by=c("month", "day")) |>
+  filter(dep_delay < 0)
+
+# Getting the average delay for each 48 hours
+
+two_days_worst_flights_first <- worst_flights |>
+  group_by(index_48_hours_first) |>
+  summarise(avg_48_delay = mean(dep_delay))
+
+two_days_worst_flights_second <- worst_flights |>
+  group_by(index_48_hours_second) |>
+  summarise(avg_48_delay = mean(dep_delay))  
+
+# Seeing which 48 hours have the worst delays on average
+
+two_days_worst_flights <- bind_rows(two_days_worst_flights_first, two_days_worst_flights_second) |>
+  filter(avg_48_delay == min(avg_48_delay))
+
+two_days_worst_index <- two_days_worst_flights$index_48_hours_second[1]
+
+one_worst_flight <- worst_flights |>
+  filter(index_48_hours_second == two_days_worst_index)
+  
+worst_day <- one_worst_flight$day[1]
+worst_month <- one_worst_flight$month[1]
+
+# Trying to see any patterns with weather
+
+weather
+
+weather |>
+  filter(month == worst_month) |>
+  filter(day == worst_day) 
+
+weather |>
+  filter(month == worst_month) |>
+  filter(day == worst_day) |>
+  summarise(mean(wind_speed, na.rm=TRUE))
+
+weather |>
+  summarise(mean(wind_speed, na.rm=TRUE))
+
+```
+
+
 ### 2
 Imagine you’ve found the top 10 most popular destinations using this code:
 ```{r}
+flights2 <- flights |> 
+  select(year, time_hour, origin, dest, tailnum, carrier)
+
 top_dest <- flights2 |>
   count(dest, sort = TRUE) |>
   head(10)
 ```
+
 How can you find all flights to those destinations?
+
+```{r}
+left_join(top_dest, flights, by="dest")
+```
 
 ### 4
 What do the tail numbers that don’t have a matching record in planes have in common? (Hint: one variable explains ~90% of the problems.)
+
+**Answer: We were not able to uncover what was common betweeen tail numbers without a matching plane.**
+
+```{r}
+unmatched_flights <- flights |>
+  left_join(planes, by = c("tailnum", "year"))|>
+  filter(is.na(type))
+
+unmatched_flights
+
+# Print or visualize the results
+unmatched_flights |>
+  select(tailnum) |>
+  unique()
+
+```
