@@ -1,0 +1,222 @@
+---
+title: "HW1"
+author: "Ryo Iwata"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(car)
+library(knitr)
+```
+
+*Nota bene* - Use car::Anova unless otherwise specified throughout this course, the reasons for which will be covered in detail in a later lecture. You can do so by using library(car) then Anova or car::Anova, assuming the car package is installed. With our simple models, it isn't different from the normal anova function, but it is a good habit to get into.
+
+Each problem should have its own data loading and carpentry chunk
+
+# Problem \#1 (40 pts):
+Your laboratory is studying the effect of the diffusion of intraventricular drug delivery vehicles (particles) and are currently evaluating the impact of the polymer used. load and prepare data from sheet DataSet1.
+
+```{r Data Loading}
+
+polymer_data <- readxl::read_excel("./data/HW1_Data.xlsx")
+
+```
+
+```{r Data carpentry}
+str(polymer_data)
+
+polymer_1 <- polymer_data |> 
+  select("Polymer Type...1", "Diffusion Rate...2") |> 
+  rename(polymer_type = "Polymer Type...1") |>
+  rename(diffusion_rate = "Diffusion Rate...2")
+
+polymer_2 <- polymer_data |> 
+  select("Polymer Type...3", "Diffusion Rate...4") |>
+  rename(polymer_type = "Polymer Type...3") |>
+  rename(diffusion_rate = "Diffusion Rate...4")
+
+polymer_restructured <- bind_rows(polymer_1, polymer_2)
+
+```
+
+
+## 1) Create a set of plots that allow you to visualize the distribution of the diffusion of each particle type that emphasizes/aids in visual consideration of particular characteristics:
+
+### a) Focused on the distribution within polymer type (4 pts)
+
+```{r}
+polymer_restructured |> ggplot(aes(x=diffusion_rate)) + 
+  geom_histogram(bins = 5) +
+  facet_wrap(vars(polymer_type))
+```
+
+### b) Focused on relationship beteen the distributions (4 pts)
+
+```{r}
+polymer_restructured |> ggplot(aes(x=diffusion_rate, colour=polymer_type)) + 
+  geom_freqpoly(bins = 5)
+```
+
+
+
+## 2) Fit a regression model (lm) to capture the effect of polymer type on diffusion. (2pts)
+
+### a) What are the coefficients for this model (4 pts)?
+
+```{r}
+polymer_lm <- lm(diffusion_rate ~ polymer_type, polymer_restructured) 
+
+car::Anova(polymer_lm)
+
+summary(polymer_lm)
+
+```
+**Answer: **
+
+### b) Which group is serving as the intercept (2 pts)?
+
+```{r}
+
+```
+
+
+### c) Using these coefficients (and not the source data), calculate the model's estimated means for each group (4 pts)?
+
+```{r}
+
+```
+
+
+
+### d) Calculate (using a tidyverse appraoch) the SS~total~, SS~Regression~, and SS~Error~ for this model (5 pts)?
+
+```{r}
+
+```
+
+
+
+### e) Write out the formula for this model using the beta notation discussed in class  (2 pts)?
+
+```{r}
+
+```
+
+
+## 3) Using the estimates and their associated error for the above model, use a t-test to evaluate whether the term is zero or non-zero.
+
+```{r}
+
+```
+
+
+### a) What are the t-statistic and associated p-value. Note-no calculation necessary, we aready have this information (3 pts)?
+
+```{r}
+
+```
+
+
+### b) What do these coefficient/estimate terms represent. List and explain each. (3 pt)?
+
+```{r}
+
+```
+
+
+### c) Which polymers differ from PLGA (ignoring consideration of multiple comparisons/post-hoc testing) (2 pt)?
+
+```{r}
+
+```
+
+
+## 4) Create two essentially visually identical figures to show both the raw data and the model. 1) from the augmented data (augment function in tidymodels). and 2) Use the outputs of the model fit (lm) to calculate the model's predicted values for each group to include in the plot, and only plotting a single value for each such predicted value for each group (i.e., not using stat_summary or equivalent and with the calculated predicted value in a separate tibble from the data) (7 pt):
+
+```{r}
+
+```
+
+
+# Problem #2 (30 pts):  Your group is investigating the encapsulation rate of long-term transcranial implants.  In your study, subjects have been implanted with a implants then placed on different therapeutic regimens after implantation.  In your study, four different drugs/formulations were used – one control and 3 experimental drugs. The encapsulation level of the implants was evaluated at 1 year after implantation; lower encapsulation is better in this study. Load and prepare data from sheet DataSet2.
+
+
+## a)	Visualize your data.
+
+### 1)	Create a histograms for each group in one ggplot call (not multiple separate figures, and be cautious with bins) (4 pts). 
+
+
+### 2)	Create a bar plot that the shows the mean +/- st. dev of each group (4 pts).
+
+
+## b)	Describe your regression model
+
+	Write out the formula for your regression model in generic terms (i.e., with $\beta$ terms and no specific values/numbers as we've not yet fit it) (3 pts).
+
+
+## c)	Fit your model
+
+### 1)	What are the coefficients for your model (3 pts)?
+
+
+#### i. Write out your model with the specific terms replaced by their estimate (as in b) (2pts)
+
+
+### 2)	What is the sum of squares for the drug type in your model (2 pts)? 
+
+
+## d)	Understand/Discuss your model
+
+### 1)	Is the effect of drug type a significant explanation of the total variance in the model? (2 pts)
+
+#### i.	What is the specific statistical hypothesis tested? (2 pts)
+
+
+#### ii.	What type of statistic will you use to evaluate this test (2 pts)?
+
+
+#### iii.	What is the value of the statistic and what is the assiciated p-value (2 pts)?
+
+
+
+#### iv. What can you conclude and what can you not conclude based on this statistical test (4 pts)?
+
+
+
+# Problem #3 (30 pts): Brain natriurectic peptide (BNP) level in blood have been shown to predict heart failure, leading to alterations is cognitive function. In patients with high levels of BNP, your team evaluated the effects of different diuretic drugs on BNP levels. Load and prepare data from sheet DataSet3.   
+
+## A) Provide a concise set of appropriate visualizations of the data (5 pts)
+
+```{r}
+
+```
+
+
+
+## B) a concise description of your approach to analyzing this data including generic formula given these data (5 pts) 
+
+```{r}
+
+```
+
+
+## C) Fit and interpret your model's summary and Anova tables (15 pts) 
+
+```{r}
+
+```
+
+
+
+## E) What can you conclude scientifically as a result of your analysis and visualization? be concise but clear (5pts)
+
+```{r}
+
+```
+
