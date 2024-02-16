@@ -24,7 +24,10 @@ Your laboratory is studying the effect of the diffusion of intraventricular drug
 
 ```{r Data Loading}
 
-polymer_data <- readxl::read_excel("./data/HW1_Data.xlsx")
+polymer_data <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet1")
+dataset_2 <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet2")
+bnp_data <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet3")
+
 
 ```
 
@@ -43,6 +46,9 @@ polymer_2 <- polymer_data |>
 
 polymer_restructured <- bind_rows(polymer_1, polymer_2)
 
+```
+
+```{r}
 ```
 
 
@@ -70,25 +76,44 @@ polymer_restructured |> ggplot(aes(x=diffusion_rate, colour=polymer_type)) +
 ### a) What are the coefficients for this model (4 pts)?
 
 ```{r}
+polymer_restructured |>
+  group_by(polymer_type) |>
+  summarise(avg = mean(diffusion_rate))
+```
+
+
+```{r summary(polymer_lm) output}
 polymer_lm <- lm(diffusion_rate ~ polymer_type, polymer_restructured) 
 
-car::Anova(polymer_lm)
-
 summary(polymer_lm)
-
 ```
-**Answer: **
+
+
+```{r}
+car::Anova(polymer_lm)
+```
+**Answer: The coefficients for this model is the mean diffusion rate of every polymer type subtracted by the intercept. One group's mean is the intercept, which does not have a corresponding coefficient. **
 
 ### b) Which group is serving as the intercept (2 pts)?
 
-```{r}
-
-```
+**Answer: In this model, Chitosan is serving as the intercept which can be seen in the output of `summary(polymer_lm)` which shows that Chitosan is not one of the groups that has a coefficient.**
 
 
 ### c) Using these coefficients (and not the source data), calculate the model's estimated means for each group (4 pts)?
 
 ```{r}
+
+tidy_polymer <- tidy(polymer_lm)
+
+mean_chitosan <- pull(filter(tidy_polymer, term=="(Intercept)"), estimate)
+mean_dextran <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typeDextran"), estimate)
+mean_plga <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typePLGA"), estimate)
+mean_silica <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typeSilica"), estimate)
+
+print(paste("Mean diffusion rate of Chitosan: ", mean_chitosan))
+print(paste("Mean diffusion rate of Dextran: ", mean_dextran))
+print(paste("Mean diffusion rate of PLGA: ", mean_plga))
+print(paste("Mean diffusion rate of Silica: ", mean_silica))
 
 ```
 
@@ -97,21 +122,49 @@ summary(polymer_lm)
 ### d) Calculate (using a tidyverse appraoch) the SS~total~, SS~Regression~, and SS~Error~ for this model (5 pts)?
 
 ```{r}
+# Calculating the mean for all the diffusion rates
+polymer_restructured <- polymer_restructured |> 
+  mutate(mean_all = mean(diffusion_rate))
+
+
+ss_total <- sum((polymer_restructured$diffusion_rate - polymer_restructured$mean_all)^2)
+```
+
+```{r}
+# Calculating the predicted values
+polymer_restructured <- polymer_restructured |> 
+  mutate(y_pred = fitted(polymer_lm))
+
+# Calculate SS_Regression 
+ss_regression <- sum((polymer_restructured$y_pred - polymer_restructured$mean_all)^2)
 
 ```
 
+```{r}
+# Calculate SS_Error (Residual Sum of Squares)
+ss_error <- sum((polymer_restructured$y_pred - polymer_restructured$diffusion_rate)^2)
+```
 
 
 ### e) Write out the formula for this model using the beta notation discussed in class  (2 pts)?
 
-```{r}
+**Answer: **
 
-```
+$$y_i = \beta_0 + \beta_1x_i + \epsilon_i$$
 
 
 ## 3) Using the estimates and their associated error for the above model, use a t-test to evaluate whether the term is zero or non-zero.
 
 ```{r}
+
+non_zero_terms <- pull(filter(tidy_polymer, p.value < 0.05),  term)
+
+zero_terms <- pull(filter(tidy_polymer, p.value >= 0.05),  term)
+
+print(paste0("Non-zero term: ", non_zero_terms))
+
+print(paste0("Zero term: ", zero_terms))
+
 
 ```
 
@@ -119,21 +172,23 @@ summary(polymer_lm)
 ### a) What are the t-statistic and associated p-value. Note-no calculation necessary, we aready have this information (3 pts)?
 
 ```{r}
-
+pull(tidy_polymer,  term)
 ```
 
 
 ### b) What do these coefficient/estimate terms represent. List and explain each. (3 pt)?
 
-```{r}
-
-```
+**Answer: `(Intercept)` is the y-value that the model would cross when all other variables are 0. In this case, it is the mean diffusion rate of the Chitosan group. `polymer_typeDextran` is the coefficient for the variable of whether a data point is in the Dextran group or not. The coefficient is equal to the mean diffusion rate of the Dextran group. `polymer_typePLGA` is the coefficient for the variable of whether a data point is in the PLGA group or not. The coefficient is equal to the mean diffusion rate of the PLGA group.  `polymer_typeSilica` is the coefficient for the variable of whether a data point is in the Silica group or not. The coefficient is equal to the mean diffusion rate of the Silica group. **  
 
 
 ### c) Which polymers differ from PLGA (ignoring consideration of multiple comparisons/post-hoc testing) (2 pt)?
 
 ```{r}
 
+# For pairwise comparison without considering multiple testing corrections
+pairwise_t_test_results <- pairwise.t.test(polymer_restructured$diffusion_rate, polymer_restructured$polymer_type)
+
+pull(filter(pairwise_t_test_results, ))
 ```
 
 
@@ -144,12 +199,13 @@ summary(polymer_lm)
 ```
 
 
-# Problem #2 (30 pts):  Your group is investigating the encapsulation rate of long-term transcranial implants.  In your study, subjects have been implanted with a implants then placed on different therapeutic regimens after implantation.  In your study, four different drugs/formulations were used – one control and 3 experimental drugs. The encapsulation level of the implants was evaluated at 1 year after implantation; lower encapsulation is better in this study. Load and prepare data from sheet DataSet2.
+# Problem #2 (30 pts):  Your group is investigating the encapsulation rate of long-term transcranial implants.  In your study, subjects have been implanted with a implants then placed on different therapeutic regimens after implantation.  In your study, four different drugs/formulatio   ns were used – one control and 3 experimental drugs. The encapsulation level of the implants was evaluated at 1 year after implantation; lower encapsulation is better in this study. Load and prepare data from sheet DataSet2.
 
 
 ## a)	Visualize your data.
 
 ### 1)	Create a histograms for each group in one ggplot call (not multiple separate figures, and be cautious with bins) (4 pts). 
+
 
 
 ### 2)	Create a bar plot that the shows the mean +/- st. dev of each group (4 pts).
