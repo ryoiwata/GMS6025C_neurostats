@@ -25,7 +25,7 @@ Your laboratory is studying the effect of the diffusion of intraventricular drug
 ```{r Data Loading}
 
 polymer_data <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet1")
-dataset_2 <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet2")
+implant_data <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet2")
 bnp_data <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet3")
 
 
@@ -46,9 +46,25 @@ polymer_2 <- polymer_data |>
 
 polymer_restructured <- bind_rows(polymer_1, polymer_2)
 
+
 ```
 
 ```{r}
+
+implant_restructured <- pivot_longer(implant_data, colnames(implant_data))
+
+```
+
+```{r}
+bnp_restructured <- bnp_data |> 
+  rename(bnp_decrease_with_furosemide="Decrease in BNP After Treatment With Furosemide") |>
+  rename(bnp_decrease_with_hydrochlorothiazide="Decrease in BNP After Treatment With Hydrochlorothiazide") |>
+  rename(bnp_decrease_with_ethacrynic_acid="Decrease in BNP After Treatment With Ethacrynic Acid") |>
+  rename(bnp_decrease_with_metolazone="Decrease in BNP After Treatment With Metolazone") 
+
+
+bnp_restructured <- pivot_longer(bnp_restructured, colnames(bnp_restructured))
+
 ```
 
 
@@ -65,8 +81,10 @@ polymer_restructured |> ggplot(aes(x=diffusion_rate)) +
 ### b) Focused on relationship beteen the distributions (4 pts)
 
 ```{r}
-polymer_restructured |> ggplot(aes(x=diffusion_rate, colour=polymer_type)) + 
-  geom_freqpoly(bins = 5)
+
+polymer_restructured |> ggplot(aes(x=diffusion_rate, group=polymer_type, fill=polymer_type)) +
+    geom_density(alpha=.4)
+
 ```
 
 
@@ -165,7 +183,6 @@ print(paste0("Non-zero term: ", non_zero_terms))
 
 print(paste0("Zero term: ", zero_terms))
 
-
 ```
 
 
@@ -206,43 +223,112 @@ pull(filter(pairwise_t_test_results, ))
 
 ### 1)	Create a histograms for each group in one ggplot call (not multiple separate figures, and be cautious with bins) (4 pts). 
 
+```{r}
+implant_restructured |> ggplot(aes(x=value)) +
+  geom_histogram(bins = 10) +
+  facet_wrap(vars(name))
+```
 
 
 ### 2)	Create a bar plot that the shows the mean +/- st. dev of each group (4 pts).
 
+```{r}
+
+summarized_implant <- implant_restructured |>
+  group_by(name) |>
+  summarise(mean = mean(value),
+            sd = sd(value),
+            lower = mean - sd,
+            upper = mean + sd) 
+
+
+summarized_implant |>
+  ggplot(aes(x = name, y = mean, fill = name)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25) 
+
+```
 
 ## b)	Describe your regression model
 
 	Write out the formula for your regression model in generic terms (i.e., with $\beta$ terms and no specific values/numbers as we've not yet fit it) (3 pts).
+	
+$$y_i = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2} + \beta_3x_{i3} + \epsilon_i$$
 
 
 ## c)	Fit your model
 
 ### 1)	What are the coefficients for your model (3 pts)?
 
+```{r}
+implant_lm <- lm(value ~ name, implant_restructured) 
+
+tidy_implant <- tidy(summary(implant_lm))
+
+tidy_implant
+
+```
+
+```{r}
+mean_aerolcen <- pull(filter(tidy_implant, term=="(intercept)"), estimate)
+mean_flepretreo <- pull(filter(tidy_implant, term=="nameFlepretreo"), estimate)
+mean_quolorest <- pull(filter(tidy_implant, term=="nameQuolorest"), estimate)
+mean_vehicle <- pull(filter(tidy_implant, term=="nameVehicle"), estimate)
+
+print(paste0("Coefficient for flepretreo: ", mean_flepretreo))
+print(paste0("Coefficient for quolorest: ", mean_quolorest))
+print(paste0("Coefficient for vehicle: ", mean_vehicle))
+```
+
 
 #### i. Write out your model with the specific terms replaced by their estimate (as in b) (2pts)
+
+$$y_i = 49.763606	 + -0.868605x_{i1} + -5.307889x_{i2} + 1.219402x_{i3} + \epsilon_i$$
 
 
 ### 2)	What is the sum of squares for the drug type in your model (2 pts)? 
 
 
+```{r}
+# Calculating the mean for all the diffusion rates
+implant_restructured <- implant_restructured |> 
+  mutate(mean_all = mean(value)) |>
+  mutate(y_pred = fitted(implant_lm))
+
+implant_ss_regression <- sum((implant_restructured$y_pred - implant_restructured$mean_all)^2)
+
+print(paste0("Sum of squares for the drug type: ", implant_ss_regression))
+```
+
 ## d)	Understand/Discuss your model
 
 ### 1)	Is the effect of drug type a significant explanation of the total variance in the model? (2 pts)
 
+```{r}
+summary(implant_lm)
+```
+**Answer: Yes, the type of drug significantly explains the total variance of the model. This is seen with the p-value of F-statistic for this linear model being less than 0.05.**
+
 #### i.	What is the specific statistical hypothesis tested? (2 pts)
 
+**Answer: The null hypothesis states that there is no significant effect of drug type on the response variable. This could be because the means of the response variable are similar across all drug types**
 
 #### ii.	What type of statistic will you use to evaluate this test (2 pts)?
 
+**Answer: We will use the F-statistic which tests whether the model is a good fit for the data. If it is, then this would suggest that at least one group mean is different from the others.**
 
 #### iii.	What is the value of the statistic and what is the assiciated p-value (2 pts)?
 
+```{r}
+summary(implant_lm)
+```
+
+**Answer: F-statistic: 4.058; p-value: 0.007508 **
 
 
 #### iv. What can you conclude and what can you not conclude based on this statistical test (4 pts)?
 
+**Answer: You can conclude that there is a significant difference between one drug types group mean from the others if we assume a p-value threshold of 0.05 which it is currently under. You can not conclude that the drug caused changes in the dependent variable.**
 
 
 # Problem #3 (30 pts): Brain natriurectic peptide (BNP) level in blood have been shown to predict heart failure, leading to alterations is cognitive function. In patients with high levels of BNP, your team evaluated the effects of different diuretic drugs on BNP levels. Load and prepare data from sheet DataSet3.   
@@ -250,24 +336,35 @@ pull(filter(pairwise_t_test_results, ))
 ## A) Provide a concise set of appropriate visualizations of the data (5 pts)
 
 ```{r}
-
+bnp_restructured |> ggplot(aes(x=value, group=name, fill=name)) +
+    geom_density(alpha=.4)
 ```
 
 
 
 ## B) a concise description of your approach to analyzing this data including generic formula given these data (5 pts) 
 
-```{r}
+**Answer: **
 
-```
+$$y_i = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2} + \beta_3x_{i3} + \epsilon_i$$
+
 
 
 ## C) Fit and interpret your model's summary and Anova tables (15 pts) 
 
 ```{r}
+bnp_lm <- lm(value ~ name, bnp_restructured) 
 
+summary(bnp_lm)
 ```
 
+**Answer: The p-value of the F-statistic is 0.001838. Which suggests that the model is a good fit to the data if our threshold is 0.05. The estimate of the model's intercept is -18.874 with a p-value of 1.73e-05. This means that we can reject the null hypothesis that the intercept is 0 assuming a threshold of 0.05 for p-values.** 
+
+**The estimate of the coefficient for the variable of whether the data point is furosemide is 7.624 with a p-value of 0.199287. This means we can not reject the null hypothesis that the coefficient is 0 for the variable of whether the data point is furosemide assuming a threshold of 0.05 for p-values.**
+
+**The estimate of the coefficient for the variable of whether the data point is hydrochlorothiazide is 14.636 with a p-value of 0.014834. This means we can reject the null hypothesis that the coefficient is 0 for the variable of whether the data point is hydrochlorothiazide assuming a threshold of 0.05 for p-values.**
+
+**The estimate of the coefficient for the variable of whether the data point is metolazone is 22.618 with a p-value of 0.000225. This means we can reject the null hypothesis that the coefficient is 0 for the variable of whether the data point is metolazone assuming a threshold of 0.05 for p-values.**
 
 
 ## E) What can you conclude scientifically as a result of your analysis and visualization? be concise but clear (5pts)
