@@ -1,0 +1,286 @@
+---
+title: "ANOVAs"
+author: "Damon G. Lamb"
+date: ""
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(car)
+library(tidymodels)
+library(Hmisc)
+```
+
+In this in-class problem set, we will work through what happens when parameters of our experiment and the underlying distribution / error, how that impacts our model (estimates, ANOVA, etc.), and visually what the impact is. 
+
+The objectives are to develop a deeper understanding of the core features of anova and thinking about anova as regression as a piece of our foundation for a more general linear model framework. 
+Practicing our coding and working with stat_XXX in ggplot will also help prepare for homework and application beyond.
+
+
+# Load data (note multiple sheets) and make our small toy problem
+
+```{r}
+n500data <- readxl::read_excel("./data/ANOVA_1way.xlsx", sheet = "n500")
+
+twowaydata <- readxl::read_excel("./data/ANOVA_Multi.xlsx") |>
+  mutate(Drug = as_factor(Drug),
+         Concentration = as_factor(Concentration))
+
+# data matches that in example hand calculation PDF.
+# Data is assumed to be drawn from a simple sample with independent, identically distributed (within group) samples.
+toydata <- tribble(
+  ~A, ~B, ~C, ~D, ~E,
+9, 7, 11, 12, 10,
+8, 9, 13, 11, 19,
+6, 6, 8, 16, 14,
+8, 6, 6, 11, 5,
+10, 6, 14, 9, 10,
+4, 11, 11, 23, 11,
+6, 6, 13, 12, 14,
+5, 3, 13, 10, 15,
+7, 8, 10, 19, 11,
+7, 7, 11, 11, 11
+)
+
+# for modeling purposes, it will be easier to have long form
+# NOTE: original data is not 'wide' as each cell is assumed to be independent!
+# When we pivot, it is important to consider the organizational unit, if any.
+toydata_long = pivot_longer(toydata,
+                            cols = everything(),
+                            names_to = "GroupID")
+
+```
+
+# Toy data
+
+```{r}
+# Manually calculate various SS with intermediate steps via mutate
+toydata_long_ws <- toydata_long |>
+                  mutate(
+                          Grandmean = mean(value),
+                          err_to_grandmean = value - Grandmean) |> # distance from Xij to Xbar
+                  mutate(
+                          .by = GroupID,
+                          GroupMean = mean(value),                 # X_jbar
+                          err_to_Gmean = value - GroupMean,        # distance from Xij to X_jbar
+                          err_Gmean_grand = GroupMean - Grandmean) # distance from X_jbar to Xbar
+
+summarise(toydata_long_ws,
+            SStot = sum( err_to_grandmean ^2),
+            SStx = sum(err_Gmean_grand^2),
+            SSresid = sum(err_to_Gmean^2))
+
+
+```
+
+```{r}
+# Manually calculate various SS with summarise
+
+groupsummary <- summarise(toydata_long, .by= GroupID,
+          mean = mean(value),
+          sd = sd(value),
+          variance = var(value))
+
+overallsummary <- summarise(toydata_long,
+          mean = mean(value),
+          sd = sd(value),
+          variance = var(value))
+
+SStotal = summarise(toydata_long, 
+          SStot = sum((value - mean(value))^2)) 
+
+# this is much easier to read than the base R alternate
+overallmean <- pull(overallsummary, mean) 
+
+SStreat <- 
+  summarise(toydata_long, .by= GroupID,
+            SSgroup = n() * (mean(value) - overallmean)^2 ) |>
+  summarise(SStreat = sum(SSgroup)) |>
+  pull() # gets the single value out of the tibble
+
+SSerror <- 
+  summarise(toydata_long, .by= GroupID,
+            SSwigroup = sum((value - mean(value))^2 )) |>
+  summarise(SSerror = sum(SSwigroup)) |>
+  pull()
+
+
+```
+
+
+```{r}
+## Creates the model
+# Don't call them weights
+toylmmod <- lm(value ~ GroupID, toydata_long) 
+
+## To emphasize that this is from car
+## Anova is evaluating the model
+## Linear model is prepping for the anova
+car::Anova(toylmmod)
+
+summary(toylmmod)
+
+
+## Trying to guess the value based on the group it is in
+## Reference is the first factor in this case aka group A
+ggplot(toydata_long, aes(`GroupID`, value))+
+  stat_summary( 
+               geom = "bar",
+               fun.data = "mean_se")+
+  stat_summary(color="Red", 
+               geom = "pointrange",
+               size = 0.15,
+               fun.data = "mean_se")
+```
+\newpage
+Pivot to in-class dataset
+
+# Explore Visualization 
+
+Make a single set of plots for one sheet, including options that have summary values, all the data, plots combining visual representations, etc. Start with the basics - things you have seen in the lit or textbooks, then try to use other geoms, stats, aesthetic mappings. Explore and experiment. We will discuss and share options.
+
+```{r}
+ggplot(n500data, aes(`Group Type`, Data))+
+  stat_summary( 
+               geom = "bar",
+               fun.data = "mean_se")+
+  stat_summary(color="Red", 
+               geom = "pointrange",
+               size = 0.15,
+               fun.data = "mean_se")+
+  coord_cartesian(ylim = c(15,50))
+# note - ylim will cause errors, think about why (and look at documentation)
+# the argument to fun.data is from Hmisc, referenced from ggplot
+# fun.data is the function used to calculate summary values passed to the geometry selected
+# In the case of sdl, the default multiplier is 2 (i.e., plus or minus 2 sd)
+# I do not know why.
+```
+
+
+You've probably seen plots like that.
+You shouldn't trust them!
+
+
+```{r}
+ggplot(n500data, aes(x = Data, color = `Group Type`)) +
+  facet_wrap(vars(`Group Type`))+
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 30, 
+                 fill=NA) +
+  geom_density()
+# the after_stat for 7 allows overlapping of the density and histogram in an elegant way
+# since we don't care about the specific count y (from histogram)
+
+```
+
+
+```{r}
+ggplot(n500data, aes(x = Data, color = `Group Type`)) +
+  geom_density()
+# the after_stat for 7 allows overlapping of the density and histogram in an elegant way
+# since we don't care about the specific count y (from histogram)
+
+```
+
+
+
+```{r}
+ggplot(n500data, aes(`Group Type`, Data))+
+  geom_violin()+
+  geom_jitter(alpha = 0.25)+
+  stat_summary(color="Red", 
+               geom = "crossbar",
+               size = 0.1,
+               fun.data = "mean_se")+
+  stat_summary(color="Blue", 
+               size=0.1, 
+               fun.data = "mean_sdl", 
+               fun.args = list(mult = 1))
+
+summarise(n500data, 
+          .by=`Group Type`, 
+          avg = mean(Data), 
+          std = sd(Data))
+#note - with such a high sample size, SEM or SE is sigma / sqrt(n)
+```
+
+
+# Choose "best"
+Make a plot that most accurately (within reason) shows the data, distribution, and the model.
+Think about what the model is and thus what you should include.
+
+
+```{r}
+# this fits a model with one factor predictor (Group Type) and with one dependent variable (Data)
+# formula = 
+n500mod = lm(formula = Data~`Group Type`, data = n500data) 
+# Complement to Applied Regression has the valid Anova test to use. We will dig into this later.
+car::Anova(n500mod)
+
+# these tidymodel functions provide useful tibbles to look at the model, fit, etc.
+# Sum sq is the total residual
+# F-value determines the p-value
+# F-value = (group/group_df ) / (residuals / df)
+glance(n500mod)
+
+n500tidymod <- tidy(n500mod)
+
+estimates <- select(n500tidymod, term, estimate)
+
+# where is group A?
+
+GroupA_estimate <- first(select(estimates, estimate))
+
+# our estimates for the rest are offset from intercept
+
+augment(n500mod)
+distinct (augment(n500mod), `Group Type`, .fitted)
+
+```
+
+```{r}
+  
+(128280 / 4) / (988969/2495) 
+```
+
+
+
+# two way example
+```{r}
+## Intercept takes up one degree of freedom
+twowaymod <- lm(`NO Activity` ~ Drug + Concentration, data=twowaydata)
+car::Anova(twowaymod)
+summary(twowaymod)
+
+# if we extend to include interactions
+twowaymodint  <- lm(`NO Activity` ~ Drug * Concentration, data=twowaydata)
+car::Anova(twowaymodint)
+summary(twowaymodint)
+```
+
+# Model
+
+Manually write out your model () You can refer back to our prior examples, but it is easiest to use 
+
+$$y = \beta_0 + \beta_{B}B? + \beta_{C}C? + \beta_{D}D? + \beta_{E}E? + \epsilon$$ 
+$$y = \beta_0 + \beta_{B} *0+ \beta_{C}*0 + \beta_{D}*0 + \beta_{E}*0 + \epsilon$$ 
+$$y = \beta_0 + \epsilon$$ 
+$$y = \beta_0 + \beta_{B} *1+ \beta_{C}*0 + \beta_{D}*0 + \beta_{E}*0 + \epsilon$$ 
+$$y = \beta_0 + \beta_{B}+ \epsilon$$ 
+
+
+etc.
+
+
+Run an lm and use car::Anova(yourlmmod). How do the estimates and statistical tests we've discussed relate to the visual representation in your figures. 
+
+
+# Apply to all sets
+
+Load the other data and run this plotting function for each of the datasets as well as your model.
+How does sample size impact your conclusions? How does the variance in the error impact them?
+

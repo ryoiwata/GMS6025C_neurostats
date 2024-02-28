@@ -1,0 +1,193 @@
+---
+title: "Sample Data Analysis"
+author: "DL"
+date: ""
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# leave this chunk in place. It lets you set the default settings for the subsequent chunks of code. Read more in the markdown documentation and/or cheat sheet.
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+# could instead be set to (for example): 
+# knitr::opts_chunk$set(echo = FALSE, error=FALSE, warning=FALSE)
+# which will suppress the code and all errors or warnings.
+
+# Don't put anything you want included in the output file here (the include option set to false)
+
+# We can indicate which libraries we wish to use here, which makes running code in place (without knitting) a bit more convenient.
+library(tidyverse)
+# For the few times we add other libraries, e.g. car, it is generally a good idea to add them here.
+```
+
+This document is a very simplified example of how we expect your homework to be created. You should have a mix of embedded R code (chunks) to do things surrounded by the written components of the work. 
+Be aware that whitespace does have an impact on typesetting, as rmarkdown/knitr translate into \latex or html via pandoc and so must impute your desires.
+
+# This is top level of headings. 
+When compiled, the above heading becomes bookmarked. This is very convenient for jumping around large analysis files, and thus for you while reviewing your submission and us when we grade. Some of mine are a couple hundred pages long.
+
+```{r thisitjustachunkname}
+# I strongly prefer if all data importing, data 'carpentry' or manipulation (the good kind!) is done here or in a series of chunks at the top. In some cases, some additional calculations or creating of new dataframes could take place farther down, but those too should be consolidated. Raw data should NOT be edited in situ - i.e., if you have a few csv files with raw data, they should be left exactly as is and imported here. That way you have a record of exactly what modification/restructuring/calculated variables/etc. has been done to the data. There are a few exceptions to consider: Data that is very badly structured might be easiest to adjust in a spreadsheet. In that case, retain both the raw and restructured data, keep a detailed record of what was done to the data, and import the restructured file. 
+
+# This helps prevent very common problems arising from re-application of calculations or modifications to data. Consider what happens if one variable needs to be converted from cm to m and you achieved that conversion in the data file itself, but then did it again the next day. Another common occurrence is having code which performs critical modification of a dataframe on line 1500 of your Rmd file, but you then work with that dataframe to fit a statistical model or make a figure on line 1100. While in your working environment, this can work as desired, but when you knit and make your report, it creates spurious results or fails.
+
+# providing an example reading from a csv
+sampledata <- read_csv("./Data/sample_tdata.csv",
+                       col_names=TRUE, # note - can be a list of column names instead
+                       trim_ws=TRUE,
+                       na=c("", " ","NA", "NaN", "   NaN"))
+# note the message about imputed column types
+
+# From the data notes:
+#  badname1 and badname2 are "leftwiggle" and "no_wiggle" independent samples
+#  badname3 is a repeated measure of badname1 (paired samples)
+#  and delta is the difference between corresponding badname1 and badname3
+
+widedata <- mutate(sampledata, 
+              left_wiggle = badname1, 
+              no_wiggle_ind = badname2, 
+              no_wiggle_paired = badname3,
+              wiggle_delta = delta1_3, 
+              .keep = "none")
+
+# str(widedata)
+
+longdata <- pivot_longer(widedata, 
+                         cols = everything(),
+                         names_to = "groupname", 
+                         values_to = "measure_value") |>
+            mutate(groupname=as_factor(groupname))
+
+# str(longdata)
+
+independentsamps_wide <- select(widedata, 
+                                left_wiggle, 
+                                no_wiggle=no_wiggle_ind) # note the rename !
+
+# str(independentsamps_wide)
+
+# can do similar in long form, but need to filter instead - note, may need to fix levels!
+independentsamps_long <- filter(longdata, 
+                                groupname == c("left_wiggle", "no_wiggle_ind"))
+
+
+# and our paired samples
+
+
+  
+```
+
+\newpage
+
+## This a heading is at the second level
+Here I would write out the background information for this question/section including the biological/system hypotheses and the statistical hypotheses. In some cases, this is quite long. If you are doing 'data mining' and do not have a hypothesis, that radically changes how you must report your results and how you should interpret any findings, especially statistical findings.
+
+Note the echo=FALSE option overrides the default, which is set above with opts_chunk.
+```{r anotherchunk, echo=FALSE}
+# And now the figures and statistics begin.
+# we will NOT be using this function, this is just an old fashioned way to do this
+t.test(measure_value ~ groupname, data = independentsamps_long, paired=FALSE)
+
+ggplot(independentsamps_long, aes(groupname, measure_value)) +
+   stat_summary(color="red",
+    fun.data =mean_se,
+    geom=c("pointrange"), size=0.75) 
+
+
+# But the actual data is messier!
+ggplot(independentsamps_long, aes(groupname, measure_value)) +
+   geom_boxplot()+
+  stat_summary(color="red",
+    fun.data =mean_se,
+    geom=c("pointrange"), size=0.75) 
+```
+
+\newpage
+
+## Another section
+More words, etc. More code. More figures. More analysis.
+
+
+
+```{r}
+
+# Note:t.test actually defaults to Welch's, assuming unequal variance.
+t.test(Sepal.Length ~ Species, 
+       data=filter(iris, Species == "setosa" | Species == "versicolor"))
+# for more info, type: ?t.test
+
+# You can access the components of the results:
+our_ttest_model <- t.test(Sepal.Length ~ Species, 
+                          data=filter(iris, Species == "setosa" | Species == "versicolor"))
+
+our_ttest_model 
+
+# these old methods are not pleasant to work with
+our_ttest_model$statistic
+our_ttest_model$null.value
+
+# Visually, what were we looking at?
+
+ggplot(filter(iris, Species == "setosa" | Species == "versicolor"), aes(Sepal.Length))+
+    facet_grid(~Species)+
+    geom_histogram(binwidth = 0.15)
+
+ggplot(filter(iris, Species == c("setosa","versicolor")),
+       aes(Sepal.Length, color=Species))+
+    geom_histogram(binwidth = 0.15, position = position_dodge2()) +
+    geom_density(size=2) 
+
+ggplot(filter(iris, Species == "setosa" | Species == "versicolor"), 
+       aes(Species, Sepal.Length, color=Species))+
+    geom_boxplot()
+
+# But there are many t.tests
+# assume equal variance (var.equal=TRUE)
+our_ttest_model <- t.test(Sepal.Length ~ Species, 
+                          data=filter(iris, Species == "setosa" | Species == "versicolor"),
+                          var.equal = TRUE)
+our_ttest_model 
+
+
+# And one-sample
+Versicolor_data <- filter(iris,Species == "versicolor")
+t.test(select(Versicolor_data, Sepal.Length))
+
+# or with a specified length against which to compare:
+Versicolor_data_SL <- filter(iris,Species == "versicolor")
+t.test(select(Versicolor_data_SL, Sepal.Length),
+       mu = 6)
+
+```
+
+## Back to our data
+
+```{r}
+
+
+ggplot(independentsamps_long, aes(x=groupname, measure_value, color=groupname)) + theme_light()+
+  stat_summary(fun.y = mean,
+               fun.ymin = function(x) mean(x) - sqrt(var(x,na.rm=TRUE)/length(na.omit(x))),
+               fun.ymax = function(x) mean(x) + sqrt(var(x,na.rm=TRUE)/length(na.omit(x))),
+               geom="pointrange")
+```
+
+
+```{r}
+
+# Here, instead of using the Hmisc function, we can manually calculate the y, ymin and ymax 
+
+ggplot(independentsamps_long, aes(x=groupname, measure_value, color=groupname)) + theme_light()+
+  stat_summary(color = "green",
+               fun.y = mean,
+               fun.ymin = function(x) mean(x),
+               fun.ymax = function(x) mean(x) + sqrt(var(x,na.rm=TRUE)/length(na.omit(x))),
+               geom="linerange")+  
+  stat_summary(color = "blue",
+               fun.y = mean,
+               fun.ymin = function(x) mean(x)- sqrt(var(x,na.rm=TRUE)/length(na.omit(x))),
+               fun.ymax = function(x) mean(x),
+               geom="linerange")+
+  stat_summary(fun.y = mean, shape = c(1,5), size = 10, geom="point") # can pass a list of shapes to loop over
+```

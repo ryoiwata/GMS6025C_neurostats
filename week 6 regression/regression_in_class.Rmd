@@ -1,0 +1,489 @@
+---
+title: "ANOVAs"
+author: "Damon G. Lamb"
+date: ""
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(car)
+library(tidymodels)
+library(Hmisc)
+```
+
+In this in-class problem set, we will work through what happens when parameters of our experiment and the underlying distribution / error, how that impacts our model (estimates, ANOVA, etc.), and visually what the impact is. 
+
+The objectives are to develop a deeper understanding of the core features of anova and thinking about anova as regression as a piece of our foundation for a more general linear model framework. 
+Practicing our coding and working with stat_XXX in ggplot will also help prepare for homework and application beyond.
+
+
+# Load data (note multiple sheets) and make our small toy problem
+
+```{r}
+str(mtcars)
+
+ourmtcars <- mutate(mtcars, 
+                    across(c(cyl, vs, am, gear, carb),
+                           as_factor))
+
+# rename the factors into string
+
+
+```
+
+
+```{r}
+
+disp_model <- lm(mpg ~ disp, ourmtcars) 
+
+summary(disp_model)
+
+ourmtcars |> ggplot(aes(disp, mpg)) +
+  geom_point() +
+  stat_smooth(formula = y ~ x, method = lm)
+```
+$$y_i = \beta_0 + \beta_1x_i + \epsilon_i$$
+## Summary
+
+We are looking at the relationship between displacement and mpg. 
+
+
+$$ mpg_i = 29.59 + -0.041disp_i + \epsilon_i $$
+F-statistic: 76.51 on 1 and 30 DF,  p-value: 9.38e-10
+
+
+
+Which is if the model fits the data well
+
+F(1, 30) = 76.51, p=9.38e-10 (< 0.05, i.e. $\alpha$)
+
+$$ \hat{y} = \beta_0 + \beta_1 * X $$
+
+$$ \hat{y} = 29.59 + -0.041 * X $$
+- Multiple R-squared is the ratio of (1- what is explained) / what is not explained
+
+- Intercept p-value is how much we can reject if the intercept is 0 or not with a t-test
+
+- Slope p-value is that the slope is 0 or no with a t-test. 
+
+# Multiple Linear Regression
+
+```{r}
+
+multi_model <- lm(mpg ~ disp + wt, ourmtcars) 
+
+summary(multi_model)
+
+
+
+```
+
+```{r}
+multi_model <- lm(mpg ~ hp + wt, ourmtcars) 
+
+summary(multi_model)
+
+ourmtcars |> ggplot(aes(hp, mpg, size=wt)) +
+  geom_point() +
+  stat_smooth(formula = y ~ x, method = lm)
+
+
+ourmtcars |> ggplot(aes(hp, mpg, size=wt)) +
+  geom_point() +
+  geom_abline(intercept = 37.22727 , slope = -0.03177)
+
+
+ourmtcars |> ggplot(aes(hp, mpg, size=wt)) +
+  geom_point() +
+  geom_abline(intercept = 37.22727 + -3.87783 * mean(ourmtcars$wt), slope = -0.03177)
+
+
+
+```
+
+- Degrees of freedom change
+
+- Intercept is when both variables are 0 and where the height is.
+
+ourmtcars |> ggplot(aes(disp, mpg)) +
+  geom_point() +
+  stat_smooth(formula = y ~ x, method = lm)
+
+
+- You can change the intercept so that it better fits the data by using the mean of one varibale.
+
+
+
+```{r}
+multi_model <- lm(mpg ~ hp + wt + disp, ourmtcars) 
+
+tidy(multi_model)
+
+intercept = pull(filter(tidy(multi_model), term == "(Intercept)"), estimate)
+hp_slope = pull(filter(tidy(multi_model), term == "hp"), estimate)
+disp_slope = pull(filter(tidy(multi_model), term == "disp"), estimate)
+wt_slope = pull(filter(tidy(multi_model), term == "wt"), estimate)
+
+disp_mean = mean(ourmtcars$disp)
+hp_mean = mean(ourmtcars$hp)
+
+ourmtcars |> ggplot(aes(x=wt, y=mpg, size=hp, color=disp)) + 
+  geom_point() +
+  geom_abline(intercept =intercept + hp_slope * hp_mean + disp_slope * disp_mean, slope=wt_slope)
+
+
+```
+```{r}
+
+augment(multi_model) |> ggplot(aes(x=wt, y=mpg)) + 
+  geom_point() +
+  geom_point(aes(x=wt, y=.fitted, color="red")) +
+  geom_abline(intercept =intercept + hp_slope * hp_mean + disp_slope * disp_mean, slope=wt_slope) +
+  geom_linerange(aes(wt, ymin=mpg, ymax=.fitted)) +
+  geom_linerange(aes(wt, ymin=.fitted, ymax=mpg))
+
+
+
+```
+
+
+```{r}
+
+multi_model <- lm(mpg ~ wt*cyl , ourmtcars) 
+
+summary(multi_model)
+
+car::Anova(multi_model)
+```
+```{r}
+intercept = pull(filter(tidy(multi_model), term == "(Intercept)"), estimate)
+cyl6_int_diff = pull(filter(tidy(multi_model), term == "cyl6"), estimate)
+cyl8_int_diff = pull(filter(tidy(multi_model), term == "cyl8"), estimate)
+wt_slope = pull(filter(tidy(multi_model), term == "wt"), estimate)
+cyl6_slope_diff = pull(filter(tidy(multi_model), term == "wt:cyl6"), estimate)
+cyl8_slope_diff = pull(filter(tidy(multi_model), term == "wt:cyl8"), estimate)
+```
+
+
+
+```{r}
+ourmtcars |> ggplot(aes(x=wt, y=mpg, color=cyl)) +
+  geom_point() +
+  geom_abline(intercept =intercept, slope=wt_slope, color="red") +
+  geom_abline(intercept =intercept + cyl6_int_diff, slope=wt_slope + cyl6_slope_diff, color="green") +
+  geom_abline(intercept =intercept + cyl8_int_diff, slope=wt_slope + cyl8_slope_diff, color="blue") +
+  stat_smooth(method=lm, formula=y~x)
+
+
+
+```
+
+```{r}
+our_cars_interaction_model <- lm(mpg ~ cyl * wt, ourmtcars)
+
+summary(cars_interaction_model)
+
+car::Anova(our_cars_interaction_model)
+
+```
+
+```{r}
+
+original_cars_interaction_model <- lm(mpg ~ cyl * wt, mtcars)
+
+summary(original_cars_interaction_model)
+
+car::Anova(original_cars_interaction_model)
+```
+
+```{r}
+prod_ourmtcars <- mtcars |>
+  mutate(wt_times_cyl = wt * cyl)
+
+prod_model <- lm(mpg ~ wt + cyl + wt_times_cyl, prod_ourmtcars)
+
+summary(prod_model)
+
+car::Anova(prod_model)
+
+```
+
+```{r}
+prod_ourmtcars |> ggplot(aes(wt, cyl, color=wt_times_cyl)) + 
+  geom_point()
+
+prod_ourmtcars |> ggplot(aes(wt, wt_times_cyl, color=cyl)) + 
+  geom_point()
+
+```
+
+$\hat{mpg} = \beta_0 + \beta_{cyl}cyl + \beta_{wt}wt$
+
+
+############# OLD CODE BELOW ###################
+
+```{r}
+n500data <- readxl::read_excel("./data/ANOVA_1way.xlsx", sheet = "n500")
+
+twowaydata <- readxl::read_excel("./data/ANOVA_Multi.xlsx") |>
+  mutate(Drug = as_factor(Drug),
+         Concentration = as_factor(Concentration))
+
+# data matches that in example hand calculation PDF.
+# Data is assumed to be drawn from a simple sample with independent, identically distributed (within group) samples.
+toydata <- tribble(
+  ~A, ~B, ~C, ~D, ~E,
+9, 7, 11, 12, 10,
+8, 9, 13, 11, 19,
+6, 6, 8, 16, 14,
+8, 6, 6, 11, 5,
+10, 6, 14, 9, 10,
+4, 11, 11, 23, 11,
+6, 6, 13, 12, 14,
+5, 3, 13, 10, 15,
+7, 8, 10, 19, 11,
+7, 7, 11, 11, 11
+)
+
+# for modeling purposes, it will be easier to have long form
+# NOTE: original data is not 'wide' as each cell is assumed to be independent!
+# When we pivot, it is important to consider the organizational unit, if any.
+toydata_long = pivot_longer(toydata,
+                            cols = everything(),
+                            names_to = "GroupID")
+
+```
+
+# Toy data
+
+```{r}
+# Manually calculate various SS with intermediate steps via mutate
+toydata_long_ws <- toydata_long |>
+                  mutate(
+                          Grandmean = mean(value),
+                          err_to_grandmean = value - Grandmean) |> # distance from Xij to Xbar
+                  mutate(
+                          .by = GroupID,
+                          GroupMean = mean(value),                 # X_jbar
+                          err_to_Gmean = value - GroupMean,        # distance from Xij to X_jbar
+                          err_Gmean_grand = GroupMean - Grandmean) # distance from X_jbar to Xbar
+
+summarise(toydata_long_ws,
+            SStot = sum( err_to_grandmean ^2),
+            SStx = sum(err_Gmean_grand^2),
+            SSresid = sum(err_to_Gmean^2))
+
+
+```
+
+```{r}
+# Manually calculate various SS with summarise
+
+groupsummary <- summarise(toydata_long, .by= GroupID,
+          mean = mean(value),
+          sd = sd(value),
+          variance = var(value))
+
+overallsummary <- summarise(toydata_long,
+          mean = mean(value),
+          sd = sd(value),
+          variance = var(value))
+
+SStotal = summarise(toydata_long, 
+          SStot = sum((value - mean(value))^2)) 
+
+# this is much easier to read than the base R alternate
+overallmean <- pull(overallsummary, mean) 
+
+SStreat <- 
+  summarise(toydata_long, .by= GroupID,
+            SSgroup = n() * (mean(value) - overallmean)^2 ) |>
+  summarise(SStreat = sum(SSgroup)) |>
+  pull() # gets the single value out of the tibble
+
+SSerror <- 
+  summarise(toydata_long, .by= GroupID,
+            SSwigroup = sum((value - mean(value))^2 )) |>
+  summarise(SSerror = sum(SSwigroup)) |>
+  pull()
+
+
+```
+
+
+```{r}
+## Creates the model
+# Don't call them weights
+toylmmod <- lm(value ~ GroupID, toydata_long) 
+
+## To emphasize that this is from car
+## Anova is evaluating the model
+## Linear model is prepping for the anova
+car::Anova(toylmmod)
+
+summary(toylmmod)
+
+
+## Trying to guess the value based on the group it is in
+## Reference is the first factor in this case aka group A
+ggplot(toydata_long, aes(`GroupID`, value))+
+  stat_summary( 
+               geom = "bar",
+               fun.data = "mean_se")+
+  stat_summary(color="Red", 
+               geom = "pointrange",
+               size = 0.15,
+               fun.data = "mean_se")
+```
+\newpage
+Pivot to in-class dataset
+
+# Explore Visualization 
+
+Make a single set of plots for one sheet, including options that have summary values, all the data, plots combining visual representations, etc. Start with the basics - things you have seen in the lit or textbooks, then try to use other geoms, stats, aesthetic mappings. Explore and experiment. We will discuss and share options.
+
+```{r}
+ggplot(n500data, aes(`Group Type`, Data))+
+  stat_summary( 
+               geom = "bar",
+               fun.data = "mean_se")+
+  stat_summary(color="Red", 
+               geom = "pointrange",
+               size = 0.15,
+               fun.data = "mean_se")+
+  coord_cartesian(ylim = c(15,50))
+# note - ylim will cause errors, think about why (and look at documentation)
+# the argument to fun.data is from Hmisc, referenced from ggplot
+# fun.data is the function used to calculate summary values passed to the geometry selected
+# In the case of sdl, the default multiplier is 2 (i.e., plus or minus 2 sd)
+# I do not know why.
+```
+
+
+You've probably seen plots like that.
+You shouldn't trust them!
+
+
+```{r}
+ggplot(n500data, aes(x = Data, color = `Group Type`)) +
+  facet_wrap(vars(`Group Type`))+
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 30, 
+                 fill=NA) +
+  geom_density()
+# the after_stat for 7 allows overlapping of the density and histogram in an elegant way
+# since we don't care about the specific count y (from histogram)
+
+```
+
+
+```{r}
+ggplot(n500data, aes(x = Data, color = `Group Type`)) +
+  geom_density()
+# the after_stat for 7 allows overlapping of the density and histogram in an elegant way
+# since we don't care about the specific count y (from histogram)
+
+```
+
+
+
+```{r}
+ggplot(n500data, aes(`Group Type`, Data))+
+  geom_violin()+
+  geom_jitter(alpha = 0.25)+
+  stat_summary(color="Red", 
+               geom = "crossbar",
+               size = 0.1,
+               fun.data = "mean_se")+
+  stat_summary(color="Blue", 
+               size=0.1, 
+               fun.data = "mean_sdl", 
+               fun.args = list(mult = 1))
+
+summarise(n500data, 
+          .by=`Group Type`, 
+          avg = mean(Data), 
+          std = sd(Data))
+#note - with such a high sample size, SEM or SE is sigma / sqrt(n)
+```
+
+
+# Choose "best"
+Make a plot that most accurately (within reason) shows the data, distribution, and the model.
+Think about what the model is and thus what you should include.
+
+
+```{r}
+# this fits a model with one factor predictor (Group Type) and with one dependent variable (Data)
+# formula = 
+n500mod = lm(formula = Data~`Group Type`, data = n500data) 
+# Complement to Applied Regression has the valid Anova test to use. We will dig into this later.
+car::Anova(n500mod)
+
+# these tidymodel functions provide useful tibbles to look at the model, fit, etc.
+# Sum sq is the total residual
+# F-value determines the p-value
+# F-value = (group/group_df ) / (residuals / df)
+glance(n500mod)
+
+n500tidymod <- tidy(n500mod)
+
+estimates <- select(n500tidymod, term, estimate)
+
+# where is group A?
+
+GroupA_estimate <- first(select(estimates, estimate))
+
+# our estimates for the rest are offset from intercept
+
+augment(n500mod)
+distinct (augment(n500mod), `Group Type`, .fitted)
+
+```
+
+```{r}
+  
+(128280 / 4) / (988969/2495) 
+```
+
+
+
+# two way example
+```{r}
+## Intercept takes up one degree of freedom
+twowaymod <- lm(`NO Activity` ~ Drug + Concentration, data=twowaydata)
+car::Anova(twowaymod)
+summary(twowaymod)
+
+# if we extend to include interactions
+twowaymodint  <- lm(`NO Activity` ~ Drug * Concentration, data=twowaydata)
+car::Anova(twowaymodint)
+summary(twowaymodint)
+```
+
+# Model
+
+Manually write out your model () You can refer back to our prior examples, but it is easiest to use 
+
+$$y = \beta_0 + \beta_{B}B? + \beta_{C}C? + \beta_{D}D? + \beta_{E}E? + \epsilon$$ 
+$$y = \beta_0 + \beta_{B} *0+ \beta_{C}*0 + \beta_{D}*0 + \beta_{E}*0 + \epsilon$$ 
+$$y = \beta_0 + \epsilon$$ 
+$$y = \beta_0 + \beta_{B} *1+ \beta_{C}*0 + \beta_{D}*0 + \beta_{E}*0 + \epsilon$$ 
+$$y = \beta_0 + \beta_{B}+ \epsilon$$ 
+
+
+etc.
+
+
+Run an lm and use car::Anova(yourlmmod). How do the estimates and statistical tests we've discussed relate to the visual representation in your figures. 
+
+
+# Apply to all sets
+
+Load the other data and run this plotting function for each of the datasets as well as your model.
+How does sample size impact your conclusions? How does the variance in the error impact them?
+

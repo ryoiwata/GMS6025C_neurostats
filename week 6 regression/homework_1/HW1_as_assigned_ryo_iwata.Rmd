@@ -31,7 +31,7 @@ bnp_data <- readxl::read_excel("./data/HW1_Data.xlsx", sheet="DataSet3")
 
 ```
 
-```{r Data carpentry}
+```{r Data carpentry 1}
 str(polymer_data)
 
 polymer_1 <- polymer_data |> 
@@ -46,16 +46,15 @@ polymer_2 <- polymer_data |>
 
 polymer_restructured <- bind_rows(polymer_1, polymer_2)
 
-
 ```
 
-```{r}
+```{r Data carpentry 2}
 
 implant_restructured <- pivot_longer(implant_data, colnames(implant_data))
 
 ```
 
-```{r}
+```{r Data carpentry 3}
 bnp_restructured <- bnp_data |> 
   rename(bnp_decrease_with_furosemide="Decrease in BNP After Treatment With Furosemide") |>
   rename(bnp_decrease_with_hydrochlorothiazide="Decrease in BNP After Treatment With Hydrochlorothiazide") |>
@@ -87,29 +86,20 @@ polymer_restructured |> ggplot(aes(x=diffusion_rate, group=polymer_type, fill=po
 
 ```
 
-
-
 ## 2) Fit a regression model (lm) to capture the effect of polymer type on diffusion. (2pts)
+
+```{r}
+polymer_lm <- lm(diffusion_rate ~ polymer_type, polymer_restructured) 
+```
+
 
 ### a) What are the coefficients for this model (4 pts)?
 
 ```{r}
-polymer_restructured |>
-  group_by(polymer_type) |>
-  summarise(avg = mean(diffusion_rate))
+tidy(summary(polymer_lm))
+
 ```
 
-
-```{r summary(polymer_lm) output}
-polymer_lm <- lm(diffusion_rate ~ polymer_type, polymer_restructured) 
-
-summary(polymer_lm)
-```
-
-
-```{r}
-car::Anova(polymer_lm)
-```
 **Answer: The coefficients for this model is the mean diffusion rate of every polymer type subtracted by the intercept. One group's mean is the intercept, which does not have a corresponding coefficient. **
 
 ### b) Which group is serving as the intercept (2 pts)?
@@ -135,7 +125,13 @@ print(paste("Mean diffusion rate of Silica: ", mean_silica))
 
 ```
 
+```{r}
 
+polymer_restructured |>
+  group_by(polymer_type) |>
+  summarise(avg = mean(diffusion_rate))
+
+```
 
 ### d) Calculate (using a tidyverse appraoch) the SS~total~, SS~Regression~, and SS~Error~ for this model (5 pts)?
 
@@ -144,8 +140,10 @@ print(paste("Mean diffusion rate of Silica: ", mean_silica))
 polymer_restructured <- polymer_restructured |> 
   mutate(mean_all = mean(diffusion_rate))
 
-
+# Calculate SS total 
 ss_total <- sum((polymer_restructured$diffusion_rate - polymer_restructured$mean_all)^2)
+
+print(paste0("SS total: ", ss_total))
 ```
 
 ```{r}
@@ -153,14 +151,18 @@ ss_total <- sum((polymer_restructured$diffusion_rate - polymer_restructured$mean
 polymer_restructured <- polymer_restructured |> 
   mutate(y_pred = fitted(polymer_lm))
 
-# Calculate SS_Regression 
+# Calculate SS Regression 
 ss_regression <- sum((polymer_restructured$y_pred - polymer_restructured$mean_all)^2)
 
+print(paste0("SS regression: ", ss_regression))
 ```
 
 ```{r}
-# Calculate SS_Error (Residual Sum of Squares)
+# Calculate SS_Error 
 ss_error <- sum((polymer_restructured$y_pred - polymer_restructured$diffusion_rate)^2)
+
+print(paste0("SS error: ", ss_error))
+
 ```
 
 
@@ -168,16 +170,16 @@ ss_error <- sum((polymer_restructured$y_pred - polymer_restructured$diffusion_ra
 
 **Answer: **
 
-$$y_i = \beta_0 + \beta_1x_i + \epsilon_i$$
+$$y_i = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2} + \beta_3x_{i3} + \epsilon_i$$
 
 
 ## 3) Using the estimates and their associated error for the above model, use a t-test to evaluate whether the term is zero or non-zero.
 
 ```{r}
 
-non_zero_terms <- pull(filter(tidy_polymer, p.value < 0.05),  term)
+non_zero_terms <- filter(tidy_polymer, p.value < 0.05)$term
 
-zero_terms <- pull(filter(tidy_polymer, p.value >= 0.05),  term)
+zero_terms <- filter(tidy_polymer, p.value >= 0.05)$term
 
 print(paste0("Non-zero term: ", non_zero_terms))
 
@@ -189,13 +191,31 @@ print(paste0("Zero term: ", zero_terms))
 ### a) What are the t-statistic and associated p-value. Note-no calculation necessary, we aready have this information (3 pts)?
 
 ```{r}
-pull(tidy_polymer,  term)
-```
+tstat_chitosan <- pull(filter(tidy_polymer, term=="(Intercept)"), statistic)
+tstat_dextran <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typeDextran"), statistic)
+tstat_plga <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typePLGA"), statistic)
+tstat_silica <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typeSilica"), statistic)
 
+pvalue_chitosan <- pull(filter(tidy_polymer, term=="(Intercept)"), p.value)
+pvalue_dextran <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typeDextran"), p.value)
+pvalue_plga <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typePLGA"), p.value)
+pvalue_silica <- mean_chitosan + pull(filter(tidy_polymer, term=="polymer_typeSilica"), p.value)
+
+print(paste("T-statistic of Intercept: ", tstat_chitosan, "P-value of Intercept: ", pvalue_chitosan))
+print(paste("T-statistic of Dextran: ", tstat_dextran, "P-value of Dextran: ", pvalue_dextran))
+print(paste("T-statistic of PLGA: ", tstat_plga, "P-value of PLGA: ", pvalue_plga))
+print(paste("T-statistic of Silica: ", tstat_silica, "P-value of Silica: ", pvalue_silica))
+```
 
 ### b) What do these coefficient/estimate terms represent. List and explain each. (3 pt)?
 
-**Answer: `(Intercept)` is the y-value that the model would cross when all other variables are 0. In this case, it is the mean diffusion rate of the Chitosan group. `polymer_typeDextran` is the coefficient for the variable of whether a data point is in the Dextran group or not. The coefficient is equal to the mean diffusion rate of the Dextran group. `polymer_typePLGA` is the coefficient for the variable of whether a data point is in the PLGA group or not. The coefficient is equal to the mean diffusion rate of the PLGA group.  `polymer_typeSilica` is the coefficient for the variable of whether a data point is in the Silica group or not. The coefficient is equal to the mean diffusion rate of the Silica group. **  
+**Answer: `(Intercept)` is the y-value that the model would cross when all other variables are 0. In this case, it is the mean diffusion rate of the Chitosan group.**
+
+**`polymer_typeDextran` is the coefficient for the variable of whether a data point is in the Dextran group or not. The coefficient is equal to the mean diffusion rate of the Dextran group.**
+
+**`polymer_typePLGA` is the coefficient for the variable of whether a data point is in the PLGA group or not. The coefficient is equal to the mean diffusion rate of the PLGA group.**
+
+**`polymer_typeSilica` is the coefficient for the variable of whether a data point is in the Silica group or not. The coefficient is equal to the mean diffusion rate of the Silica group.**
 
 
 ### c) Which polymers differ from PLGA (ignoring consideration of multiple comparisons/post-hoc testing) (2 pt)?
@@ -205,13 +225,29 @@ pull(tidy_polymer,  term)
 # For pairwise comparison without considering multiple testing corrections
 pairwise_t_test_results <- pairwise.t.test(polymer_restructured$diffusion_rate, polymer_restructured$polymer_type)
 
-pull(filter(pairwise_t_test_results, ))
+# pull(filter(pairwise_t_test_results, ))
+print(pairwise_t_test_results)
 ```
-
+**Answer: Based on this pairwise t-test, Dextran is different than PLGA if we assume a p-value threshold of less than 0.05**
 
 ## 4) Create two essentially visually identical figures to show both the raw data and the model. 1) from the augmented data (augment function in tidymodels). and 2) Use the outputs of the model fit (lm) to calculate the model's predicted values for each group to include in the plot, and only plotting a single value for each such predicted value for each group (i.e., not using stat_summary or equivalent and with the calculated predicted value in a separate tibble from the data) (7 pt):
 
 ```{r}
+augmented_data <- augment(polymer_lm, polymer_restructured)
+
+augmented_data
+
+augmented_data |> 
+  ggplot(aes(x = polymer_type, y = diffusion_rate)) +
+  geom_point(aes(color = "Raw Data")) +
+  geom_point(aes(y = .fitted, color = "Predicted")) +
+  labs(title = "Augmented data plot")
+
+polymer_restructured |> 
+  ggplot(aes(x = polymer_type, y = diffusion_rate)) +
+  geom_point(aes(color = "Raw Data")) +
+  geom_point(aes(y = y_pred, color = "Predicted")) +
+  labs(title = "Fitted data plot")
 
 ```
 
@@ -280,6 +316,7 @@ print(paste0("Coefficient for quolorest: ", mean_quolorest))
 print(paste0("Coefficient for vehicle: ", mean_vehicle))
 ```
 
+**Answer: The coefficients for this model is the mean encapsulation level of every drug type subtracted by the intercept. One group's mean is the intercept, which does not have a corresponding coefficient. **
 
 #### i. Write out your model with the specific terms replaced by their estimate (as in b) (2pts)
 
@@ -307,7 +344,7 @@ print(paste0("Sum of squares for the drug type: ", implant_ss_regression))
 ```{r}
 summary(implant_lm)
 ```
-**Answer: Yes, the type of drug significantly explains the total variance of the model. This is seen with the p-value of F-statistic for this linear model being less than 0.05.**
+**Answer: Yes, the type of drug significantly explains the total variance of the model. This is seen with the p-value of F-statistic for this linear model being less than 0.05 (if below 0.05 is significant).**
 
 #### i.	What is the specific statistical hypothesis tested? (2 pts)
 
@@ -341,13 +378,11 @@ bnp_restructured |> ggplot(aes(x=value, group=name, fill=name)) +
 ```
 
 
-
 ## B) a concise description of your approach to analyzing this data including generic formula given these data (5 pts) 
 
-**Answer: **
+**Answer: I would analyze the data by fitting a linear model onto the data with the formula `bnp levels ~ drug type`. Then I could look at the overall model's fit by looking at the p-value of the F-statistic. If it meets my threshold, then I can conclude that I can not reject the null hypothesis that there is no significant difference in the mean BNP levels for any of the drug groups. **
 
 $$y_i = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2} + \beta_3x_{i3} + \epsilon_i$$
-
 
 
 ## C) Fit and interpret your model's summary and Anova tables (15 pts) 
@@ -369,7 +404,5 @@ summary(bnp_lm)
 
 ## E) What can you conclude scientifically as a result of your analysis and visualization? be concise but clear (5pts)
 
-```{r}
-
-```
+**Answer: We can scientifically conclude that the mean BNP level is significantly different for one of the diuretic groups compared to all the others. **
 
