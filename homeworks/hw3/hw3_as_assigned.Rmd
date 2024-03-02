@@ -42,14 +42,24 @@ You are researching how GAD65 single nucleotide polymorphisms modify the enzyme'
 ## 1.A Load data and prepare data for analysis 
 
 ```{r}
-
+# Reading in the data
+raw_gad65_data <- readxl::read_excel("./data/HW3data_.xlsx")
 ```
+```{r}
+# Turning categorical variables into factors
+fixed_gad65_data <- mutate(raw_gad65_data,
+across(c(WellID, `Plate ID`, `Enzyme Variant`),
+as_factor))
+```
+
 
 ## 1.B Considering *only* the enzyme variant, conduct an ANOVA analysis: (10 pt)
 
 ### 1.B.1 Write out reasonable scientific hypothesis in clear terms that this approach can test (2 pt)
 
-**text**
+**Answer: There is a significant difference in the enzyme activity of GAD65 enzyme variants caused by single nucleotide polymorphisms.**
+
+This implies that the mutations introduced result in measurable changes in enzyme function, which could be linked to the enzyme's role in neurotransmitter regulation and, by extension, to psychiatric conditions. The observed differences in enzyme activity among variants suggest a potential functional impact of specific SNPs on GAD65, warranting further investigation into their role in the etiology of psychiatric disorders.**
 
 ### 1.B.2 Write out your statistical hypothesis (null hypothesis and alternate) and the formula you are fitting. (2 pt)
 
@@ -62,13 +72,21 @@ $$. $$
 ### 1.B.3 Make a figure which shows both the 'raw' data and summary relevant to this model/analysis (3 pt)
 
 ```{r}
-
+fixed_gad65_data |> ggplot(aes(x=`Enzyme Variant`, y=`Enz Activity`)) +
+  geom_violin() +
+  stat_summary(fun = mean) +
+  stat_summary(geom = "errorbar", fun.data = mean_se) 
 ```
 
 ### 1.B.4 Fit your model; identify and interpret the results (3 pt (1pt each for: model, results and interpretation)). Use Anova from car for your ANOVA table.
 
 ```{r}
 
+variant_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant`, nucleotide_psychiatric_data)
+
+summary(variant_to_activity_model)
+
+car::Anova(variant_to_activity_model)
 ```
 
 **text**
