@@ -81,12 +81,11 @@ fixed_gad65_data |> ggplot(aes(x=`Enzyme Variant`, y=`Enz Activity`)) +
 ### 1.B.4 Fit your model; identify and interpret the results (3 pt (1pt each for: model, results and interpretation)). Use Anova from car for your ANOVA table.
 
 ```{r}
+variant_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant`, fixed_gad65_data)
 
-variant_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant`, nucleotide_psychiatric_data)
 
-summary(variant_to_activity_model)
-
-car::Anova(variant_to_activity_model)
+car_variant_to_activity_model = car::Anova(variant_to_activity_model)
+kable(car_variant_to_activity_model)
 ```
 
 **text**
@@ -109,7 +108,10 @@ $$.$$
 
 
 ```{r}
-
+fixed_gad65_data |> ggplot(aes(x=Glu, y=`Enz Activity`, color=`Enzyme Variant`)) +
+  geom_point() +
+  facet_wrap(vars(`Enzyme Variant`)) +
+  stat_smooth(method = "lm")
 ```
 
 ### 1.C.4 Fit your model; present the key components in one or more concise, well-formatted table(s), and interpret the results (5 pt)
@@ -139,6 +141,11 @@ $$\hat{Y} = $$
 
 
 ```{r}
+
+fixed_gad65_data |> ggplot(aes(x=`pyridoxal phosphate conc.`, y=`Enz Activity`, color=`Enzyme Variant`)) +
+  geom_point() +
+  facet_wrap(vars(`Enzyme Variant`)) +
+  stat_smooth(method = "lm")
 
 ```
 
