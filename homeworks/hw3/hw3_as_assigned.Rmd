@@ -63,11 +63,16 @@ This implies that the mutations introduced result in measurable changes in enzym
 
 ### 1.B.2 Write out your statistical hypothesis (null hypothesis and alternate) and the formula you are fitting. (2 pt)
 
-$$H_0: ...$$
+```{r}
+str(fixed_gad65_data)
+```
+
+$$H_0: \mu_{A121C} = \mu_{A121F} = \mu_{A121L} = \mu_{A121R} = \mu_{A121T}$$
+**H1: Not all means of enzyme activity is equal across different groups of enzyme variants.**
 
 (beta also ok to use, using B for simplicity)
 
-$$. $$
+$$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_{A121L}x_{A121L?} + \beta_{A121F}x_{A121F?}$$
 
 ### 1.B.3 Make a figure which shows both the 'raw' data and summary relevant to this model/analysis (3 pt)
 
@@ -83,10 +88,17 @@ fixed_gad65_data |> ggplot(aes(x=`Enzyme Variant`, y=`Enz Activity`)) +
 ```{r}
 variant_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant`, fixed_gad65_data)
 
-
 car_variant_to_activity_model = car::Anova(variant_to_activity_model)
-kable(car_variant_to_activity_model)
+
+car_variant_to_activity_model |> 
+  select("Pr(>F)") |>
+  filter(row.names(car_variant_to_activity_model) == "Enzyme Variant") |>
+  kable()
+
+# summary(variant_to_activity_model)
 ```
+
+
 
 **text**
 
