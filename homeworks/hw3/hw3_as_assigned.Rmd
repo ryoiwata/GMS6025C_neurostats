@@ -41,11 +41,11 @@ You are researching how GAD65 single nucleotide polymorphisms modify the enzyme'
 
 ## 1.A Load data and prepare data for analysis 
 
-```{r}
+```{r loading in data}
 # Reading in the data
 raw_gad65_data <- readxl::read_excel("./data/HW3data_.xlsx")
 ```
-```{r}
+```{r data carpentry}
 # Turning categorical variables into factors
 fixed_gad65_data <- mutate(raw_gad65_data,
 across(c(WellID, `Plate ID`, `Enzyme Variant`),
@@ -57,18 +57,17 @@ as_factor))
 
 ### 1.B.1 Write out reasonable scientific hypothesis in clear terms that this approach can test (2 pt)
 
-**Answer: There is a significant difference in the enzyme activity of GAD65 enzyme variants caused by single nucleotide polymorphisms.**
-
-This implies that the mutations introduced result in measurable changes in enzyme function, which could be linked to the enzyme's role in neurotransmitter regulation and, by extension, to psychiatric conditions. The observed differences in enzyme activity among variants suggest a potential functional impact of specific SNPs on GAD65, warranting further investigation into their role in the etiology of psychiatric disorders.**
+**Answer: When considering only enzyme variants, there is a significant difference in the enzyme activity in at least one of the tested GAD65 enzyme variants compared to the other tested GAD65 enzyme variants.**
 
 ### 1.B.2 Write out your statistical hypothesis (null hypothesis and alternate) and the formula you are fitting. (2 pt)
 
 ```{r}
-str(fixed_gad65_data)
+distinct(fixed_gad65_data, `Enzyme Variant`)
 ```
 
-$$H_0: \mu_{A121C} = \mu_{A121F} = \mu_{A121L} = \mu_{A121R} = \mu_{A121T}$$
-**H1: Not all means of enzyme activity is equal across different groups of enzyme variants.**
+$$H_0: \mu_{A121C} = \mu_{A121T} = \mu_{A121R} = \mu_{A121L} = \mu_{A121F} $$
+$$H_1: \mu_{A121C} \neq \mu_{A121T} \neq \mu_{A121R} \neq \mu_{A121L} \neq \mu_{A121F} $$
+
 
 (beta also ok to use, using B for simplicity)
 
@@ -77,10 +76,12 @@ $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_
 ### 1.B.3 Make a figure which shows both the 'raw' data and summary relevant to this model/analysis (3 pt)
 
 ```{r}
-fixed_gad65_data |> ggplot(aes(x=`Enzyme Variant`, y=`Enz Activity`)) +
+fixed_gad65_data |> ggplot(aes(x=`Enzyme Variant`, y=`Enz Activity`, color = `Enzyme Variant`)) +
   geom_violin() +
-  stat_summary(fun = mean) +
-  stat_summary(geom = "errorbar", fun.data = mean_se) 
+  geom_jitter(width = 0.25) + 
+  stat_summary(fun = mean, color="black") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, color="black") 
+  
 ```
 
 ### 1.B.4 Fit your model; identify and interpret the results (3 pt (1pt each for: model, results and interpretation)). Use Anova from car for your ANOVA table.
@@ -91,10 +92,8 @@ variant_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant`, fixed_gad65_da
 car_variant_to_activity_model = car::Anova(variant_to_activity_model)
 
 car_variant_to_activity_model |> 
-  select("Pr(>F)") |>
-  filter(row.names(car_variant_to_activity_model) == "Enzyme Variant") |>
-  kable()
-
+  select("Pr(>F)") #|>
+  # filter(row.names(car_variant_to_activity_model) == "Enzyme Variant") 
 # summary(variant_to_activity_model)
 ```
 
@@ -129,7 +128,11 @@ fixed_gad65_data |> ggplot(aes(x=Glu, y=`Enz Activity`, color=`Enzyme Variant`))
 ### 1.C.4 Fit your model; present the key components in one or more concise, well-formatted table(s), and interpret the results (5 pt)
 
 ```{r}
+variant_and_glutamate_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant` + Glu, fixed_gad65_data)
 
+variant_and_glutamate_to_activity_tidy = tidy(variant_and_glutamate_to_activity_model)
+
+kable(variant_and_glutamate_to_activity_tidy)
 ```
 
 **text** 
@@ -164,6 +167,11 @@ fixed_gad65_data |> ggplot(aes(x=`pyridoxal phosphate conc.`, y=`Enz Activity`, 
 ### 1.D.4 Fit your model; identify, present and interpret the results (5 pt)
 
 ```{r}
+variant_and_pyridoxal_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant` + `pyridoxal phosphate conc.`, fixed_gad65_data)
+
+variant_and_pyridoxal_to_activity_tidy = tidy(variant_and_pyridoxal_to_activity_model)
+
+kable(variant_and_pyridoxal_to_activity_tidy)
 
 ```
 
@@ -172,10 +180,21 @@ fixed_gad65_data |> ggplot(aes(x=`pyridoxal phosphate conc.`, y=`Enz Activity`, 
 ## 1.E. Using your models from C and D, calculate activity after removing the estimated contribution of (1) glutamate and (2) pyridoxal phosphate concentrations (note: create 2 new variables). Recreate figure 1.B.3 for each of these with a separate facet for each (will require some data carpentry). (10 pt)
 
 
-```{r}
+
+
+```{r model C}
+
+glu_coef_for_variant_and_glutamate_to_activity <- pull(filter(variant_and_glutamate_to_activity_tidy, term == "Glu"), estimate)
+
+variant_and_glutamate_to_activity_augment <- augment(variant_and_glutamate_to_activity_model) |>
+  mutate(`Corrected Enz Activity` = `Enz Activity` - Glu * glu_coef_for_variant_and_glutamate_to_activity)
+
 
 ```
 
+```{r model D}
+augment(variant_and_pyridoxal_to_activity_model)
+```
 
 ### 1.E.1 Describe this figure and provide an interpretation of each facet. (5 pt)
 
@@ -220,3 +239,6 @@ fixed_gad65_data |> ggplot(aes(x=`pyridoxal phosphate conc.`, y=`Enz Activity`, 
 **text**
 
 ## 1. Bonus! : Go back (revisit, do not duplicate here) to your plots above and use **[theme] (https://ggplot2.tidyverse.org/reference/theme.html)** (and any other ggplot functions you care to use) to polish them by adjusting theme and mapping characteristics (e.g., the fonts, font sizes, colors, color scales, etc.) of your plots. List each change, indicate what you changed, and clearly yet concisely explain the benefit of each change. (up to +5 pt; half a point per well-justified change)
+
+```{r}
+```
