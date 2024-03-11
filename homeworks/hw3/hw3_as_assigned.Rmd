@@ -93,33 +93,52 @@ fixed_gad65_data |> ggplot(aes(x=`Enzyme Variant`,
 ### 1.B.4 Fit your model; identify and interpret the results (3 pt (1pt each for: model, results and interpretation)). Use Anova from car for your ANOVA table.
 
 ```{r}
-# variant_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant`, fixed_gad65_data)
-# 
-# car_variant_to_activity_model = car::Anova(variant_to_activity_model)
-# 
-# car_variant_to_activity_model |> 
-#   select("Pr(>F)") #|>
-  # filter(row.names(car_variant_to_activity_model) == "Enzyme Variant") 
-# summary(variant_to_activity_model)
+variant_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant`, fixed_gad65_data)
+
+variant_to_activity_car = car::Anova(variant_to_activity_model)
+
+kable(variant_to_activity_car)
+
 ```
 
+```{r}
+variant_to_activity_car
+```
+
+```{r}
+variant_to_activity_pvalue <- pull(filter(variant_to_activity_car, row.names(variant_to_activity_car)=="`Enzyme Variant`"), 
+                       "Pr(>F)")
+
+variant_to_activity_fstat <- pull(filter(variant_to_activity_car, row.names(variant_to_activity_car)=="`Enzyme Variant`"), 
+                       "F value")
+
+variant_to_activity_Df <- pull(filter(variant_to_activity_car, row.names(variant_to_activity_car)=="`Enzyme Variant`"), 
+                       "Df")
 
 
-**text**
+print("F-statistic and associated p-value for all slope terms")
+print(paste("F(", variant_to_activity_Df, ",", df.residual(variant_to_activity_model), ") = ", 
+            variant_to_activity_fstat, ", p = ", 
+            variant_to_activity_pvalue))
+```
+
+**Assuming significance with a p-value less than 0.05, we can not reject the null hypothesis that the mean enzyme activity of different enzyme variants are not significantly different from each other**
 
 ## 1.C Considering only the enzyme variant and glutamate concentration, fit a GLM model that includes both: (15 pt)
 
 ### 1.C.1 Write out a reasonable scientific hypothesis in clear terms (2 pt)
 
-**text**
+**Answer: There is a significant difference in the enzyme activity in at least one of the tested GAD65 enzyme variants compared to the other tested GAD65 enzyme variants after controlling for the effect of the concentrations of glutamate.**
+
 
 ### 1.C.2 Write out your statistical hypothesis and the formula you are fitting. (3 pt)
 
 **The hypotheses we care about are:**
 
-$$H_0: ...$$
+$$H_0: \mu_{A121C} = \mu_{A121T} = \mu_{A121R} = \mu_{A121L} = \mu_{A121F} $$
+$$H_1: \mu_{A121C} \neq \mu_{A121T} \neq \mu_{A121R} \neq \mu_{A121L} \neq \mu_{A121F} $$
 
-$$.$$
+$$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_{A121L}x_{A121L?} + \beta_{A121F}x_{A121F?} + \beta_{glutamate}x_{glutamate}$$
 
 ### 1.C.3 Make a figure which includes all relevant variables relevant to this model and *only* those variables (5 pt)
 
@@ -133,29 +152,64 @@ fixed_gad65_data |> ggplot(aes(x=Glu, y=`Enz Activity`, color=`Enzyme Variant`))
 
 ### 1.C.4 Fit your model; present the key components in one or more concise, well-formatted table(s), and interpret the results (5 pt)
 
+
 ```{r}
 variant_and_glutamate_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant` + Glu, fixed_gad65_data)
 
+variant_and_glutamate_to_activity_car = car::Anova(variant_and_glutamate_to_activity_model)
 variant_and_glutamate_to_activity_tidy = tidy(variant_and_glutamate_to_activity_model)
 
-kable(variant_and_glutamate_to_activity_tidy)
+kable(variant_and_glutamate_to_activity_car)
+```
+```{r}
+variant_and_glutamate_pvalue_for_variant <- pull(filter(variant_and_glutamate_to_activity_car, row.names(variant_and_glutamate_to_activity_car)=="`Enzyme Variant`"), "Pr(>F)")
+
+variant_and_glutamate_fstat_for_variant <- pull(filter(variant_and_glutamate_to_activity_car, row.names(variant_and_glutamate_to_activity_car)=="`Enzyme Variant`"), 
+                       "F value")
+
+variant_and_glutamate_df_for_variant <- pull(filter(variant_and_glutamate_to_activity_car, row.names(variant_and_glutamate_to_activity_car)=="`Enzyme Variant`"), 
+                       "Df")
+
+
+print("F-statistic and associated p-value for all slope terms")
+print(paste("F(", variant_and_glutamate_df_for_variant, ",", df.residual(variant_and_glutamate_to_activity_model), ") = ", 
+            variant_and_glutamate_fstat_for_variant, ", p = ", 
+            variant_and_glutamate_pvalue_for_variant))
+```
+```{r}
+variant_and_glutamate_pvalue_for_glu <- pull(filter(variant_and_glutamate_to_activity_car, row.names(variant_and_glutamate_to_activity_car)=="Glu"), "Pr(>F)")
+
+variant_and_glutamate_fstat_for_variant <- pull(filter(variant_and_glutamate_to_activity_car, row.names(variant_and_glutamate_to_activity_car)=="Glu"), 
+                       "F value")
+
+variant_and_glutamate_df_for_variant <- pull(filter(variant_and_glutamate_to_activity_car, row.names(variant_and_glutamate_to_activity_car)=="Glu"), 
+                       "Df")
+
+
+print("F-statistic and associated p-value for all slope terms")
+print(paste("F(", variant_and_glutamate_df_for_variant, ",", df.residual(variant_and_glutamate_to_activity_model), ") = ", 
+            variant_and_glutamate_fstat_for_variant, ", p = ", 
+            variant_and_glutamate_pvalue_for_glu))
 ```
 
-**text** 
+**Assuming significance with a p-value less than 0.05, we can not reject the null hypothesis that the mean enzyme activity of different enzyme variants are not significantly different from each other. We can not reject the null hypothesis that the mean enzyme activity of different enzyme variants are not significantly different from each other. We can reject the null hypothesis that the Glumate concentration has a statistically significant effect on the enzyme activity.**
 
 ## 1.D. Considering only the enzyme variant and pyridoxal phosphate concentration, fit a new GLM and interpret it: (15 pt)
 
 ### 1.D.1 Write out a reasonable scientific hypothesis in clear terms (2 pt)
 
-**text**
+**Answer: There is a significant difference in the enzyme activity in at least one of the tested GAD65 enzyme variants compared to the other tested GAD65 enzyme variants after controlling for the effect of the concentrations of pyridoxal phosphate.**
+
 
 ### 1.D.2 Write out your statistical hypothesis and the formula you are fitting. (3 pt)
 
 **The hypothesis we care about is still:**
 
-$$H_0: $$
+$$H_0: \mu_{A121C} = \mu_{A121T} = \mu_{A121R} = \mu_{A121L} = \mu_{A121F} $$
 
-$$\hat{Y} = $$
+$$H_1: \mu_{A121C} \neq \mu_{A121T} \neq \mu_{A121R} \neq \mu_{A121L} \neq \mu_{A121F} $$
+
+$$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_{A121L}x_{A121L?} + \beta_{A121F}x_{A121F?} + \beta_{phosphate}x_{phosphate}$$
 
 
 ### 1.D.3 Make a figure which shows all relevant variables relevant to this model and *only* those variables (5 pt)
@@ -173,33 +227,83 @@ fixed_gad65_data |> ggplot(aes(x=`pyridoxal phosphate conc.`, y=`Enz Activity`, 
 ### 1.D.4 Fit your model; identify, present and interpret the results (5 pt)
 
 ```{r}
-variant_and_pyridoxal_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant` + `pyridoxal phosphate conc.`, fixed_gad65_data)
+variant_and_phosphate_to_activity_model = lm(`Enz Activity` ~ `Enzyme Variant` + `pyridoxal phosphate conc.`, fixed_gad65_data)
 
-variant_and_pyridoxal_to_activity_tidy = tidy(variant_and_pyridoxal_to_activity_model)
+variant_and_phosphate_to_activity_car = car::Anova(variant_and_phosphate_to_activity_model)
+variant_and_phosphate_to_activity_tidy = tidy(variant_and_phosphate_to_activity_model)
 
-kable(variant_and_pyridoxal_to_activity_tidy)
-
+kable(variant_and_phosphate_to_activity_car)
 ```
 
 **text**
 
+
+```{r}
+variant_and_phosphate_pvalue_for_variant <- pull(filter(variant_and_phosphate_to_activity_car, row.names(variant_and_phosphate_to_activity_car)=="`Enzyme Variant`"), "Pr(>F)")
+
+variant_and_phosphate_fstat_for_variant <- pull(filter(variant_and_phosphate_to_activity_car, row.names(variant_and_phosphate_to_activity_car)=="`Enzyme Variant`"), 
+                       "F value")
+
+variant_and_phosphate_df_for_variant <- pull(filter(variant_and_phosphate_to_activity_car, row.names(variant_and_phosphate_to_activity_car)=="`Enzyme Variant`"), 
+                       "Df")
+
+
+print("F-statistic and associated p-value for all slope terms")
+print(paste("F(", variant_and_phosphate_df_for_variant, ",", df.residual(variant_and_phosphate_to_activity_model), ") = ", 
+            variant_and_phosphate_fstat_for_variant, ", p = ", 
+            variant_and_phosphate_pvalue_for_variant))
+```
+```{r}
+variant_and_phosphate_pvalue_for_glu <- pull(filter(variant_and_phosphate_to_activity_car, row.names(variant_and_phosphate_to_activity_car)=="`pyridoxal phosphate conc.`"), "Pr(>F)")
+
+variant_and_phosphate_fstat_for_variant <- pull(filter(variant_and_phosphate_to_activity_car, row.names(variant_and_phosphate_to_activity_car)=="`pyridoxal phosphate conc.`"), 
+                       "F value")
+
+variant_and_phosphate_df_for_variant <- pull(filter(variant_and_phosphate_to_activity_car, row.names(variant_and_phosphate_to_activity_car)=="`pyridoxal phosphate conc.`"), 
+                       "Df")
+
+
+print("F-statistic and associated p-value for all slope terms")
+print(paste("F(", variant_and_phosphate_df_for_variant, ",", df.residual(variant_and_phosphate_to_activity_model), ") = ", 
+            variant_and_phosphate_fstat_for_variant, ", p = ", 
+            variant_and_phosphate_pvalue_for_glu))
+```
+
+**Assuming significance with a p-value less than 0.05, we can not reject the null hypothesis that the mean enzyme activity of different enzyme variants are not significantly different from each other. We can not reject the null hypothesis that the mean enzyme activity of different enzyme variants are not significantly different from each other. We can reject the null hypothesis that the pyridoxal phosphate concentration has a statistically significant effect on the enzyme activity.**
+
+
+
 ## 1.E. Using your models from C and D, calculate activity after removing the estimated contribution of (1) glutamate and (2) pyridoxal phosphate concentrations (note: create 2 new variables). Recreate figure 1.B.3 for each of these with a separate facet for each (will require some data carpentry). (10 pt)
 
-
+```{r}
+variant_and_glutamate_to_activity_tidy
+```
 
 
 ```{r model C}
 
 glu_coef_for_variant_and_glutamate_to_activity <- pull(filter(variant_and_glutamate_to_activity_tidy, term == "Glu"), estimate)
 
-variant_and_glutamate_to_activity_augment <- augment(variant_and_glutamate_to_activity_model) |>
-  mutate(`Corrected Enz Activity` = `Enz Activity` - Glu * glu_coef_for_variant_and_glutamate_to_activity)
+phosphate_coef_for_variant_and_glutamate_to_activity <- pull(filter(variant_and_phosphate_to_activity_tidy, term == "`pyridoxal phosphate conc.`"), estimate)
 
+glutamate_and_phosphated_corrected_gad65_data <- fixed_gad65_data |>
+  mutate(`glu corrected Enz Activity` = `Enz Activity` - Glu * glu_coef_for_variant_and_glutamate_to_activity) |>
+  mutate(`phosphate corrected Enz Activity` = `Enz Activity` - `pyridoxal phosphate conc.`
+ * phosphate_coef_for_variant_and_glutamate_to_activity) |>
+  pivot_longer(cols=c(`Enz Activity`, `glu corrected Enz Activity`, `phosphate corrected Enz Activity`), values_to = "Enz Activity")
 
 ```
 
-```{r model D}
-augment(variant_and_pyridoxal_to_activity_model)
+```{r}
+glutamate_and_phosphated_corrected_gad65_data |> ggplot(aes(x=`Enzyme Variant`, 
+                               y=`Enz Activity`, 
+                               color = `Enzyme Variant`)) +
+  geom_violin() +
+  geom_jitter(width = 0.25) +
+  stat_summary(fun = mean, color="black", geom = "point") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, color="black") +
+  facet_wrap(vars(name))
+  
 ```
 
 ### 1.E.1 Describe this figure and provide an interpretation of each facet. (5 pt)
@@ -222,6 +326,13 @@ augment(variant_and_pyridoxal_to_activity_model)
 ### 1.F.3 Fit your model; present and interpret the results (5)
 
 ```{r}
+variant_ancova_model = lm(`Enz Activity` ~ `Enzyme Variant` + `Glu` + `pyridoxal phosphate conc.`, fixed_gad65_data)
+
+variant_ancova_car = car::Anova(variant_ancova_model)
+variant_ancova_tidy = tidy(variant_ancova_model)
+tidy
+
+kable(variant_ancova_tidy)
 
 ```
 
@@ -231,7 +342,30 @@ augment(variant_and_pyridoxal_to_activity_model)
 
 
 ```{r}
+glu_coef_ancova <- pull(filter(variant_ancova_tidy, term == "Glu"), estimate)
 
+phosphate_coef_ancova <- pull(filter(variant_ancova_tidy, term == "`pyridoxal phosphate conc.`"), estimate)
+
+
+glutamate_and_phosphated_corrected_ancova_gad65_data <- fixed_gad65_data |>
+  mutate(`glu corrected Enz Activity` = `Enz Activity` - Glu * glu_coef_ancova) |>
+  mutate(`phosphate corrected Enz Activity` = `Enz Activity` - `pyridoxal phosphate conc.`
+ * phosphate_coef_ancova) |>
+   mutate(`Glu and phosphate corrected Enz Activity` = `Enz Activity` - `pyridoxal phosphate conc.` * phosphate_coef_ancova - Glu * glu_coef_ancova) |>
+  pivot_longer(cols=c(`glu corrected Enz Activity`, `phosphate corrected Enz Activity`, `Glu and phosphate corrected Enz Activity`), values_to = "corrected Enz Activity")
+
+```
+
+```{r}
+glutamate_and_phosphated_corrected_ancova_gad65_data |> ggplot(aes(x=`Enzyme Variant`, 
+                               y=`Enz Activity`, 
+                               color = `Enzyme Variant`)) +
+  geom_violin() +
+  geom_jitter(width = 0.25) +
+  stat_summary(fun = mean, color="black", geom = "point") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, color="black") +
+  facet_wrap(vars(name))
+  
 ```
 
 **text** 
