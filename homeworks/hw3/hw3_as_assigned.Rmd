@@ -69,10 +69,11 @@ fixed_gad65_data <- raw_gad65_data |>
 kable(distinct(fixed_gad65_data, `Enzyme Variant`))
 ```
 
+**The hypotheses we care about are:**
 $$H_0: \mu_{A121C} = \mu_{A121T} = \mu_{A121R} = \mu_{A121L} = \mu_{A121F} $$
 $$H_1: \mu_{A121C} \neq \mu_{A121T} \neq \mu_{A121R} \neq \mu_{A121L} \neq \mu_{A121F} $$
 
-
+**Formula that is being fitted**
 (beta also ok to use, using B for simplicity)
 
 $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_{A121L}x_{A121L?} + \beta_{A121F}x_{A121F?}$$
@@ -102,34 +103,40 @@ kable(variant_to_activity_car)
 ```
 
 ```{r}
-variant_to_activity_car
-```
+variant_to_activity_pvalue <- 
+  pull(filter(variant_to_activity_car,
+              row.names(variant_to_activity_car)=="`Enzyme Variant`"),
+       "Pr(>F)")
 
-```{r}
-variant_to_activity_pvalue <- pull(filter(variant_to_activity_car, row.names(variant_to_activity_car)=="`Enzyme Variant`"), 
-                       "Pr(>F)")
+variant_to_activity_fstat <- 
+  pull(filter(variant_to_activity_car, 
+              row.names(variant_to_activity_car)=="`Enzyme Variant`"),
+       "F value")
 
-variant_to_activity_fstat <- pull(filter(variant_to_activity_car, row.names(variant_to_activity_car)=="`Enzyme Variant`"), 
-                       "F value")
-
-variant_to_activity_Df <- pull(filter(variant_to_activity_car, row.names(variant_to_activity_car)=="`Enzyme Variant`"), 
-                       "Df")
-
+variant_to_activity_Df <- 
+  pull(filter(variant_to_activity_car, 
+              row.names(variant_to_activity_car)=="`Enzyme Variant`"),
+       "Df")
 
 print("F-statistic and associated p-value for all slope terms")
-print(paste("F(", variant_to_activity_Df, ",", df.residual(variant_to_activity_model), ") = ", 
-            variant_to_activity_fstat, ", p = ", 
+
+print(paste("F(", 
+            variant_to_activity_Df, 
+            ",", 
+            df.residual(variant_to_activity_model), 
+            ") = ", 
+            variant_to_activity_fstat, 
+            ", p = ", 
             variant_to_activity_pvalue))
 ```
 
-**Assuming significance with a p-value less than 0.05, we can not reject the null hypothesis that the mean enzyme activity of different enzyme variants are not significantly different from each other**
+**Assuming significance with a p-value less than 0.05, we can not reject the null hypothesis that the mean enzyme activity of different enzyme variants are not significantly different from each other when considering only enzyme variant.**
 
 ## 1.C Considering only the enzyme variant and glutamate concentration, fit a GLM model that includes both: (15 pt)
 
 ### 1.C.1 Write out a reasonable scientific hypothesis in clear terms (2 pt)
 
-**Answer: There is a significant difference in the enzyme activity in at least one of the tested GAD65 enzyme variants compared to the other tested GAD65 enzyme variants after controlling for the effect of the concentrations of glutamate.**
-
+**Answer: There is a significant difference in the enzyme activity of at least one of the tested GAD65 enzyme variants compared to the other tested GAD65 enzyme variants after controlling for the effect of the concentrations of glutamate.**
 
 ### 1.C.2 Write out your statistical hypothesis and the formula you are fitting. (3 pt)
 
@@ -137,6 +144,8 @@ print(paste("F(", variant_to_activity_Df, ",", df.residual(variant_to_activity_m
 
 $$H_0: \mu_{A121C} = \mu_{A121T} = \mu_{A121R} = \mu_{A121L} = \mu_{A121F} $$
 $$H_1: \mu_{A121C} \neq \mu_{A121T} \neq \mu_{A121R} \neq \mu_{A121L} \neq \mu_{A121F} $$
+
+**Formula that is being fitted**
 
 $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_{A121L}x_{A121L?} + \beta_{A121F}x_{A121F?} + \beta_{glutamate}x_{glutamate}$$
 
@@ -146,7 +155,7 @@ $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_
 ```{r}
 fixed_gad65_data |> ggplot(aes(x=Glu, y=`Enz Activity`, color=`Enzyme Variant`)) +
   geom_point() +
-  facet_wrap(vars(`Enzyme Variant`)) +
+  facet_wrap(vars(`Enzyme Variant`), nrow=1) +
   stat_smooth(method = "lm")
 ```
 
@@ -209,6 +218,8 @@ $$H_0: \mu_{A121C} = \mu_{A121T} = \mu_{A121R} = \mu_{A121L} = \mu_{A121F} $$
 
 $$H_1: \mu_{A121C} \neq \mu_{A121T} \neq \mu_{A121R} \neq \mu_{A121L} \neq \mu_{A121F} $$
 
+**Formula that is being fitted**
+
 $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_{A121L}x_{A121L?} + \beta_{A121F}x_{A121F?} + \beta_{phosphate}x_{phosphate}$$
 
 
@@ -219,7 +230,7 @@ $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_
 
 fixed_gad65_data |> ggplot(aes(x=`pyridoxal phosphate conc.`, y=`Enz Activity`, color=`Enzyme Variant`)) +
   geom_point() +
-  facet_wrap(vars(`Enzyme Variant`)) +
+  facet_wrap(vars(`Enzyme Variant`), nrow=1) +
   stat_smooth(method = "lm")
 
 ```
@@ -404,5 +415,7 @@ glu_and_PLP_adjusted_ancova_gad65_data |> summarise(`Model Estimates` = mean(.fi
 1. Rotated the tick values for the variants so they are vertical and not overlapping with `theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))`
 2.   facet_wrap(vars(name), nrow=1) 
 
+# TODO
+- add titles to plots
 
 
