@@ -1,0 +1,59 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr) # to render better tables
+library(tidyverse)
+library(tidymodels)
+library(car)
+options(scipen = 2, digits = 4) # to control default number formatting
+```
+
+
+```{r}
+prestige_data = Prestige
+?Prestige
+```
+
+```{r}
+prestige_nanrm = na.omit(prestige_data)
+```
+
+```{r}
+str(prestige_nanrm)
+prestige_model = lm(income ~ education * type + women * type, prestige_nanrm)
+```
+
+```{r}
+prestige_type_1_anova <- anova(prestige_model)
+
+prestige_type_1_anova
+
+```
+
+```{r}
+?Anova
+```
+
+
+```{r}
+prestige_type_2_anova <- car::Anova(prestige_model, type = 2)
+
+prestige_type_2_anova
+
+```
+```{r}
+prestige_type_3_anova <- car::Anova(prestige_model, type = 3)
+
+prestige_type_3_anova
+```
+
+```{r}
+?stat_summary
+
+prestige_nanrm |> ggplot(aes(x=women, y=income, color=education)) +
+  geom_point() +
+  facet_wrap(vars(type)) + 
+  stat_summary()
+
+```
+

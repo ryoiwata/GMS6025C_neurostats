@@ -1,0 +1,122 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr) # to render better tables
+library(tidyverse)
+library(tidymodels)
+library(car)
+options(scipen = 2, digits = 4) # to control default number formatting
+```
+
+
+```{r}
+prestige_data = Prestige
+?Prestige
+```
+
+```{r}
+prestige_nanrm = na.omit(prestige_data)
+```
+
+```{r}
+str(prestige_nanrm)
+prestige_model = lm(income ~ education + prestige, prestige_nanrm)
+```
+
+```{r}
+prestige_type_1_anova <- anova(prestige_model)
+
+prestige_type_1_anova
+
+```
+
+```{r}
+?Anova
+
+```
+
+
+```{r}
+prestige_type_2_anova <- car::Anova(prestige_model, type = 2)
+prestige_type_2_anova
+
+```
+
+# 3/8/2024
+
+```{r}
+tidy(prestige_model)
+```
+
+```{r}
+prestige_tidy <- tidy(prestige_model) |>
+  select(term, DF, p.value)
+
+kable(prestige_tidy)
+```
+
+```{r}
+summary(prestige_model)
+```
+
+```{r}
+car::Anova(prestige_model)
+?Prestige
+```
+
+**Results: We looked at the relationship between income of an occupation with the education level of the occupant as well as the surveyed prestige of the of the job. We hypothesized that both education level and prestige had a positive relationship on income. We found an significant positive effect of prestige on income of occupation(F(1, 95)=32.29, P=1.5e-07), but we did not find a significant main effect of education level on income (F(1, 95)=0.95, P=0.33)**
+
+**main effect of prestige (F(1, 95)=32.29, P<0.001) $204/prestige unit**
+**no main effect of education (F(1, 95)=0.95, P=0.33) **
+
+
+```{r}
+str(prestige_nanrm)
+prestige_model = lm(income ~ education * type + prestige * type, prestige_nanrm)
+summary(prestige_model)
+car::Anova(prestige_model)
+```
+
+```{r}
+intercept_size_to_diffusion_model <- pull(filter(tidy_model_size_to_diffusion,
+term=="(Intercept)"), estimate)
+
+slope_size_to_diffusion_model <- pull(filter(tidy_model_size_to_diffusion,
+term=="`Particle Size`"), estimate)
+```
+
+```{r}
+prestige_nanrm |> 
+  ggplot(aes(x=education, y=income, color=type, shape=type, group=type)) +
+  geom_point(aes(size=prestige)) +
+  stat_smooth(method = "lm")
+  
+```
+```{r}
+filter(prestige_nanrm, income > 20000)
+```
+
+
+**Results: We looked at the relationship between income of an occupation with the education level of the occupant, the type of occupation, and the surveyed prestige of the of the job. As well as the interaction education and type as well as type and prestige. We hypothesized that 
+
+We hypot
+
+
+We hypothesized that both education level and prestige had a positive relationship on income. We found an significant positive effect of prestige on income of occupation(F(1, 95)=32.29, P=1.5e-07), but we did not find a significant main effect of education level on income (F(1, 95)=0.95, P=0.33)**
+
+**main effect of prestige (F(1, 95)=32.29, P<0.001) $204/prestige unit**
+**no main effect of education (F(1, 95)=0.95, P=0.33) **
+
+
+
+
+```{r}
+?stat_summary
+
+prestige_nanrm |> ggplot(aes(x=women, y=income, color=education)) +
+  geom_point() +
+  facet_wrap(vars(type)) + 
+  stat_summary()
+
+```
+

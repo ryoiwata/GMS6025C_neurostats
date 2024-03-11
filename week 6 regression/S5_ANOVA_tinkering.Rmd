@@ -24,7 +24,7 @@ Practicing our coding and working with stat_XXX in ggplot will also help prepare
 # Load data (note multiple sheets) and make our small toy problem
 
 ```{r}
-example_data <- readxl::read_excel("./data/ANOVA_1way.xlsx", sheet = "sd5")
+# example_data <- readxl::read_excel("./data/ANOVA_1way.xlsx", sheet = "sd5")
 
 twowaydata <- readxl::read_excel("./data/ANOVA_Multi.xlsx") |>
   mutate(Drug = as_factor(Drug),
