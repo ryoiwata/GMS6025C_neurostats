@@ -1,0 +1,110 @@
+---
+title: "HW3 - Factors and friends"
+author: "Ryo Iwata"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(knitr)
+library(car)
+library(emmeans)
+# to control default number formatting, no need for specifying digits in kable.
+options(scipen = 3, digits = 5) 
+```
+
+```{r}
+str(warpbreaks)
+
+# warpbreaks |> ggplot(aes())
+
+```
+
+```{r}
+warp.lm <- lm(breaks ~ wool*tension, data = warpbreaks)
+
+```
+
+```{r}
+
+# tension within wools
+warp.emm <- emmeans(warp.lm , ~tension | wool)
+warp.emm
+
+```
+
+```{r}
+# wools within tensions
+warp.emm <- emmeans(warp.lm , ~wool | tension)
+warp.emm
+```
+```{r}
+contrast(warp.emm, by=NULL)
+```
+```{r}
+contrast(warp.emm, method = "pairwise", by = "tension")
+```
+
+```{r}
+contrast(warp.emm, method = "pairwise", simple = "wool")
+```
+
+
+
+```{r}
+contrast(warp.emm, method = "pairwise", simple = "tension")
+```
+```{r}
+contrast(warp.emm, method = "pairwise", by = "wool")
+```
+```{r}
+contrast(warp.emm, method = "pairwise", simple = "each", combine = TRUE)
+```
+```{r}
+contrast(warp.emm, method = "pairwise", simple = "each", combine = TRUE, adjust="fdr")
+```
+
+########################################################
+
+```{r}
+
+ourmtcars <- mtcars |> mutate(vs = as.factor(vs), am = as.factor(am))
+
+str(ourmtcars)
+
+```
+
+```{r}
+ourmtcars |> ggplot(aes(x=wt, y=mpg, color=vs)) +
+  geom_point() + 
+  geom_abline(intercept = 18.7, slope = 0) +
+  geom_abline(intercept = 21.9, slope = 0)
+
+```
+
+```{r}
+mtcars.lm <- lm(mpg ~ vs + wt, data = ourmtcars)
+```
+
+```{r}
+tidy(mtcars.lm)
+```
+
+```{r}
+mtcars.emm <- emmeans(mtcars.lm , ~ vs)
+mtcars.emm
+```
+```{r}
+contrast(mtcars.emm, method = "pairwise", simple = "each", combine = TRUE)
+
+```
+
+```{r}
+str(penguins)
+
+```

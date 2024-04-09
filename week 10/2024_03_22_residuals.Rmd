@@ -1,0 +1,268 @@
+---
+title: "ANOVAs"
+author: "Damon G. Lamb"
+date: ""
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(car)
+library(tidymodels)
+library(Hmisc)
+
+```
+
+```{r}
+hp_to_mpg_model = lm(mpg ~ hp, mtcars)
+```
+
+```{r}
+mtcars |> ggplot(aes(x=hp, y=mpg)) +
+  geom_point()
+```
+
+```{r}
+augment_hp_to_mpg <- augment(hp_to_mpg_model)
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.hat, y=.std.resid, size=.cooksd)) +
+  geom_point()
+```
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.cooksd, y=.std.resid, size=.hat)) +
+  geom_point()
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.cooksd, y=.hat, size=.std.resid)) +
+  geom_point()
+```
+
+```{r}
+ggplot(augment_hp_to_mpg, aes(sample=.std.resid)) +
+  stat_qq() +
+  stat_qq_line() +
+  geom_abline(slope=1, linetype=2)
+
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.hat)) +
+  geom_histogram()
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.cooksd)) +
+  geom_histogram()
+```
+
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=mpg, y=.hat)) +
+  geom_point()
+```
+```{r}
+# h_hat = 
+
+glance_hp_to_mpg <- glance(hp_to_mpg_model)
+
+n_obs <- glance_hp_to_mpg |> select(nobs) |>
+  pull(nobs)
+
+k_dof <- glance_hp_to_mpg |>
+  select(df) |>
+  pull(df)
+
+average_hat = (k_dof + 1) / n_obs
+
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.hat, y=.std.resid)) +
+  geom_point() +
+  geom_vline(xintercept = average_hat) +
+  geom_vline(xintercept = average_hat * 2, color="orange") +
+  geom_vline(xintercept = average_hat * 3, color="red")
+
+
+```
+
+```{r}
+filtered_augment_hp_to_mpg_hat <- augment_hp_to_mpg |> filter(.hat <= .2)
+
+```
+
+
+```{r}
+filtered_augment_hp_to_mpg_cooks <- augment_hp_to_mpg |> filter(.cooksd <= 0.09)
+```
+
+```{r}
+augment_hp_to_mpg <- augment_hp_to_mpg |> mutate(is_outlier = if_else(.cooksd <= 0.09, FALSE, TRUE))
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=hp, y=mpg, color=is_outlier, size=.hat)) +
+  geom_point() +
+  stat_smooth(method = "lm", col = "black", linetype=1) +
+  stat_smooth(aes(x=hp, y=mpg), data=filtered_augment_hp_to_mpg, method = "lm", linetype=2, color="red") +
+  stat_smooth(aes(x=hp, y=mpg), data=filtered_augment_hp_to_mpg_2, method = "lm", linetype=2, color="blue")
+```
+```{r}
+# tidy(hp_to_mpg_model)
+tidy(car::Anova(hp_to_mpg_model))
+
+```
+
+```{r}
+# tidy(hp_to_mpg_model)
+tidy(hp_to_mpg_model)
+
+```
+
+
+
+```{r}
+filtered_model <- lm(mpg~hp, filtered_augment_hp_to_mpg_2)
+tidy(car::Anova(filtered_model))
+```
+
+```{r}
+tidy(filtered_model)
+```
+
+
+# More complicated model
+
+```{r}
+hp_and_cyl_to_mpg <- lm(mpg ~ hp * cyl, mtcars)
+```
+
+```{r}
+augment_hp_and_cyl_to_mpg <- augment(hp_and_cyl_to_mpg)
+```
+
+```{r}
+augment_hp_and_cyl_to_mpg |> ggplot(aes(x=hp, y=mpg, color=cyl)) +
+  geom_point() +
+  facet_wrap(vars(cyl)) +
+  stat_smooth(method = "lm")
+
+```
+```{r}
+```
+
+
+```{r}
+augment_hp_and_cyl_to_mpg |> ggplot(aes(x=.hat, y=.std.resid, color=cyl)) +
+  geom_point()
+```
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.cooksd, y=.std.resid, size=.hat)) +
+  geom_point()
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.cooksd, y=.hat, size=.std.resid)) +
+  geom_point()
+```
+
+```{r}
+ggplot(augment_hp_to_mpg, aes(sample=.std.resid)) +
+  stat_qq() +
+  stat_qq_line() +
+  geom_abline(slope=1, linetype=2)
+
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.hat)) +
+  geom_histogram()
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.cooksd)) +
+  geom_histogram()
+```
+
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=mpg, y=.hat)) +
+  geom_point()
+```
+```{r}
+# h_hat = 
+
+glance_hp_to_mpg <- glance(hp_to_mpg_model)
+
+n_obs <- glance_hp_to_mpg |> select(nobs) |>
+  pull(nobs)
+
+k_dof <- glance_hp_to_mpg |>
+  select(df) |>
+  pull(df)
+
+average_hat = (k_dof + 1) / n_obs
+
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=.hat, y=.std.resid)) +
+  geom_point() +
+  geom_vline(xintercept = average_hat) +
+  geom_vline(xintercept = average_hat * 2, color="orange") +
+  geom_vline(xintercept = average_hat * 3, color="red")
+
+
+```
+
+```{r}
+filtered_augment_hp_to_mpg_hat <- augment_hp_to_mpg |> filter(.hat <= .2)
+
+```
+
+
+```{r}
+filtered_augment_hp_to_mpg_cooks <- augment_hp_to_mpg |> filter(.cooksd <= 0.09)
+```
+
+```{r}
+augment_hp_to_mpg <- augment_hp_to_mpg |> mutate(is_outlier = if_else(.cooksd <= 0.09, FALSE, TRUE))
+```
+
+```{r}
+augment_hp_to_mpg |> ggplot(aes(x=hp, y=mpg, color=is_outlier, size=.hat)) +
+  geom_point() +
+  stat_smooth(method = "lm", col = "black", linetype=1) +
+  stat_smooth(aes(x=hp, y=mpg), data=filtered_augment_hp_to_mpg, method = "lm", linetype=2, color="red") +
+  stat_smooth(aes(x=hp, y=mpg), data=filtered_augment_hp_to_mpg_2, method = "lm", linetype=2, color="blue")
+```
+```{r}
+# tidy(hp_to_mpg_model)
+tidy(car::Anova(hp_to_mpg_model))
+
+```
+
+```{r}
+# tidy(hp_to_mpg_model)
+tidy(hp_to_mpg_model)
+
+```
+
+
+
+```{r}
+filtered_model <- lm(mpg~hp, filtered_augment_hp_to_mpg_2)
+tidy(car::Anova(filtered_model))
+```
+
+```{r}
+tidy(filtered_model)
+```
+
+

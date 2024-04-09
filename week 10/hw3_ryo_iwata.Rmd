@@ -136,9 +136,7 @@ $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_
 
 ```{r}
 fixed_gad65_data |> ggplot(aes(x=Glu, y=`Enz Activity`, color=`Enzyme Variant`)) +
-  geom_point() +
-  facet_wrap(vars(`Enzyme Variant`), nrow=1) +
-  stat_smooth(method = "lm")
+  geom_point()
 ```
 
 ### 1.C.4 Fit your model; present the key components in one or more concise, well-formatted table(s), and interpret the results (5 pt)
@@ -237,9 +235,7 @@ $$\hat{y} = \beta_0 + \beta_{A121T}x_{A121T?} + \beta_{A121R}x_{A121R?} + \beta_
 fixed_gad65_data |> ggplot(aes(x=`pyridoxal phosphate conc.`, 
                                y=`Enz Activity`, 
                                color=`Enzyme Variant`)) +
-  geom_point() +
-  facet_wrap(vars(`Enzyme Variant`), nrow=1) +
-  stat_smooth(method = "lm")
+  geom_point()
 ```
 
 ### 1.D.4 Fit your model; identify, present and interpret the results (5 pt)
@@ -479,15 +475,23 @@ variant_ancova_tidy |>
 ### 1.F.5 Calculate the mean values for each factor level after correcting for only glutamate, only pyridoxal phosphate, and glutamate and pyridoxal phosphate using the model from F. Compare these values to the estimates from your model for each factor level. (12 pt)
 
 ```{r}
+variant_ancova_tidy |>
+  filter()
+```
+
+```{r}
 glu_and_PLP_adjusted_gad65_data |> 
-  summarise(`Model Estimates` = mean(.fitted), 
-            `Glu adjusted` =mean(`Glu adjusted`), 
+  summarise(`Glu adjusted` =mean(`Glu adjusted`), 
             `PLP adjusted`=mean(`PLP adjusted`), 
             `Glu+PLP adjusted` =mean(`Glu+PLP adjusted`), 
             .by = "Enzyme Variant") |>
   kable()
 ```
 
+```{r}
+glu_and_PLP_adjusted_gad65_data
+
+```
 
 **Answer: The Glu adjustment increases enzyme activity levels, which shows glutamate's negative relationship with enzyme activity. The PLP adjustment decreases enzyme activity levels, which shows pyridoxal phosphate's positive relationship with enzyme activity. When adjusting for both Glu and PLP, the enzyme activity distributions lie between those observed when adjusting for each factor separately. All these trends are seen across all factor levels or enzyme variants.**
 

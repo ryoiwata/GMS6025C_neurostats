@@ -1,0 +1,185 @@
+---
+title: "In Class 29 March"
+author: ""
+date: ""
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidymodels)
+library(tidyverse)
+library(car)
+library(emmeans)
+
+```
+
+```{r}
+raw_drug_data <- readxl::read_excel("./data/data.xlsx")
+```
+
+```{r}
+our_drug_data <- raw_drug_data |> mutate(Sex = as_factor(Sex), Dose = as_factor(Dose))
+```
+
+You are part of a group evaluating how an experimental drug (NOV_b1543) impacts the levels of Neurofilament-light, a putative biomarker of brain injury, in the blood. Blood plasma proteins Q_R and BVB are believed to be involved in NF-L's metabolic pathways and so are included in your blood analyses. You give your experimental drug NOV_b1543 at doses of 0.0, 20 and 40mg twice a day for a month, then measure the plasma levels of your proteins of interest. Your fellow researcher conducted an analysis and concluded that there was no effect of the drug and advocated abandoning further research into the question. You decide further evaluation may be warranted and conduct an exploratory analysis of the data.
+
+## 1.A Visualize the data
+in 3 plots (i.e., only 3 ggplot calls, one per subproblem, with both raw and appropriate summary data, for which you may use ggplot2 stat functions, and facets where appropriate. The most effecient approach will require careful pivoting to prepare your data for each plot, but the plotting itself will be fairly straightforward) corresponding to : 
+
+### 1.A.1 Simple main effects of Sex and Drug Dose. 
+
+
+```{r}
+our_drug_data |> ggplot(aes(x=Sex, y=`NF-L`)) +
+  geom_jitter() + 
+  stat_summary(na.rm=TRUE, color="red", size=0.3)
+
+our_drug_data |> ggplot(aes(x=Dose, y=`NF-L`)) +
+  geom_jitter() + 
+  stat_summary(na.rm=TRUE, color="red", size=0.3)
+```
+
+### 1.A.2 Interacted effects of Sex and Drug Dose. 
+
+```{r}
+our_drug_data |> ggplot(aes(x=Dose, y=`NF-L`, color=Sex)) +
+  geom_jitter() + 
+  stat_summary(na.rm=TRUE, color="red", size=0.3)
+```
+
+
+### 1.A.3 Interacted effects of Sex and Q_R, Sex and BVB, Drug Dose and Q_R, and Drug Dose and BVB. Justify/explain your choice of aesthetics, geometries and statistical mappings. 
+
+```{r}
+our_drug_data |> ggplot(aes(x=Dose:Sex, y=`NF-L`, color=Sex)) +
+  geom_jitter(width=0.2) + 
+  stat_summary(na.rm=TRUE, size=0.3) 
+
+our_drug_data |> ggplot(aes(x=BVB, y=`NF-L`, color=Sex)) +
+  geom_jitter(width=0.2) + 
+  geom_smooth()
+
+our_drug_data |> ggplot(aes(x=Q_R, y=`NF-L`, color=Dose)) +
+  geom_jitter(width=0.2) + 
+  geom_smooth()
+
+our_drug_data |> ggplot(aes(x=BVB, y=`NF-L`, color=Dose)) +
+  geom_jitter(width=0.2) + 
+  stat_summary(na.rm=TRUE, size=0.3) +
+  geom_smooth()
+
+
+```
+
+## 1.B Generate and evaluate 4 statistical models containing 
+
+```{r}
+```
+
+### 1.B.1 Only main effects (no interactions). 
+
+```{r}
+main_effects_model <- lm(`NF-L` ~ Sex + Dose + Q_R + BVB, our_drug_data)
+```
+
+### 1.B.2 All main effects and an interaction between Sex and Drug Dose.
+
+```{r}
+sex_drug_interaction_model <- lm(`NF-L` ~ Sex*Dose + Q_R + BVB, our_drug_data)
+
+tidy(sex_drug_interaction_model)
+```
+
+### 1.B.3 All terms up to and including all appropriate 2-way interactions. 
+
+```{r}
+appropriate_interaction_model <- lm(`NF-L` ~ Sex * Dose + Sex * Q_R + Sex * BVB + Dose * Q_R + Dose * BVB, our_drug_data)
+
+tidy(appropriate_interaction_model)
+```
+
+```{r}
+glance(main_effects_model)
+glance(sex_drug_interaction_model)
+glance(appropriate_interaction_model)
+```
+
+### 1.B.4 A parsimonious model based on the results of your above models. Be sure to respect marginality!
+
+```{r}
+car::Anova(appropriate_interaction_model, type=2)
+
+car::Anova(appropriate_interaction_model, type=3)
+
+```
+
+```{r}
+parsimoniois_model <- lm(`NF-L` ~ Q_R + Sex*Dose + Sex*BVB, our_drug_data)
+
+tidy(parsimoniois_model)
+```
+```{r}
+AIC(parsimoniois_model)
+```
+
+
+
+
+### 1.B.5 Which model do you think is the 'best' and why? 
+
+
+
+### 1.C Where did your colleague go wrong?
+
+With which model and which 'type' of sum of squares do you think your colleague analyzed their data? What mistake(s) did they make in interpreting the experiment's results? 
+
+```{r}
+car::Anova(appropriate_interaction_model, type=3)
+```
+
+
+## 1.D. Prepare for your upcoming group meeting by creating figures and analyses to support your interpretation based on the parsimonious model above 
+
+```{r}
+parsimoniois_emm <- tidy(emmeans(parsimoniois_model , ~ Sex | Dose)) |>
+  mutate(Sex = as_factor(Sex), Dose = as_factor(Dose))
+
+parsimoniois_emm |> ggplot(aes(x=Sex: Dose, y=estimate)) +
+  geom_point()
+
+```
+
+```{r}
+augment_parsimoniois_model <- augment(parsimoniois_model) |>
+  mutate()
+```
+
+```{r}
+our_drug_data |> ggplot(aes(x=Dose:Sex, y=`NF-L`, color=Sex)) +
+  geom_jitter(width=0.2) + 
+  stat_summary(na.rm=TRUE, size=0.3) 
+
+our_drug_data |> ggplot(aes(x=BVB, y=`NF-L`, color=Sex)) +
+  geom_jitter(width=0.2) + 
+  geom_smooth()
+
+our_drug_data |> ggplot(aes(x=Q_R, y=`NF-L`, color=Dose)) +
+  geom_jitter(width=0.2) + 
+  geom_smooth()
+
+our_drug_data |> ggplot(aes(x=BVB, y=`NF-L`, color=Dose)) +
+  geom_jitter(width=0.2) + 
+  stat_summary(na.rm=TRUE, size=0.3) +
+  geom_smooth()
+
+
+```
+
+### 1.D.1 Create a figure which most effectively communicates your findings. 
+
+### 1.D.2 Create an appropriate table to report your statistical analyses
+
+### 1.D.3 Conduct a posthoc analysis to test the effect of drug dose. 
+
+

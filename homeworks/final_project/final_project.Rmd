@@ -1,0 +1,85 @@
+---
+title: "Final Project"
+author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(knitr)
+library(car)
+# to control default number formatting, no need for specifying digits in kable.
+options(scipen = 3, digits = 5) 
+```
+
+# Problem 1
+
+## 1.A Load data and prepare data for analysis 
+
+```{r loading in data}
+# Reading in the data
+
+# Predictor
+## Basic demographics (age, gender, education) 
+## Duration of sobriety prior to treatment
+raw_demographics <- read_delim("./data/demo.damon.csv", delim = ",")
+## Specific SUDs (e.g., alcohol use disorder)
+raw_SUD <- read_delim("./data/SUDdiagnosis.damon.csv", delim = ",")
+## Social Support (MSPSS)
+raw_social_support <- read_delim("./data/mspss.damon.csv", delim = ",")
+## Substance Use History
+raw_sub_history <- read_delim("./data/subuse.damon.csv", delim = ",")
+## AA/NA Affiliation 
+raw_aana_affiliation <- read_delim("./data/aana.damon.csv", delim = ",")
+## Stressful Life Experiences (LEC-5) lec.damon
+"
+*The structure of this dataframe is really bonkers. You probably want to use the variable “toyou_total” which is a sum of event types that the patients endorsed as having happened to them. We sometimes also use “toyou_wit_total”, which is a similar sum score, but includes events that have happened to the participant AND events that the participant has witnessed.
+"
+raw_stressful_life  <- read_delim("./data/lec.damon.csv", delim = ",")
+## Spiritual Experiences (Brief R-COPE)
+raw_spiritual <- read_delim("./data/r_cope.damon.csv", delim = ",")
+
+# Things to predict
+## Quality of Life (WHOQOL-BREF): Evaluates general, physical, psychological health, social relationships, and environment.
+raw_life_quality <- read_delim("./data/QOL.damon.csv", delim = ",")
+## raw_life_quality <- read_delim("./data/QOL.damon.csv", delim = ",")
+raw_commitment <- read_delim("./data/change.damon.csv", delim = ",")
+## Alcohol/Drug Craving (PACS): Measures the frequency and intensity of cravings.
+raw_craving <- read_delim("./data/craving.damon.csv", delim = ",")
+## Treatment dropout
+## demo.damon (dropout_yn)
+## Length of stay in treatment
+## demo.damon (days_in_tx_clean)
+## Impression of Change (PGIC)
+raw_change_impression <- read_delim("./data/pgic.damon.csv", delim = ",")
+
+# Other
+raw_data_dictionary <- read_delim("./data/Data Dictionary.csv", delim = ",")
+# Demographics
+
+# Missing
+## Childhood Experiences (ACE)
+## aces.damon is missing
+
+```
+
+
+```{r}
+str(raw_demographics)
+str(raw_SUD)
+str(raw_social_support)
+str(raw_sub_history)
+str(raw_aana_affiliation)
+str(raw_stressful_life)
+str(raw_spiritual)
+str(raw_life_quality)
+str(raw_commitment)
+str(raw_craving)
+str(raw_change_impression)
+str(raw_data_dictionary)
+```
