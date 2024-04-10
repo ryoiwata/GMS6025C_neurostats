@@ -83,3 +83,39 @@ str(raw_craving)
 str(raw_change_impression)
 str(raw_data_dictionary)
 ```
+
+```{r}
+raw_demographics |> filter(!str_detect(redcap_event_name,'readmission'))
+
+discharged_demo <- raw_demographics |> filter(str_detect(redcap_event_name,'discharge')) |>
+  mutate(discharge = redcap_event_name) |>
+  select(record_id, discharge)
+
+joined_demographics <- raw_demographics |> filter(str_detect(redcap_event_name,'baseline')) |>
+  inner_join(discharged_demo, by="record_id")
+
+
+
+#raw_demographics |> filter(str_detect(redcap_event_name,'followup'))
+
+```
+
+
+```{r}
+raw_SUD |>  filter(str_detect(redcap_event_name,'baseline')) |>
+  select(record_id, starts_with("sa")) |>
+  inner_join(joined_demographics, by="record_id")
+  
+
+```
+
+```{r}
+baseline_craving <- raw_craving |>  select(record_id, redcap_event_name, ends_with("mean")) |>
+  filter(str_detect(redcap_event_name,'baseline'))
+
+discharge_craving <- raw_craving |>  select(record_id, redcap_event_name, ends_with("mean")) |>
+  filter(str_detect(redcap_event_name,'discharge'))
+
+inner_join(baseline_craving, discharge_craving, by="record_id", suffix=c(".baseline", ".discharge"))
+
+```
