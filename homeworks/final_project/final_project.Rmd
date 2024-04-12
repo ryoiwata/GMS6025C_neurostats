@@ -69,7 +69,7 @@ raw_data_dictionary <- read_delim("./data/Data Dictionary.csv", delim = ",")
 ```
 
 
-```{r}
+```{}
 str(raw_demographics)
 str(raw_SUD)
 str(raw_social_support)
@@ -85,37 +85,224 @@ str(raw_data_dictionary)
 ```
 
 ```{r}
+# Filtering out readmission
 raw_demographics |> filter(!str_detect(redcap_event_name,'readmission'))
 
-discharged_demo <- raw_demographics |> filter(str_detect(redcap_event_name,'discharge')) |>
-  mutate(discharge = redcap_event_name) |>
-  select(record_id, discharge)
+# Filtering for subjects that are in each time
 
-joined_demographics <- raw_demographics |> filter(str_detect(redcap_event_name,'baseline')) |>
-  inner_join(discharged_demo, by="record_id")
+discharged_demo <- raw_demographics |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
 
+baseline_demo <- raw_demographics |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
 
+followup_demo <- raw_demographics |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
 
-#raw_demographics |> filter(str_detect(redcap_event_name,'followup'))
+```
+```{r}
+joined_demographics <- baseline_demo |> 
+  inner_join(discharged_demo, by="record_id") |>
+  inner_join(followup_demo, by="record_id")
 
 ```
 
+# Getting baseline, followup, discharge for all datasets
 
-```{r}
-raw_SUD |>  filter(str_detect(redcap_event_name,'baseline')) |>
-  select(record_id, starts_with("sa")) |>
-  inner_join(joined_demographics, by="record_id")
-  
+```{r SUD}
+# Filtering for subjects that are in each time
+
+discharged_SUD <- raw_SUD |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_SUD <- raw_SUD |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_SUD <- raw_SUD |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_SUD <- baseline_SUD |> 
+  inner_join(discharged_SUD, by="record_id") |>
+  inner_join(followup_SUD, by="record_id")
 
 ```
 
+```{r social support}
+# Filtering for subjects that are in each time
+
+discharged_social_support <- raw_social_support |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_social_support <- raw_social_support |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_social_support <- raw_social_support |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_social_support <- baseline_social_support |> 
+  inner_join(discharged_social_support, by="record_id") |>
+  inner_join(followup_social_support, by="record_id")
+```
+
+```{r substance history}
+# Filtering for subjects that are in each time
+
+discharged_sub_history <- raw_sub_history |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_sub_history <- raw_sub_history |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_sub_history <- raw_sub_history |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_sub_history <- baseline_sub_history |> 
+  inner_join(discharged_sub_history, by="record_id") |>
+  inner_join(followup_sub_history, by="record_id")
+```
+
+```{r aana affiliation}
+# Filtering for subjects that are in each time
+
+discharged_aana_affiliation <- raw_aana_affiliation |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_aana_affiliation <- raw_aana_affiliation |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_aana_affiliation <- raw_aana_affiliation |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_aana_affiliation <- baseline_aana_affiliation |> 
+  inner_join(discharged_aana_affiliation, by="record_id") |>
+  inner_join(followup_aana_affiliation, by="record_id")
+```
+
+```{r stressful life}
+# Filtering for subjects that are in each time
+
+discharged_stressful_life <- raw_stressful_life |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_stressful_life <- raw_stressful_life |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_stressful_life <- raw_stressful_life |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_stressful_life <- baseline_stressful_life |> 
+  inner_join(discharged_stressful_life, by="record_id") |>
+  inner_join(followup_stressful_life, by="record_id")
+```
+
+```{r spirituality}
+# Filtering for subjects that are in each time
+
+discharged_spiritual <- raw_spiritual |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_spiritual <- raw_spiritual |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_spiritual <- raw_spiritual |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_spiritual <- baseline_spiritual |> 
+  inner_join(discharged_spiritual, by="record_id") |>
+  inner_join(followup_spiritual, by="record_id")
+```
+
 ```{r}
-baseline_craving <- raw_craving |>  select(record_id, redcap_event_name, ends_with("mean")) |>
-  filter(str_detect(redcap_event_name,'baseline'))
+# Filtering for subjects that are in each time
 
-discharge_craving <- raw_craving |>  select(record_id, redcap_event_name, ends_with("mean")) |>
-  filter(str_detect(redcap_event_name,'discharge'))
+discharged_life_quality <- raw_life_quality |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
 
-inner_join(baseline_craving, discharge_craving, by="record_id", suffix=c(".baseline", ".discharge"))
+baseline_life_quality <- raw_life_quality |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
 
+followup_life_quality <- raw_life_quality |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_life_quality <- baseline_life_quality |> 
+  inner_join(discharged_life_quality, by="record_id") |>
+  inner_join(followup_life_quality, by="record_id")
+```
+
+```{r craving}
+# Filtering for subjects that are in each time
+
+discharged_craving <- raw_craving |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_craving <- raw_craving |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_craving <- raw_craving |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_craving <- baseline_craving |> 
+  inner_join(discharged_craving, by="record_id") |>
+  inner_join(followup_craving, by="record_id")
+```
+
+```{r change impression}
+# Filtering for subjects that are in each time
+
+discharged_change_impression <- raw_change_impression |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_change_impression <- raw_change_impression |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_change_impression <- raw_change_impression |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_change_impression <- baseline_change_impression |> 
+  inner_join(discharged_change_impression, by="record_id") |>
+  inner_join(followup_change_impression, by="record_id")
+```
+
+# Joining all 
+
+```{r}
+all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, by="record_id") |>
+  inner_join(joined_change_impression, by="record_id") |>
+  inner_join(joined_craving, by="record_id") |>
+  inner_join(joined_life_quality, by="record_id") |>
+  inner_join(joined_social_support, by="record_id") |>
+  inner_join(joined_spiritual, by="record_id") |>
+  inner_join(joined_stressful_life, by="record_id") |>
+  inner_join(joined_sub_history, by="record_id") |>
+  inner_join(joined_SUD, by="record_id")
 ```
