@@ -115,15 +115,27 @@ joined_demographics <- baseline_demo |>
 ```{r SUD}
 # Filtering for subjects that are in each time
 
-discharged_SUD <- raw_SUD |>
+factored_SUD <- raw_SUD |> mutate(sa_dx___0 = as_factor(sa_dx___0)) |>
+  mutate(sa_dx___1 = as_factor(sa_dx___1)) |>
+  mutate(sa_dx___2 = as_factor(sa_dx___2)) |>
+  mutate(sa_dx___3 = as_factor(sa_dx___3)) |>
+  mutate(sa_dx___4 = as_factor(sa_dx___4)) |>
+  mutate(sa_dx___5 = as_factor(sa_dx___5)) |>
+  mutate(sa_dx___6 = as_factor(sa_dx___6)) |>
+  mutate(sa_dx___7 = as_factor(sa_dx___7)) |>
+  mutate(sa_dx___8 = as_factor(sa_dx___8)) |>
+  mutate(sa_dx___9 = as_factor(sa_dx___9))
+
+
+discharged_SUD <- factored_SUD |>
   filter(str_detect(redcap_event_name,'discharge')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
 
-baseline_SUD <- raw_SUD |>
+baseline_SUD <- factored_SUD |>
   filter(str_detect(redcap_event_name,'baseline')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
 
-followup_SUD <- raw_SUD |>
+followup_SUD <- factored_SUD |>
   filter(str_detect(redcap_event_name,'followup')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
 
@@ -382,11 +394,135 @@ all_addiction_data |>
 
 ```{r stressful life experiences}
 all_addiction_data |>
-  ggplot(aes(lec)) +
+  ggplot(aes(who_qol_gh_total.baseline)) +
   geom_histogram()
 
 all_addiction_data |>
-  ggplot(aes(tspe_positive.baseline)) +
+  ggplot(aes(who_psy_total.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(who_ph_total.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(who_soc_rel_total.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(who_env_total.baseline)) +
   geom_histogram()
 
 ```
+
+```{r Craving}
+all_addiction_data |>
+  ggplot(aes(aase_neg_mean.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(aase_pos_mean.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(aase_phy_mean.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(aase_crv_mean.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(aase_tot_mean.baseline)) +
+  geom_histogram()
+```
+
+```{r Impression of change}
+all_addiction_data |>
+  ggplot(aes(patient_impression_change.discharge)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(patient_impression_change.followup)) +
+  geom_histogram()
+```
+
+```{r Commitment to sobriety}
+all_addiction_data |>
+  ggplot(aes(commit_to_change.total.baseline)) +
+  geom_histogram()
+
+```
+
+```{r EDA Spiritual}
+all_addiction_data |>
+  ggplot(aes(pos_cope.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(neg_cope.baseline)) +
+  geom_histogram()
+
+```
+
+
+```{r Craving}
+all_addiction_data |>
+  ggplot(aes(aase_neg_mean.baseline, color=sa_dx___0.baseline)) +
+  geom_density() 
+
+all_addiction_data |>
+  ggplot(aes(aase_pos_mean.baseline, color=sa_dx___0.baseline)) +
+  geom_density() 
+
+```
+
+```{r}
+mutate(all_addiction_data, commit)
+```
+
+```{r Craving}
+all_addiction_data |>
+  ggplot(aes(dase_neg_mean.baseline, color=sa_dx___0.baseline)) +
+  geom_density() 
+
+all_addiction_data |>
+  ggplot(aes(dase_pos_mean.baseline, color=sa_dx___0.baseline)) +
+  geom_density() 
+
+```
+
+```{r SUD}
+all_addiction_data |>
+  ggplot(aes(sa_dx_sum.baseline, color=sa_dx___0.baseline)) +
+  geom_density() 
+
+all_addiction_data |>
+  ggplot(aes(sa_dx_sum.baseline, color=sa_dx___4.baseline)) +
+  geom_density() 
+
+all_addiction_data |>
+  ggplot(aes(sa_dx___0.baseline, sa_dx___1.baseline)) +
+  geom_jitter()
+```
+
+```{r}
+filter(all_addiction_data, sa_dx___4.baseline==1)
+```
+
+
+all_addiction_data |>
+  ggplot(aes(aase_pos_mean.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(aase_phy_mean.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(aase_crv_mean.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(aase_tot_mean.baseline)) +
+  geom_histogram()
