@@ -306,3 +306,27 @@ all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, b
   inner_join(joined_sub_history, by="record_id") |>
   inner_join(joined_SUD, by="record_id")
 ```
+
+```{r Craving EDA}
+all_addiction_data |>
+  ggplot(aes(pacs_mean.baseline, pacs_mean.discharge)) +
+  geom_jitter()
+
+all_addiction_data |>
+  ggplot(aes(pacs_mean.baseline, pacs_mean.followup)) +
+  geom_jitter()
+```
+```{r Craving EDA}
+all_addiction_data |>
+  ggplot() +
+  geom_histogram(aes(pacs_mean.baseline))
+
+all_addiction_data |>
+  ggplot() +
+  geom_histogram(aes(pacs_mean.followup))
+
+all_addiction_data |>
+  ggplot() +
+  geom_histogram(aes(pacs_mean.discharge))
+
+```
