@@ -293,11 +293,32 @@ joined_change_impression <- baseline_change_impression |>
   inner_join(followup_change_impression, by="record_id")
 ```
 
+```{r}
+# Filtering for subjects that are in each time
+
+discharged_commitment <- raw_commitment |>
+  filter(str_detect(redcap_event_name,'discharge')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
+
+baseline_commitment <- raw_commitment |>
+  filter(str_detect(redcap_event_name,'baseline')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
+
+followup_commitment <- raw_commitment |>
+  filter(str_detect(redcap_event_name,'followup')) |>
+  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
+
+joined_commitment <- baseline_commitment |> 
+  inner_join(discharged_commitment, by="record_id") |>
+  inner_join(followup_commitment, by="record_id")
+```
+
 # Joining all 
 
 ```{r}
 all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, by="record_id") |>
   inner_join(joined_change_impression, by="record_id") |>
+  inner_join(joined_commitment, by="record_id") |>
   inner_join(joined_craving, by="record_id") |>
   inner_join(joined_life_quality, by="record_id") |>
   inner_join(joined_social_support, by="record_id") |>
@@ -328,5 +349,44 @@ all_addiction_data |>
 all_addiction_data |>
   ggplot() +
   geom_histogram(aes(pacs_mean.discharge))
+
+```
+```{r EDA social support}
+all_addiction_data |>
+  ggplot(aes(mspss_fam_sub_total.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(mspss_friends_sub_total.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(mspss_sig_other_sub_total.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(mspss_total.baseline)) +
+  geom_histogram()
+```
+
+```{r AA NA thoughts}
+all_addiction_data |>
+  ggplot(aes(tspe_negative.baseline)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(tspe_positive.baseline)) +
+  geom_histogram()
+
+```
+
+```{r stressful life experiences}
+all_addiction_data |>
+  ggplot(aes(lec)) +
+  geom_histogram()
+
+all_addiction_data |>
+  ggplot(aes(tspe_positive.baseline)) +
+  geom_histogram()
 
 ```
