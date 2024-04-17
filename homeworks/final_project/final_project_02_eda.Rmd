@@ -25,3 +25,59 @@ all_addiction_data = read_rds("./addiction.rds")
 all_addiction_data
 ```
 
+```{r}
+all_addiction_data |>
+  filter(SUD.is_Alchohol == 1) |>
+  filter(SUD.is_sum >= 2) |>
+  filter(SUD.is_Cocaine == 1)
+
+
+```
+
+# Things that can predict
+- number of sober days
+- days since baseline
+- age
+- gender
+- education
+- drop out yes no
+- SUD is alcholoc
+- SUD is other
+- Social support
+  - family
+  - friends
+  - sig other
+  - total
+- Substance use history
+  - Tried tobacco/alcohol
+  - Age of first use
+  - Regular use
+  - Age of regular use
+- AA/NA affiliation
+  - Lifetime number of meetings
+  - Last year number of meetings
+  - Degree of affiliation
+  - Positive thoughts
+  - Negative thoughts
+- Stressful life
+  - happened
+  - witnessed
+  - learned about
+  - exposed
+  - total of all things
+- Childhood
+- Religion
+  - Religious affiliation
+  - Positive
+  - Negative
+- Life quality
+
+# Things we can predict
+- impression change
+- length of stay
+- Life quality
+- Commitment to change
+- Cravings
+  - baseline
+  - baseline vs followup
+- Impression of change

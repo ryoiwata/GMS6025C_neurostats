@@ -421,7 +421,7 @@ factored_addiction_data <- all_addiction_data |>
   mutate(number_of_days_since_baseline = days_in_tx_clean.baseline) |>
   mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
 
-    # SUD
+  # SUD
   mutate(SUD.is_Alchohol = as_factor(sa_dx___0.baseline)) |>
   mutate(SUD.is_Opioid = as_factor(sa_dx___1.baseline)) |>
   mutate(SUD.is_Cannabis = as_factor(sa_dx___2.baseline)) |>
@@ -435,12 +435,36 @@ factored_addiction_data <- all_addiction_data |>
   mutate(SUD.is_sum = sa_dx_sum.baseline) |>
   
   # Social support
+  # 1. There is a special person who is around when I am in need.
+  # 2. There is a special person with whom I can share joys and sorrows.
+  # 3. My family really tries to help me.
+  # 4. I get the emotional help & support I need from my family.
+  # 5. I have a special person who is a real source of comfort to me.
+  # 6. My friends really try to help me.
+  # 7. I can count on my friends when things go wrong.
+  # 8. I can talk about my problems with my family.
+  # 9. I have friends with whom I can share my joys and sorrows.
+  # 10. There is a special person in my life who cares about my feelings.
+  # 11. My family is willing to help me make decisions.
+  # 12. I can talk about my problems with my friends.
+  # MSPSS Family Subscale	sum([mspss3],[mspss4],[mspss8],[mspss11])/4
+  # MSPSS Friends Subscale	sum([mspss6],[mspss7],[mspss9],[mspss12])/4
+  # MSPSS Significant Other Subscale	sum([mspss1], [mspss2], [mspss5], [mspss10])/4
+  # MSPSS Total	round(sum( [mspss1],[mspss2],[mspss3],[mspss4],[mspss5],[mspss6],[mspss7],[mspss8],[mspss9],[mspss10],[mspss11],[mspss12] )/12,2)
   mutate(social_support.fam_sub_total = mspss_fam_sub_total.baseline) |>
   mutate(social_support.friends_sub_total = mspss_friends_sub_total.baseline) |>
   mutate(social_support.total = mspss_total.baseline) |>
   mutate(social_support.sig_other_sub_total = mspss_sig_other_sub_total.baseline) |>
   
   # Substance use history
+  # 18. Please indicate which of these substances you have EVER TRIED:	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drug(s)
+  # Tobacco (including e-cigarettes or vaping): Age you first tried any tobacco/nicotine product.	
+  # Alcohol: Age you first tried any type of alcohol.	
+  # Other drug(s): Age you first tried any type of mood altering substance.	
+  # 19. Please indicate which substances you   REGULARLY used (for any consistent amount of time):	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drugs
+  # Tobacco (including e-cigarettes or vaping): Age at which you began regular use of tobacco/nicotine product (even if you have since quit).	
+  # Alcohol: Age at which you began regular use of any type of alcohol product (even if you have since quit).	
+  # Other drug(s): Age at which you began regular use of any type of mood altering substance (even if you have since quit).	
   mutate(sub_history.has_tried_tobacco = as_factor(newace18a___1.baseline)) |>
   mutate(sub_history.has_tried_alcohol = as_factor(newace18a___2.baseline)) |>
   mutate(sub_history.has_tried_other = as_factor(newace18a___10.baseline)) |>
@@ -492,7 +516,8 @@ factored_addiction_data <- all_addiction_data |>
   mutate(aana_affiliation.tspe_negative = tspe_negative.baseline) |>
 
   # Stressful life events
-  # 1. Natural disaster	1, Happened to you | 2, Witnessed it happen | 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 6, Doesn't apply
+  # 1, Happened to you | 2, Witnessed it happen | 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 6, Doesn't apply
+  # 1. Natural disaster	
   mutate(stressful_life.natural_disaster.happened_to_you = as_factor(lec_2_1___1.baseline)) |>
   mutate(stressful_life.natural_disaster.witnessed = as_factor(lec_2_1___2.baseline)) |>
   mutate(stressful_life.natural_disaster.learned = as_factor(lec_2_1___3.baseline)) |>
