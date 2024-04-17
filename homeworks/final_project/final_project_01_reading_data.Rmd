@@ -17,7 +17,7 @@ library(car)
 options(scipen = 3, digits = 5) 
 ```
 
-# Problem 1
+# Inputting the data
 
 ## 1.A Load data and prepare data for analysis 
 
@@ -27,51 +27,105 @@ options(scipen = 3, digits = 5)
 # Predictor
 ## Basic demographics (age, gender, education) 
 ## Duration of sobriety prior to treatment
-raw_demographics <- read_delim("./data/demo.damon.csv", delim = ",")
+raw_demographics <- read_delim("./data/demo.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
+
 ## Specific SUDs (e.g., alcohol use disorder)
-raw_SUD <- read_delim("./data/SUDdiagnosis.damon.csv", delim = ",")
+raw_SUD <- read_delim("./data/SUDdiagnosis.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
+
 ## Social Support (MSPSS)
-raw_social_support <- read_delim("./data/mspss.damon.csv", delim = ",")
+raw_social_support <- read_delim("./data/mspss.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
+
 ## Substance Use History
-raw_sub_history <- read_delim("./data/subuse.damon.csv", delim = ",")
+raw_sub_history <- read_delim("./data/subuse.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
+
+problems(raw_sub_history)
+
+
 ## AA/NA Affiliation 
-raw_aana_affiliation <- read_delim("./data/aana.damon.csv", delim = ",")
+raw_aana_affiliation <- read_delim("./data/aana.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
+
+problems(raw_aana_affiliation)
+
+
+```
+
+```{r}
 ## Stressful Life Experiences (LEC-5) lec.damon
-"
-*The structure of this dataframe is really bonkers. You probably want to use the variable “toyou_total” which is a sum of event types that the patients endorsed as having happened to them. We sometimes also use “toyou_wit_total”, which is a similar sum score, but includes events that have happened to the participant AND events that the participant has witnessed.
-"
-raw_stressful_life  <- read_delim("./data/lec.damon.csv", delim = ",")
+
+# *The structure of this dataframe is really bonkers. 
+#You probably want to use the variable “toyou_total” 
+# which is a sum of event types that the patients endorsed as having happened to them. 
+# We sometimes also use “toyou_wit_total”, which is a similar sum score, 
+# but includes events that have happened to the participant 
+#AND events that the participant has witnessed.
+
+raw_stressful_life  <- read_delim("./data/lec.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
+
 ## Spiritual Experiences (Brief R-COPE)
-raw_spiritual <- read_delim("./data/r_cope.damon.csv", delim = ",")
+raw_spiritual <- read_delim("./data/r_cope.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
 
 ## Childhood Experiences (ACE)
-raw_childhood <- read_delim("./data/aces.damon.csv", delim = ",")
+raw_childhood <- read_delim("./data/aces.damon.csv", 
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
 ```
 
 
 ```{r}
 # Things to predict
 ## Quality of Life (WHOQOL-BREF): Evaluates general, physical, psychological health, social relationships, and environment.
-raw_life_quality <- read_delim("./data/QOL.damon.csv", delim = ",")
-## raw_life_quality <- read_delim("./data/QOL.damon.csv", delim = ",")
-raw_commitment <- read_delim("./data/change.damon.csv", delim = ",")
+raw_life_quality <- read_delim("./data/QOL.damon.csv",
+                               delim = ",",
+                               progress = FALSE,
+                               show_col_types = FALSE)
+
+raw_commitment <- read_delim("./data/change.damon.csv",
+                             delim = ",",
+                             progress = FALSE,
+                             show_col_types = FALSE)
 ## Alcohol/Drug Craving (PACS): Measures the frequency and intensity of cravings.
-raw_craving <- read_delim("./data/craving.damon.csv", delim = ",")
+raw_craving <- read_delim("./data/craving.damon.csv",
+                          delim = ",",
+                          progress = FALSE,
+                          show_col_types = FALSE)
+
 ## Treatment dropout
 ## demo.damon (dropout_yn)
 ## Length of stay in treatment
 ## demo.damon (days_in_tx_clean)
 ## Impression of Change (PGIC)
-raw_change_impression <- read_delim("./data/pgic.damon.csv", delim = ",")
+raw_change_impression <- read_delim("./data/pgic.damon.csv",
+                                    delim = ",",
+                                    progress = FALSE,
+                                    show_col_types = FALSE)
 
 # Other
-raw_data_dictionary <- read_delim("./data/Data Dictionary.csv", delim = ",")
-# Demographics
-
-# Missing
-## Childhood Experiences (ACE)
-## aces.damon is missing
-
+raw_data_dictionary <- read_delim("./data/Data Dictionary.csv", 
+                                  delim = ",",
+                                  progress = FALSE,
+                                  show_col_types = FALSE)
 ```
 
 
@@ -92,9 +146,6 @@ raw_data_dictionary <- read_delim("./data/Data Dictionary.csv", delim = ",")
 ```
 
 ```{r}
-# Filtering out readmission
-raw_demographics |> filter(!str_detect(redcap_event_name,'readmission'))
-
 # Filtering for subjects that are in each time
 
 discharged_demo <- raw_demographics |>
@@ -121,29 +172,15 @@ joined_demographics <- baseline_demo |>
 # Getting baseline, followup, discharge for all datasets
 
 ```{r SUD}
-# Filtering for subjects that are in each time
-
-factored_SUD <- raw_SUD |> mutate(sa_dx___0 = as_factor(sa_dx___0)) |>
-  mutate(sa_dx___1 = as_factor(sa_dx___1)) |>
-  mutate(sa_dx___2 = as_factor(sa_dx___2)) |>
-  mutate(sa_dx___3 = as_factor(sa_dx___3)) |>
-  mutate(sa_dx___4 = as_factor(sa_dx___4)) |>
-  mutate(sa_dx___5 = as_factor(sa_dx___5)) |>
-  mutate(sa_dx___6 = as_factor(sa_dx___6)) |>
-  mutate(sa_dx___7 = as_factor(sa_dx___7)) |>
-  mutate(sa_dx___8 = as_factor(sa_dx___8)) |>
-  mutate(sa_dx___9 = as_factor(sa_dx___9))
-
-
-discharged_SUD <- factored_SUD |>
+discharged_SUD <- raw_SUD |>
   filter(str_detect(redcap_event_name,'discharge')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
 
-baseline_SUD <- factored_SUD |>
+baseline_SUD <- raw_SUD |>
   filter(str_detect(redcap_event_name,'baseline')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
 
-followup_SUD <- factored_SUD |>
+followup_SUD <- raw_SUD |>
   filter(str_detect(redcap_event_name,'followup')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
 
@@ -370,194 +407,12 @@ all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, b
 
 ```
 
+# Saving the Tibble to file
+
 ```{r}
 saveRDS(all_addiction_data, "addiction.rds")
         
 ```
 
-```{r Craving EDA}
-all_addiction_data |>
-  ggplot(aes(pacs_mean.baseline, pacs_mean.discharge)) +
-  geom_jitter()
-
-all_addiction_data |>
-  ggplot(aes(pacs_mean.baseline, pacs_mean.followup)) +
-  geom_jitter()
-```
-```{r Craving EDA}
-all_addiction_data |>
-  ggplot() +
-  geom_histogram(aes(pacs_mean.baseline))
-
-all_addiction_data |>
-  ggplot() +
-  geom_histogram(aes(pacs_mean.followup))
-
-all_addiction_data |>
-  ggplot() +
-  geom_histogram(aes(pacs_mean.discharge))
-
-```
-```{r EDA social support}
-all_addiction_data |>
-  ggplot(aes(mspss_fam_sub_total.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(mspss_friends_sub_total.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(mspss_sig_other_sub_total.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(mspss_total.baseline)) +
-  geom_histogram()
-```
-
-```{r AA NA thoughts}
-all_addiction_data |>
-  ggplot(aes(tspe_negative.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(tspe_positive.baseline)) +
-  geom_histogram()
-
-```
-
-```{r stressful life experiences}
-all_addiction_data |>
-  ggplot(aes(who_qol_gh_total.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(who_psy_total.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(who_ph_total.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(who_soc_rel_total.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(who_env_total.baseline)) +
-  geom_histogram()
-
-```
-
-```{r Craving}
-all_addiction_data |>
-  ggplot(aes(aase_neg_mean.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(aase_pos_mean.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(aase_phy_mean.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(aase_crv_mean.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(aase_tot_mean.baseline)) +
-  geom_histogram()
-```
-
-```{r Impression of change}
-all_addiction_data |>
-  ggplot(aes(patient_impression_change.discharge)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(patient_impression_change.followup)) +
-  geom_histogram()
-```
-
-```{r Commitment to sobriety}
-all_addiction_data |>
-  ggplot(aes(commit_to_change.total.baseline)) +
-  geom_histogram()
-
-```
-
-```{r EDA Spiritual}
-all_addiction_data |>
-  ggplot(aes(pos_cope.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(neg_cope.baseline)) +
-  geom_histogram()
-
-```
 
 
-```{r Craving}
-all_addiction_data |>
-  ggplot(aes(aase_neg_mean.baseline, color=sa_dx___0.baseline)) +
-  geom_density() 
-
-all_addiction_data |>
-  ggplot(aes(aase_pos_mean.baseline, color=sa_dx___0.baseline)) +
-  geom_density() 
-
-```
-
-```{r}
-mutate(all_addiction_data, commit)
-```
-
-```{r Craving}
-all_addiction_data |>
-  ggplot(aes(dase_neg_mean.baseline, color=sa_dx___0.baseline)) +
-  geom_density() 
-
-all_addiction_data |>
-  ggplot(aes(dase_pos_mean.baseline, color=sa_dx___0.baseline)) +
-  geom_density() 
-
-```
-
-```{r SUD}
-all_addiction_data |>
-  ggplot(aes(sa_dx_sum.baseline, color=sa_dx___0.baseline)) +
-  geom_density() 
-
-all_addiction_data |>
-  ggplot(aes(sa_dx_sum.baseline, color=sa_dx___4.baseline)) +
-  geom_density() 
-
-all_addiction_data |>
-  ggplot(aes(sa_dx___0.baseline, sa_dx___1.baseline)) +
-  geom_jitter()
-```
-
-```{r}
-filter(all_addiction_data, sa_dx___4.baseline==1)
-```
-
-
-all_addiction_data |>
-  ggplot(aes(aase_pos_mean.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(aase_phy_mean.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(aase_crv_mean.baseline)) +
-  geom_histogram()
-
-all_addiction_data |>
-  ggplot(aes(aase_tot_mean.baseline)) +
-  geom_histogram()

@@ -1,0 +1,49 @@
+---
+title: "Final Project"
+author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(knitr)
+library(car)
+# to control default number formatting, no need for specifying digits in kable.
+options(scipen = 3, digits = 5) 
+```
+
+```{r}
+all_addiction_data = read_rds("./addiction.rds")
+```
+
+```{r}
+factored_addiction_data <- all_addiction_data |>
+  mutate(age = age_today.baseline) |>
+  mutate(gender = as_factor(gender.baseline)) |>
+  mutate(education = as_factor(ed_summary.baseline)) |>
+  mutate(sobriety_calc = sobriety_calc.baseline) |>
+  mutate(days_in_tx_clean = days_in_tx_clean.baseline) |>
+  mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
+  mutate(sa_dx___0 = as_factor(sa_dx___0.baseline)) |>
+  mutate(sa_dx___1 = as_factor(sa_dx___1.baseline)) |>
+  mutate(sa_dx___2 = as_factor(sa_dx___2.baseline)) |>
+  mutate(sa_dx___3 = as_factor(sa_dx___3.baseline)) |>
+  mutate(sa_dx___4 = as_factor(sa_dx___4.baseline)) |>
+  mutate(sa_dx___5 = as_factor(sa_dx___5.baseline)) |>
+  mutate(sa_dx___6 = as_factor(sa_dx___6.baseline)) |>
+  mutate(sa_dx___7 = as_factor(sa_dx___7.baseline)) |>
+  mutate(sa_dx___8 = as_factor(sa_dx___8.baseline)) |>
+  mutate(sa_dx___9 = as_factor(sa_dx___9.baseline)) |>
+  mutate(sa_dx_sum = sa_dx_sum.baseline))
+
+```
+
+```{r}
+drop_na(all_addiction_data, dropout_yn.baseline)
+```
+
