@@ -21,3 +21,7 @@ options(scipen = 3, digits = 5)
 all_addiction_data = read_rds("./addiction.rds")
 ```
 
+```{r}
+all_addiction_data
+```
+
