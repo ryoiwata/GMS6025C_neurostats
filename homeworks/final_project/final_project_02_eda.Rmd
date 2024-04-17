@@ -129,22 +129,38 @@ all_addiction_data |> ggplot(aes(social_support.friends_sub_total)) +
 all_addiction_data |> ggplot(aes(social_support.sig_other_sub_total)) +
   geom_histogram() 
 ```
+```{r}
+all_addiction_data |> ggplot(aes(qol.general_health_baseline)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.psychological_health_baseline)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.physical_health_baseline)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.social_health_baseline)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.environmental_health_baseline)) +
+  geom_histogram()
+```
 
 ```{r}
-# all_addiction_data |> ggplot(aes(qol.general_health)) +
-#   geom_histogram()
-# 
-# all_addiction_data |> ggplot(aes(qol.psychological_health)) +
-#   geom_histogram()
-# 
-# all_addiction_data |> ggplot(aes(qol.physical_health)) +
-#   geom_histogram()
-# 
-# all_addiction_data |> ggplot(aes(qol.social_health)) +
-#   geom_histogram()
-# 
-# all_addiction_data |> ggplot(aes(qol.environmental_health)) +
-#   geom_histogram()
+all_addiction_data |> ggplot(aes(qol.general_health_followup)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.psychological_health_followup)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.physical_health_followup)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.social_health_followup)) +
+  geom_histogram()
+
+all_addiction_data |> ggplot(aes(qol.environmental_health_followup)) +
+  geom_histogram()
 ```
 
 ```{r}
