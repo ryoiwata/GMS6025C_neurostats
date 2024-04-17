@@ -25,15 +25,6 @@ all_addiction_data = read_rds("./addiction.rds")
 all_addiction_data
 ```
 
-```{r}
-all_addiction_data |>
-  filter(SUD.is_Alchohol == 1) |>
-  filter(SUD.is_sum >= 2) |>
-  filter(SUD.is_Cocaine == 1)
-
-
-```
-
 # Things that can predict
 - number of sober days
 - days since baseline
@@ -81,3 +72,82 @@ all_addiction_data |>
   - baseline
   - baseline vs followup
 - Impression of change
+
+```{r}
+filtered_alcohol_data <- all_addiction_data |>
+  # Getting only the people that are addicted to alcohol
+  filter(SUD.is_Alchohol == 1) |>
+  filter(SUD.is_sum == 1) 
+
+filtered_alcohol_data
+
+filtered_cocaine_data <- all_addiction_data |>
+  # Getting only the people that are addicted to alcohol
+  filter(SUD.is_Cocaine == 1)
+
+filtered_cocaine_data
+
+```
+
+```{r}
+filtered_alcohol_data |> ggplot(aes(abstain_confidence_pos_mean_baseline)) +
+  geom_histogram()
+
+filtered_alcohol_data |> ggplot(aes(abstain_confidence_neg_mean_baseline)) +
+  geom_histogram()
+```
+
+```{r}
+filtered_cocaine_data |> ggplot(aes(abstain_confidence_pos_mean_baseline)) +
+  geom_histogram()
+
+filtered_cocaine_data |> ggplot(aes(abstain_confidence_neg_mean_baseline)) +
+  geom_histogram()
+
+filtered_cocaine_data |> ggplot(aes(abstain_confidence_crv_mean_baseline)) +
+  geom_histogram()
+
+filtered_cocaine_data |> ggplot(aes(abstain_confidence_crv_mean_followup)) +
+  geom_histogram()
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(impression_change_followup)) +
+  geom_histogram()
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(social_support.total)) +
+  geom_histogram() 
+
+all_addiction_data |> ggplot(aes(social_support.fam_sub_total)) +
+  geom_histogram() 
+
+all_addiction_data |> ggplot(aes(social_support.friends_sub_total)) +
+  geom_histogram() 
+
+all_addiction_data |> ggplot(aes(social_support.sig_other_sub_total)) +
+  geom_histogram() 
+```
+
+```{r}
+# all_addiction_data |> ggplot(aes(qol.general_health)) +
+#   geom_histogram()
+# 
+# all_addiction_data |> ggplot(aes(qol.psychological_health)) +
+#   geom_histogram()
+# 
+# all_addiction_data |> ggplot(aes(qol.physical_health)) +
+#   geom_histogram()
+# 
+# all_addiction_data |> ggplot(aes(qol.social_health)) +
+#   geom_histogram()
+# 
+# all_addiction_data |> ggplot(aes(qol.environmental_health)) +
+#   geom_histogram()
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(commit_to_change.total)) +
+  geom_histogram()
+```

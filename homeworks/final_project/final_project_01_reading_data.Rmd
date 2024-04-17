@@ -723,12 +723,25 @@ factored_addiction_data <- all_addiction_data |>
   # Social Relationships	sum([who_20],[who_21],[who_22])
   # Environment	sum([who_8],[who_9],[who_12],[who_13],[who_14],[who_23],[who_24],[who_25])
   
-  mutate(qol.general_health = who_qol_gh_total.baseline) |>
-  mutate(qol.psychological_health = who_psy_total.baseline) |>
-  mutate(qol.physical_health = who_ph_total.baseline) |>
-  mutate(qol.social_health = who_soc_rel_total.baseline) |>
-  mutate(qol.environmental_health = who_env_total.baseline) |>
-  mutate(qol.mean = qol_mean.baseline) |>
+  mutate(qol.general_health_baseline =  who_qol_gh_total.baseline) |>
+  mutate(qol.psychological_health_baseline =  who_psy_total.baseline) |>
+  mutate(qol.physical_health_baseline =  who_ph_total.baseline) |>
+  mutate(qol.social_health_baseline =  who_soc_rel_total.baseline) |>
+  mutate(qol.environmental_health_baseline =  who_env_total.baseline) |>
+  mutate(qol.mean_baseline =  qol_mean.baseline) |>
+  mutate(qol.general_health_followup =  who_qol_gh_total.baseline) |>
+  mutate(qol.psychological_health_followup =  who_psy_total.baseline) |>
+  mutate(qol.physical_health_followup =  who_ph_total.baseline) |>
+  mutate(qol.social_health_followup =  who_soc_rel_total.baseline) |>
+  mutate(qol.environmental_health_followup =  who_env_total.baseline) |>
+  mutate(qol.mean_followup =  qol_mean.baseline) |>
+  mutate(qol.general_health_discharge =  who_qol_gh_total.baseline) |>
+  mutate(qol.psychological_health_discharge =  who_psy_total.baseline) |>
+  mutate(qol.physical_health_discharge =  who_ph_total.baseline) |>
+  mutate(qol.social_health_discharge =  who_soc_rel_total.baseline) |>
+  mutate(qol.environmental_health_discharge =  who_env_total.baseline) |>
+  mutate(qol.mean_discharge =  qol_mean.baseline) |>
+
 
   # Commitment
   mutate(commit_to_change.total = commit_to_change.total.baseline) |>
