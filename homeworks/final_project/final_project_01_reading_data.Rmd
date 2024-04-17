@@ -407,11 +407,336 @@ all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, b
 
 ```
 
+# Filtering for columns that have data and factoring as needed
+
+```{r}
+factored_addiction_data <- all_addiction_data |>
+  # Demographics
+  mutate(age = age_today.baseline) |>
+  mutate(gender = as_factor(gender.baseline)) |>
+  mutate(education = as_factor(ed_summary.baseline)) |>
+  mutate(sobriety_calc = sobriety_calc.baseline) |>
+  mutate(days_in_tx_clean = days_in_tx_clean.baseline) |>
+  mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
+  # SUD
+  mutate(sa_dx_Alchohol = as_factor(sa_dx___0.baseline)) |>
+  mutate(sa_dx_Opioid = as_factor(sa_dx___1.baseline)) |>
+  mutate(sa_dx_Cannabis = as_factor(sa_dx___2.baseline)) |>
+  mutate(sa_dx_sedative_hypnotic_anxiolytic = as_factor(sa_dx___3.baseline)) |>
+  mutate(sa_dx_Cocaine = as_factor(sa_dx___4.baseline)) |>
+  mutate(sa_dx_Other_stimulant = as_factor(sa_dx___5.baseline)) |>
+  mutate(sa_dx_Hallucinogen = as_factor(sa_dx___6.baseline)) |>
+  mutate(sa_dx_Nicotine = as_factor(sa_dx___7.baseline)) |>
+  mutate(sa_dx_Inhalant = as_factor(sa_dx___8.baseline)) |>
+  mutate(sa_dx_psychoactive = as_factor(sa_dx___9.baseline)) |>
+  mutate(sa_dx_sum = sa_dx_sum.baseline) |>
+  # Social support
+  mutate(mspss_fam_sub_total = mspss_fam_sub_total.baseline) |>
+  mutate(mspss_friends_sub_total = mspss_friends_sub_total.baseline) |>
+  mutate(mspss_total = mspss_total.baseline) |>
+  mutate(mspss_sig_other_sub_total = mspss_sig_other_sub_total.baseline) |>
+  # Substance use history
+  mutate(has_tried_tobacco = as_factor(newace18a___1.baseline)) |>
+  mutate(has_tried_alcohol = as_factor(newace18a___2.baseline)) |>
+  mutate(has_tried_other = as_factor(newace18a___10.baseline)) |>
+  mutate(age_tried_tobacco = newace18b.baseline) |>
+  mutate(age_tried_alcohol = newace18c.baseline) |>
+  mutate(age_tried_other = newace18d.baseline) |>
+  mutate(is_regular_tobacco = as_factor(newace19a___1.baseline)) |>
+  mutate(is_regular_alcohol = as_factor(newace19b.baseline)) |>
+  mutate(is_regular_other = as_factor(newace19c.baseline)) |>
+  mutate(age_regular_tobacco = newace19b.baseline) |>
+  mutate(age_regular_alcohol = newace19c.baseline) |>
+  mutate(age_regular_other = newace19d.baseline) |>
+  # AA/NA Affiliation
+  # Lifetime meetings calculation	if([aaas_8]=0, 0,if([aaas_8]>0 and [aaas_8]<=30, 0.25, if([aaas_8]>=31 and [aaas_8]<=90,0.50, if([aaas_8]>90 and [aaas_8]<=500, 0.75, if([aaas_8]>=501,1,0)))))
+  mutate(aaas_calc_lifetime = aaas_calc_lifetime.baseline) |>
+ # Past year meetings calculation	if([aaas_9]=0,0,if([aaas_9]>0 and [aaas_9]<=65, 0.25, if([aaas_9]>=66 and [aaas_9]<=130, 0.50, if([aaas_9]>130 and [aaas_9]<=195, 0.75, if([aaas_9]>=196,1,0)))))
+  mutate(aaas_calc_past_year = aaas_calc_past_year.baseline) |>
+# Total AAAS Score	sum([aaas_1],[aaas_2],[aaas_3],[aaas_4],[aaas_5],[aaas_6],[aaas_7],[aaas_calc_lifetime],[aaas_calc_past_year])
+  mutate(aaas_total = aaas_total.baseline) |>
+  mutate(tspe_positive = tspe_positive.baseline) |>
+  mutate(tspe_negative = tspe_negative.baseline) |>
+
+  # Stressful life events
+  # 1. Natural disaster	1, Happened to you | 2, Witnessed it happen | 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 6, Doesn't apply
+  mutate(natural_disaster.happened_to_you = as_factor(lec_2_1___1.baseline)) |>
+  mutate(natural_disaster.witnessed = as_factor(lec_2_1___2.baseline)) |>
+  mutate(natural_disaster.learned = as_factor(lec_2_1___3.baseline)) |>
+  mutate(natural_disaster.exposed = as_factor(lec_2_1___4.baseline)) |>
+  # 2. Fire or explosion
+  mutate(fire.happened_to_you = as_factor(lec_2_2___1.baseline)) |>
+  mutate(fire.witnessed = as_factor(lec_2_2___2.baseline)) |>
+  mutate(fire.learned = as_factor(lec_2_2___3.baseline)) |>
+  mutate(fire.exposed = as_factor(lec_2_2___4.baseline)) |>
+  # 3. Transportation accident
+  mutate(transportation_accident.happened_to_you = as_factor(lec_2_3___1.baseline)) |>
+  mutate(transportation_accident.witnessed = as_factor(lec_2_3___2.baseline)) |>
+  mutate(transportation_accident.learned = as_factor(lec_2_3___3.baseline)) |>
+  mutate(transportation_accident.exposed = as_factor(lec_2_3___4.baseline)) |>
+  # 4. Serious accident
+  mutate(serious_accident.happened_to_you = as_factor(lec_2_4___1.baseline)) |>
+  mutate(serious_accident.witnessed = as_factor(lec_2_4___2.baseline)) |>
+  mutate(serious_accident.learned = as_factor(lec_2_4___3.baseline)) |>
+  mutate(serious_accident.exposed = as_factor(lec_2_4___4.baseline)) |>
+  # 5. Toxic substance
+  mutate(toxic.happened_to_you = as_factor(lec_2_5___1.baseline)) |>
+  mutate(toxic.witnessed = as_factor(lec_2_5___2.baseline)) |>
+  mutate(toxic.learned = as_factor(lec_2_5___3.baseline)) |>
+  mutate(toxic.exposed = as_factor(lec_2_5___4.baseline)) |>
+  # 6. Physical assault
+  mutate(physical_assault.happened_to_you = as_factor(lec_2_6___1.baseline)) |>
+  mutate(physical_assault.witnessed = as_factor(lec_2_6___2.baseline)) |>
+  mutate(physical_assault.learned = as_factor(lec_2_6___3.baseline)) |>
+  mutate(physical_assault.exposed = as_factor(lec_2_6___4.baseline)) |>
+  # 7. Assault with weapon
+  mutate(weapon_assault.happened_to_you = as_factor(lec_2_7___1.baseline)) |>
+  mutate(weapon_assault.witnessed = as_factor(lec_2_7___2.baseline)) |>
+  mutate(weapon_assault.learned = as_factor(lec_2_7___3.baseline)) |>
+  mutate(weapon_assault.exposed = as_factor(lec_2_7___4.baseline)) |>
+  # 8. Sexual assault
+  mutate(sexual_assault.happened_to_you = as_factor(lec_2_8___1.baseline)) |>
+  mutate(sexual_assault.witnessed = as_factor(lec_2_8___2.baseline)) |>
+  mutate(sexual_assault.learned = as_factor(lec_2_8___3.baseline)) |>
+  mutate(sexual_assault.exposed = as_factor(lec_2_8___4.baseline)) |>
+  # 9. Unwanted sexual experience
+  mutate(unwanted_sexual.happened_to_you = as_factor(lec_2_9___1.baseline)) |>
+  mutate(unwanted_sexual.witnessed = as_factor(lec_2_9___2.baseline)) |>
+  mutate(unwanted_sexual.learned = as_factor(lec_2_9___3.baseline)) |>
+  mutate(unwanted_sexual.exposed = as_factor(lec_2_9___4.baseline)) |>
+  # 10. Combat or war exposure
+  mutate(combat.happened_to_you = as_factor(lec_2_10___1.baseline)) |>
+  mutate(combat.witnessed = as_factor(lec_2_10___2.baseline)) |>
+  mutate(combat.learned = as_factor(lec_2_10___3.baseline)) |>
+  mutate(combat.exposed = as_factor(lec_2_10___4.baseline)) |>
+  # 11. Captivity
+  mutate(captivity.happened_to_you = as_factor(lec_2_11___1.baseline)) |>
+  mutate(captivity.witnessed = as_factor(lec_2_11___2.baseline)) |>
+  mutate(captivity.learned = as_factor(lec_2_11___3.baseline)) |>
+  mutate(captivity.exposed = as_factor(lec_2_11___4.baseline)) |>
+  # 12. Life-threatening illness
+  mutate(illness.happened_to_you = as_factor(lec_2_12___1.baseline)) |>
+  mutate(illness.witnessed = as_factor(lec_2_12___2.baseline)) |>
+  mutate(illness.learned = as_factor(lec_2_12___3.baseline)) |>
+  mutate(illness.exposed = as_factor(lec_2_12___4.baseline)) |>
+  # 13. Severe human suffering
+  mutate(severe_suffering.happened_to_you = as_factor(lec_2_13___1.baseline)) |>
+  mutate(severe_suffering.witnessed = as_factor(lec_2_13___2.baseline)) |>
+  mutate(severe_suffering.learned = as_factor(lec_2_13___3.baseline)) |>
+  mutate(severe_suffering.exposed = as_factor(lec_2_13___4.baseline)) |>
+  # 14. Sudden violent death
+  mutate(sudden_violent_death.happened_to_you = as_factor(lec_2_14___1.baseline)) |>
+  mutate(sudden_violent_death.witnessed = as_factor(lec_2_14___2.baseline)) |>
+  mutate(sudden_violent_death.learned = as_factor(lec_2_14___3.baseline)) |>
+  mutate(sudden_violent_death.exposed = as_factor(lec_2_14___4.baseline)) |>
+  # 15. Sudden accidental death
+  mutate(sudden_accidental_death.happened_to_you = as_factor(lec_2_15___1.baseline)) |>
+  mutate(sudden_accidental_death.witnessed = as_factor(lec_2_15___2.baseline)) |>
+  mutate(sudden_accidental_death.learned = as_factor(lec_2_15___3.baseline)) |>
+  mutate(sudden_accidental_death.exposed = as_factor(lec_2_15___4.baseline)) |>
+  # 16. Serious injury or harm caused to someone else
+  mutate(harm_to_others.happened_to_you = as_factor(lec_2_16___1.baseline)) |>
+  mutate(harm_to_others.witnessed = as_factor(lec_2_16___2.baseline)) |>
+  mutate(harm_to_others.learned = as_factor(lec_2_16___3.baseline)) |>
+  mutate(harm_to_others.exposed = as_factor(lec_2_16___4.baseline)) |>
+  # 17. Any other very stressful experience
+  mutate(other_stressful.happened_to_you = as_factor(lec_2_17___1.baseline)) |>
+  mutate(other_stressful.witnessed = as_factor(lec_2_17___2.baseline)) |>
+  mutate(other_stressful.learned = as_factor(lec_2_17___3.baseline)) |>
+  mutate(other_stressful.exposed = as_factor(lec_2_17___4.baseline)) |>
+  # Total stress
+  mutate(stressful_life.happened_to_you = toyou_total.baseline) |>
+  mutate(stressful_life.happened_to_you_and_witnessed = toyou_wit_total.baseline) |>
+  mutate(stressful_life.witnessed = witnessed_total.baseline) |>
+
+  # Childhood
+  #   "1. Did a parent or other adult in the household often or very often... 
+  # 
+  # Swear at you, insult you, put you down, or humiliate you?   
+  # 
+  #           OR
+  # 
+  # Act in a way that made you afraid that you might be physically hurt?"
+  mutate(childhood.verbal_abuse = as_factor(ace1.baseline)) |>
+  # "2. Did a parent or other adult in the household often or very often... 
+  # 
+  # Push, grab, slap, or throw something at you?
+  # 
+  #            OR    
+  # 
+  # Ever hit you so hard that you had marks or were injured?"
+  mutate(childhood.physical_abuse = as_factor(ace2.baseline)) |>
+  # "3. Did an adult or person at least 5 years older than you ever...
+  # 
+  # Touch or fondle you or have you touch their body in a sexual way?
+  # 
+  #            OR    
+  # 
+  # Attempt or actually have oral, anal, or vaginal intercourse with you?"
+  mutate(childhood.sexual_abuse = as_factor(ace3.baseline)) |>
+  # "4. Did you often or very often feel that ...
+  # 
+  # No one in your family loved you or thought you were important or special?
+  # 
+  #            OR    
+  # 
+  # Your family didn't look out for each other, feel close to each other, or support each other?"
+  mutate(childhood.alone = as_factor(ace4.baseline)) |>
+  # "5. Did you often or very often feel that ...
+  # 
+  # You didn't have enough to eat, had to wear dirty clothes, and had no one to protect you?
+  # 
+  #            OR    
+  # 
+  # Your parents were too drunk or high to take care of you or take you to the doctor if you needed it?"
+  mutate(childhood.neglected = as_factor(ace5.baseline)) |>
+  # 6. Were your parents ever separated or divorced?
+  mutate(childhood.divorced = as_factor(ace2.baseline)) |>
+  # "7. Was your mother or stepmother (or father/stepfather):
+  # 
+  # Often or very often pushed, grabbed, slapped, or had something thrown at her/him?
+  # 
+  #            OR    
+  # 
+  # Sometimes, often, or very often kicked, bitten, hit with a fist, or hit with something hard?
+  # 
+  #            OR    
+  # 
+  # Ever repeatedly hit at least a few minutes or threatened with a gun or knife?"
+  mutate(childhood.parent_was_abused = as_factor(ace7.baseline)) |>
+  # 7a. For Q7, indicate which parent was violated 
+  # 8. Did you live with anyone who was a problem drinker or alcoholic or who used street drugs?
+  mutate(childhood.other_was_addicted = as_factor(ace8.baseline)) |>
+  # 9. Was a household member depressed or mentally ill, or did a household member attempt suicide?
+  mutate(childhood.other_was_stressed = as_factor(ace9.baseline)) |>
+  # 10. Did a household member go to prison?
+  mutate(childhood.other_was_prisoned = as_factor(ace10.baseline)) |>
+  # Total childhood
+  mutate(total_ace_score = total_ace_score.baseline) |>
+
+  # Spirituality and religion
+  # 0, Atheist | 1, Agnostic | 2, Protestant | 3, Catholic | 4, Muslim | 5, Jewish | 6, Hindu | 7, Buddhist | 8, Baptist | 9, No religious affiliation | 10, Non-denominational Christian | 15, Other
+  mutate(religion.Atheist = as_factor(brc_rel___0.baseline)) |>
+  mutate(religion.Agnostic = as_factor(brc_rel___1.baseline)) |>
+  mutate(religion.Protestant = as_factor(brc_rel___2.baseline)) |>
+  mutate(religion.Catholic = as_factor(brc_rel___3.baseline)) |>
+  mutate(religion.Muslim = as_factor(brc_rel___4.baseline)) |>
+  mutate(religion.Jewish = as_factor(brc_rel___5.baseline)) |>
+  mutate(religion.Hindu = as_factor(brc_rel___6.baseline)) |>
+  mutate(religion.Buddhist = as_factor(brc_rel___7.baseline)) |>
+  mutate(religion.Baptist = as_factor(brc_rel___8.baseline)) |>
+  mutate(religion.No_affiliation = as_factor(brc_rel___9.baseline)) |>
+  mutate(religion.Non_denominational_Christian = as_factor(brc_rel___10.baseline)) |>
+  mutate(religion.Other = as_factor(brc_rel___15.baseline)) |>
+  mutate(positive_spiritual_cope = as_factor(pos_cope.baseline)) |>
+  mutate(negative_spiritual_cope = as_factor(neg_cope.baseline)) |>
+
+  # Life Quality
+  # 1. How would you rate your quality of life?
+  # 2. How satisfied are you with your health?
+  # 3. To what extent do you feel that physical pain prevents you from doing what you need to do?
+  # 4. How much do you need any medical treatment to function in your daily life?
+  # 5. How much do you enjoy life?
+  # 6. To what extent do you feel your life to be meaningful?
+  # 7. How well are you able to concentrate?
+  # 8. How safe do you feel in your daily life?
+  # 9. How healthy is your physical environment?
+  # 10. Do you have enough energy for everyday life?
+  # 11. Are you able to accept your bodily appearance?
+  # 12. Have you enough money to meet your needs?
+  # 13. How available to you is the information you need in your day-to-day life?
+  # 14. To what extent do you have the opportunity for leisure activities?
+  # 15. How well are you able to get around?
+  # 16. How satisfied are you with your sleep?
+  # 17. How satisfied are you with your ability to perform your daily living activities?
+  # 18. How satisfied are you with your capacity for work?
+  # 19. How satisfied are you with yourself?
+  # 20. How satisfied are you with your personal relationships?
+  # 21. How satisfied are you with your sex life?
+  # 22. How satisfied are you with the support you get from your friends?
+  # 23. How satisfied are you with the conditions of your living place?
+  # 24. How satisfied are you with your access to health services?
+  # 25. How satisfied are you with your mode of transportation?
+  # 26. How often do you have negative feelings, such as blue mood, despair, anxiety, or depression?
+
+  # General Health	sum([who_1],[who_2])
+  # Psychological Health	sum([who_5],[who_6],[who_7],[who_11],[who_19],[who_26])
+  # Physical Health	sum([who_3],[who_4],[who_10],[who_15],[who_16],[who_17],[who_18])
+  # Social Relationships	sum([who_20],[who_21],[who_22])
+  # Environment	sum([who_8],[who_9],[who_12],[who_13],[who_14],[who_23],[who_24],[who_25])
+  
+  mutate(qol.general_health = who_qol_gh_total.baseline) |>
+  mutate(qol.psychological_health = who_psy_total.baseline) |>
+  mutate(qol.physical_health = who_ph_total.baseline) |>
+  mutate(qol.social_health = who_soc_rel_total.baseline) |>
+  mutate(qol.environmental_health = who_env_total.baseline) |>
+  mutate(qol.mean = qol_mean.baseline) |>
+
+  # Commitment
+  mutate(commit_to_change.total = commit_to_change.total.baseline) |>
+  
+
+  # Cravings
+  # Please read each statement and indicate how confident you are RIGHT NOW that you would not choose to use a drug or drugs if they were readily available to you TODAY. 
+  # 1, Not at all confident | 2, Not Very confident | 3, Moderately confident | 4, Very confident | 5, Extremely confident
+  # 1. When I am in agony because of stopping or withdrawing from drug use.
+  # 2. When I have a headache.
+  # 3. When I am feeling depressed.
+  # 4. When I am on vacation and want to relax.
+  # 5. When I am concerned about someone.
+  # 6. When I am worried.
+  # 7. When I have the urge to use drugs to see what happens.
+  # 8. When I am being offered drugs in a social situation.
+  # 9. When I dream about using drugs.
+  # 10. When I want to test my will power over using drugs.
+  # 11. When I am feeling a physical need or craving for drugs.
+  # 12. When I am physically tired.
+  # 13. When I am experiencing some physical pain or injury.
+  # 14. When I feel like blowing up because of frustration.
+  # 15. When I see others using drugs at a bar or a party.
+  # 16. When I sense everything is going wrong for me.
+  # 17. When people I used to use drugs with encourage me to use drugs.
+  # 18. When I am feeling angry inside.
+  # 19. When I experience an urge or impulse to use drugs that catches me unprepared.
+  # 20. When I am excited or celebrating with others.
+  # DASE Neg Affect Subscale	sum([dase3],[dase6],[dase14],[dase16],[dase18])
+  # DASE Social/Positive Subscale	sum([dase4],[dase8],[dase15],[dase17],[dase20])
+  # DASE Physical Subscale	sum([dase2],[dase5],[dase9],[dase12],[dase13])
+  # DASE Cravings and Urges Subscale	sum([dase1],[dase7],[dase10],[dase11],[dase19])
+  mutate(abstain_confidence_neg_mean_baseline = dase_neg_mean.baseline) |>
+  mutate(abstain_confidence_pos_mean_baseline = dase_neg_mean.baseline) |>
+  mutate(abstain_confidence_phy_mean_baseline = dase_neg_mean.baseline) |>
+  mutate(abstain_confidence_crv_mean_baseline = dase_neg_mean.baseline) |>
+  mutate(abstain_confidence_tot_mean_baseline = dase_neg_mean.baseline) |>
+  mutate(abstain_confidence_neg_mean_followup = dase_neg_mean.followup) |>
+  mutate(abstain_confidence_pos_mean_followup = dase_neg_mean.followup) |>
+  mutate(abstain_confidence_phy_mean_followup = dase_neg_mean.followup) |>
+  mutate(abstain_confidence_crv_mean_followup = dase_neg_mean.followup) |>
+  mutate(abstain_confidence_tot_mean_followup = dase_neg_mean.followup) |>
+  mutate(abstain_confidence_neg_mean_discharge = dase_neg_mean.discharge) |>
+  mutate(abstain_confidence_pos_mean_discharge = dase_neg_mean.discharge) |>
+  mutate(abstain_confidence_phy_mean_discharge = dase_neg_mean.discharge) |>
+  mutate(abstain_confidence_crv_mean_discharge = dase_neg_mean.discharge) |>
+  mutate(abstain_confidence_tot_mean_discharge = dase_neg_mean.discharge) |>
+
+  # Impression of change
+  # 1. Since beginning treatment at the Florida Recovery Center, how would you describe the change (if any) in your activity, limitations, symptoms, emotions and overall quality of life, related to your substance use disorder?    	
+  # 1, 1. No change (or condition has gotten worse) | 2, 2. Almost the same (hardly any change at all) | 3, 3. A little better (but no noticeable change) | 4, 4. Somewhat better (but the change has not made any real difference) | 5, 5. Moderately better (and a slight but noticeable difference) | 6, 6. Better (and a definite improvement has made a real and worthwhile difference) | 7, 7. A great deal better (and a considerable improvement that has made all the difference)
+  mutate(patient_impression_change_discharge = patient_impression_change.discharge) |>
+  mutate(patient_impression_change_followup = patient_impression_change.followup) |>
+
+  select(-contains(".baseline")) |>
+  select(-contains(".discharge")) |>
+  select(-contains(".followup")) |>
+  select(-contains(".x.x")) |>
+  select(-contains(".y.y"))
+
+```
+
 # Saving the Tibble to file
 
 ```{r}
-saveRDS(all_addiction_data, "addiction.rds")
-        
+saveRDS(factored_addiction_data, "addiction.rds")
 ```
 
 
