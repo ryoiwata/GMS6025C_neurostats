@@ -13,19 +13,32 @@ library(tidyverse)
 library(tidymodels)
 library(knitr)
 library(car)
+# install.packages("ggalluvial")
+library(ggalluvial)
+# install.packages("circlize")
+library(circlize)
+library(stringr)
+
 # to control default number formatting, no need for specifying digits in kable.
 options(scipen = 3, digits = 5) 
 ```
 
 ```{r}
-all_addiction_data = read_rds("./addiction.rds")
+all_addiction_data = read_rds("./addiction.rds") |>
+  filter(number_of_days_in_treatment >= 0) |>
+  drop_na(gender) |>
+  drop_na(dropout_yn)
+
+
 ```
 
 ```{r}
 all_addiction_data
 ```
 
-# Things that can predict
+# Overview of what we're working with
+
+### Things that can predict
 - number of sober days
 - days since baseline
 - age
@@ -63,7 +76,7 @@ all_addiction_data
   - Negative
 - Life quality
 
-# Things we can predict
+### Things we can predict
 - impression change
 - length of stay
 - Life quality
@@ -72,6 +85,88 @@ all_addiction_data
   - baseline
   - baseline vs followup
 - Impression of change
+
+# Looking at the basic demographics
+
+```{r}
+ggplot() +
+  geom_alluvium()
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
+  geom_density(alpha=.4)
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
+  geom_histogram(alpha=0.4, binwidth = 10) +
+  facet_wrap(vars(education))
+```
+```{r}
+
+# # Function to calculate co-occurrences
+# co_occurrence <- function(df) {
+#   n <- ncol(df)
+#   mat <- matrix(0, n, n, dimnames = list(colnames(df), colnames(df)))
+# 
+#   for (i in 1:n) {
+#     for (j in i:n) {
+#       if (i == j) {
+#         mat[i, j] <- sum(df[[i]] == 1)
+#       } else {
+#         mat[i, j] <- sum(df[[i]] == 1 & df[[j]] == 1)
+#         mat[j, i] <- mat[i, j]  # Symmetric matrix
+#       }
+#     }
+#   }
+#   mat
+# }
+
+co_occurrence_modified <- function(df) {
+  n <- ncol(df)
+  mat <- matrix(0, n, n, dimnames = list(colnames(df), colnames(df)))
+  
+  for (i in 1:(n-1)) {  # Adjust loop to stop before the last column
+    for (j in (i+1):n) {  # Start from the next column to avoid repeats and self-comparison
+      # Calculate co-occurrence only for unique pairs (i != j)
+      mat[i, j] <- sum(df[[i]] == 1 & df[[j]] == 1)
+      mat[j, i] <- mat[i, j]  # Ensure the matrix is symmetric
+    }
+  }
+  
+  # Ensure diagonal and any revisited pairs are set to zero
+  # This step is somewhat redundant with the above control but ensures no self-pair counts
+  diag(mat) <- 0
+  
+  mat
+}
+
+# Create the matrix
+matrix_for_chord <- all_addiction_data |>
+  select(starts_with("SUD")) |>
+  select(-ends_with("sum")) |>
+  rename_all(~stringr::str_replace(., "SUD.is_", "")) |>
+  co_occurrence_modified()
+
+matrix_for_chord[upper.tri(matrix_for_chord)] <- 0
+```
+
+```{r}
+chordDiagram(matrix_for_chord)
+```
+
+```{r}
+install.packages("ggalluvial")
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(number_of_days_in_treatment)) +
+  geom_histogram() +
+  facet_wrap(vars(dropout_yn))
+```
+
+
 
 ```{r}
 filtered_alcohol_data <- all_addiction_data |>
@@ -164,6 +259,210 @@ all_addiction_data |> ggplot(aes(qol.environmental_health_followup)) +
 ```
 
 ```{r}
-all_addiction_data |> ggplot(aes(commit_to_change.total)) +
+all_addiction_data |> 
+  ggplot(aes(number_of_days_in_treatment)) +
+  geom_histogram() +
+  facet_wrap(vars(SUD.is_Cocaine))
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(x=social_support.fam_sub_total, y=qol.psychological_health_baseline)) +
+  geom_jitter() +
+  facet_wrap(vars(SUD.is_Cocaine))
+
+all_addiction_data |> ggplot(aes(x=social_support.fam_sub_total, y=qol.psychological_health_followup)) +
+  geom_jitter() +
+  facet_wrap(vars(SUD.is_Cocaine))
+  
+```
+
+```{r}
+filtered_cocaine_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=qol.psychological_health_baseline)) +
+  geom_jitter() 
+
+filtered_cocaine_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=qol.psychological_health_followup)) +
+  geom_jitter() 
+  
+```
+
+```{r}
+all_addiction_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=SUD.is_sum)) +
+  geom_jitter() 
+```
+
+```{r}
+filtered_alcohol_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=number_of_days_in_treatment)) +
+  geom_jitter() 
+```
+
+```{r}
+filtered_alcohol_data |> ggplot(aes(x=aana_affiliation.tspe_positive, y=number_of_days_in_treatment)) +
+  geom_jitter() 
+```
+
+```{r}
+filtered_alcohol_data |> ggplot(aes(x=aana_affiliation.tspe_negative, y=number_of_days_in_treatment)) +
+  geom_jitter() 
+```
+
+```{r}
+all_addiction_data |> 
+  filter(stressful_life.physical_assault.happened_to_you == 1) |>
+  ggplot(aes(qol.mean_baseline)) +
   geom_histogram()
+
+all_addiction_data |> 
+  filter(stressful_life.happened_to_you_total == 0) |>
+  ggplot(aes(qol.mean_baseline)) +
+  geom_histogram()
+
+```
+
+```{r}
+filtered_cocaine_data |> 
+  ggplot(aes(x=stressful_life.happened_to_you_total, y=abstain_confidence_neg_mean_baseline)) +
+  geom_jitter()
+```
+
+```{r}
+filtered_cocaine_data |> 
+  ggplot(aes(x=stressful_life.happened_to_you_total, y=abstain_confidence_crv_mean_baseline)) +
+  geom_jitter()
+```
+
+```{r}
+stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.is_sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope, 
+                             all_addiction_data)
+```
+
+```{r}
+car::Anova(stress_to_abstain_model)
+```
+
+```{r}
+qol_model = lm(qol.mean_baseline ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.is_sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope, 
+                             all_addiction_data)
+```
+
+```{r}
+car::Anova(qol_model)
+```
+
+```{r}
+duration_model = lm(number_of_days_in_treatment ~
+                               stressful_life.happened_to_you_total
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.is_sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope, 
+                             all_addiction_data)
+```
+
+```{r}
+car::Anova(duration_model)
+```
+
+```{r}
+change_model = lm(impression_change_followup ~
+                               stressful_life.happened_to_you_total
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.is_sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope, 
+                             all_addiction_data)
+```
+
+```{r}
+car::Anova(change_model)
+```
+
+```{r}
+commitment_model = lm(commit_to_change.total ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.is_sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope, 
+                             all_addiction_data)
+```
+
+```{r}
+car::Anova(commitment_model)
+```
+
+```{r}
+stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.is_sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope,
+                             all_addiction_data)
+```
+
+  + SUD.is_Alchohol
+  + SUD.is_Opioid 
+  + SUD.is_Cannabis
+  + SUD.is_sedative_hypnotic_anxiolytic 
+  + SUD.is_Cocaine 
+  + SUD.is_Other_stimulant 
+  + SUD.is_Hallucinogen 
+  + SUD.is_Nicotine 
+  + SUD.is_Inhalant 
+  + SUD.is_psychoactive 
+
+```{r}
+car::Anova(stress_to_abstain_model)
 ```

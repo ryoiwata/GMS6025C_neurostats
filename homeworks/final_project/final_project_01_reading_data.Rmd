@@ -17,6 +17,7 @@ library(car)
 options(scipen = 3, digits = 5) 
 ```
 
+
 # Inputting the data
 
 ## 1.A Load data and prepare data for analysis 
@@ -418,7 +419,7 @@ factored_addiction_data <- all_addiction_data |>
   # 17a. # of sobriety days (calculated)
   mutate(number_of_sober_days = sobriety_calc.baseline) |>
   # B4. Number of days since baseline.
-  mutate(number_of_days_since_baseline = days_in_tx_clean.baseline) |>
+  mutate(number_of_days_in_treatment = days_in_tx_clean.baseline) |>
   mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
 
   # SUD
@@ -686,8 +687,8 @@ factored_addiction_data <- all_addiction_data |>
   mutate(religion.No_affiliation = as_factor(brc_rel___9.baseline)) |>
   mutate(religion.Non_denominational_Christian = as_factor(brc_rel___10.baseline)) |>
   mutate(religion.Other = as_factor(brc_rel___15.baseline)) |>
-  mutate(religion.positive_spiritual_cope = as_factor(pos_cope.baseline)) |>
-  mutate(religion.negative_spiritual_cope = as_factor(neg_cope.baseline)) |>
+  mutate(religion.positive_spiritual_cope = pos_cope.baseline) |>
+  mutate(religion.negative_spiritual_cope = neg_cope.baseline) |>
 
   # Life Quality
   # 1. How would you rate your quality of life?
