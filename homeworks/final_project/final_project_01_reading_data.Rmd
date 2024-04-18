@@ -116,11 +116,6 @@ raw_craving <- read_delim("./data/craving.damon.csv",
 ## demo.damon (dropout_yn)
 ## Length of stay in treatment
 ## demo.damon (days_in_tx_clean)
-## Impression of Change (PGIC)
-raw_change_impression <- read_delim("./data/pgic.damon.csv",
-                                    delim = ",",
-                                    progress = FALSE,
-                                    show_col_types = FALSE)
 
 # Other
 raw_data_dictionary <- read_delim("./data/Data Dictionary.csv", 
@@ -142,7 +137,6 @@ raw_data_dictionary <- read_delim("./data/Data Dictionary.csv",
 # str(raw_life_quality)
 # str(raw_commitment)
 # str(raw_craving)
-# str(raw_change_impression)
 # str(raw_data_dictionary)
 ```
 
@@ -351,26 +345,6 @@ joined_craving <- baseline_craving |>
   inner_join(followup_craving, by="record_id")
 ```
 
-```{r change impression}
-# Filtering for subjects that are in each time
-
-discharged_change_impression <- raw_change_impression |>
-  filter(str_detect(redcap_event_name,'discharge')) |>
-  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
-
-baseline_change_impression <- raw_change_impression |>
-  filter(str_detect(redcap_event_name,'baseline')) |>
-  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
-
-followup_change_impression <- raw_change_impression |>
-  filter(str_detect(redcap_event_name,'followup')) |>
-  rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
-
-joined_change_impression <- baseline_change_impression |> 
-  inner_join(discharged_change_impression, by="record_id") |>
-  inner_join(followup_change_impression, by="record_id")
-```
-
 ```{r}
 # Filtering for subjects that are in each time
 
@@ -395,7 +369,6 @@ joined_commitment <- baseline_commitment |>
 
 ```{r}
 all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, by="record_id") |>
-  inner_join(joined_change_impression, by="record_id") |>
   inner_join(joined_commitment, by="record_id") |>
   inner_join(joined_childhood, by="record_id") |>
   inner_join(joined_craving, by="record_id") |>
@@ -415,7 +388,10 @@ factored_addiction_data <- all_addiction_data |>
   # Demographics
   mutate(age = age_today.baseline) |>
   mutate(gender = as_factor(gender.baseline)) |>
-  mutate(education = as_factor(ed_summary.baseline)) |>
+  # mutate(education = as_factor(ed_summary.baseline)) |>
+  mutate(education = factor(ed_summary.baseline, levels = c("High School/GED or less", "Associate's/Some College", "Bachelor's", "Master's", "Doctoral"))) |>
+  
+  
   # 17a. # of sobriety days (calculated)
   mutate(number_of_sober_days = sobriety_calc.baseline) |>
   # B4. Number of days since baseline.
@@ -469,15 +445,6 @@ factored_addiction_data <- all_addiction_data |>
   mutate(sub_history.has_tried_tobacco = as_factor(newace18a___1.baseline)) |>
   mutate(sub_history.has_tried_alcohol = as_factor(newace18a___2.baseline)) |>
   mutate(sub_history.has_tried_other = as_factor(newace18a___10.baseline)) |>
-  mutate(sub_history.age_tried_tobacco = newace18b.baseline) |>
-  mutate(sub_history.age_tried_alcohol = newace18c.baseline) |>
-  mutate(sub_history.age_tried_other = newace18d.baseline) |>
-  mutate(sub_history.is_regular_tobacco = as_factor(newace19a___1.baseline)) |>
-  mutate(sub_history.is_regular_alcohol = as_factor(newace19b.baseline)) |>
-  mutate(sub_history.is_regular_other = as_factor(newace19c.baseline)) |>
-  mutate(sub_history.age_regular_tobacco = newace19b.baseline) |>
-  mutate(sub_history.age_regular_alcohol = newace19c.baseline) |>
-  mutate(sub_history.age_regular_other = newace19d.baseline) |>
   
   # AA/NA Affiliation
   # 1. Have you ever considered yourself a member of AA or NA?
@@ -791,24 +758,71 @@ factored_addiction_data <- all_addiction_data |>
   mutate(abstain_confidence_crv_mean_discharge = dase_neg_mean.discharge) |>
   mutate(abstain_confidence_tot_mean_discharge = dase_neg_mean.discharge) |>
 
-  # Impression of change
-  # 1. Since beginning treatment at the Florida Recovery Center, how would you describe the change (if any) in your activity, limitations, symptoms, emotions and overall quality of life, related to your substance use disorder?    	
-  # 1, 1. No change (or condition has gotten worse) | 2, 2. Almost the same (hardly any change at all) | 3, 3. A little better (but no noticeable change) | 4, 4. Somewhat better (but the change has not made any real difference) | 5, 5. Moderately better (and a slight but noticeable difference) | 6, 6. Better (and a definite improvement has made a real and worthwhile difference) | 7, 7. A great deal better (and a considerable improvement that has made all the difference)
-  mutate(impression_change_discharge = patient_impression_change.discharge) |>
-  mutate(impression_change_followup = patient_impression_change.followup) |>
-
   select(-contains(".baseline")) |>
   select(-contains(".discharge")) |>
   select(-contains(".followup")) |>
   select(-contains(".x.x")) |>
-  select(-contains(".y.y"))
+  select(-contains(".y.y")) |>
+  
+  filter(number_of_days_in_treatment >= 0) |>
+  drop_na() |>
 
+  # Feature engineering 
+  mutate(SUD.sum_legal = as.numeric(as.character(SUD.is_Alchohol)) + as.numeric(as.character(SUD.is_Cannabis)) + as.numeric(as.character(SUD.is_Nicotine))) |>
+  
+  mutate(SUD.sum_illegal = as.numeric(as.character(SUD.is_Opioid)) +
+           as.numeric(as.character(SUD.is_sedative_hypnotic_anxiolytic)) +
+           as.numeric(as.character(SUD.is_Cocaine)) +
+           # as.numeric(as.character(SUD.is_Other_stimulant)) +
+           # as.numeric(as.character(SUD.is_Inhalant)) +
+           as.numeric(as.character(SUD.is_psychoactive))
+         )
+
+```
+
+```{r}
+factored_addiction_data |> filter(SUD.sum_illegal == 0)
+```
+
+```{r}
+counts <- colSums(select(select(factored_addiction_data, starts_with("SUD.is_")), -SUD.is_sum) == 1)
+
+counts_df <- as.data.frame(counts) |>
+  mutate(column_names = row.names(counts_df)) |>
+  mutate(column_names = str_replace(column_names, "SUD.is_", "")) |>
+  mutate(column_names = str_replace_all(column_names, "_", " "))
+
+  
+
+counts_df |> ggplot(aes(column_names, counts)) +
+  geom_bar(stat="identity") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title = "Distribution of addicted substances")
+```
+
+```{r}
+# factored_addiction_data |> filter(SUD.sum_illegal == 0)
+
+factored_addiction_data |> filter(SUD.is_Cocaine == 1)
+
+```
+
+```{r}
+factored_addiction_data |> mutate(SUD.is_Alchohol = as.numeric(as.character(SUD.is_Alchohol))) |>
+  select(SUD.is_Alchohol)
+
+ # as.numeric(as.character(factor_vector))
 ```
 
 # Saving the Tibble to file
 
 ```{r}
 saveRDS(factored_addiction_data, "addiction.rds")
+```
+
+```{r}
+str(factored_addiction_data)
+
 ```
 
 
