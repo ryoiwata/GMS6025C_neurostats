@@ -26,8 +26,14 @@ options(scipen = 3, digits = 5)
 ```{r}
 all_addiction_data = read_rds("./addiction.rds") |>
   filter(number_of_days_in_treatment >= 0) |>
-  drop_na(gender) |>
-  drop_na(dropout_yn)
+  select(-starts_with("sub_history.age")) |>
+  select(-starts_with("sub_history.is_regular")) |>
+  select(-starts_with("impression")) |>
+  drop_na()
+
+
+  # drop_na(gender) |>
+  # drop_na(dropout_yn) 
 
 
 ```
@@ -88,10 +94,6 @@ all_addiction_data
 
 # Looking at the basic demographics
 
-```{r}
-ggplot() +
-  geom_alluvium()
-```
 
 ```{r}
 all_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
@@ -157,10 +159,6 @@ chordDiagram(matrix_for_chord)
 ```
 
 ```{r}
-install.packages("ggalluvial")
-```
-
-```{r}
 all_addiction_data |> ggplot(aes(number_of_days_in_treatment)) +
   geom_histogram() +
   facet_wrap(vars(dropout_yn))
@@ -203,11 +201,6 @@ filtered_cocaine_data |> ggplot(aes(abstain_confidence_crv_mean_baseline)) +
   geom_histogram()
 
 filtered_cocaine_data |> ggplot(aes(abstain_confidence_crv_mean_followup)) +
-  geom_histogram()
-```
-
-```{r}
-all_addiction_data |> ggplot(aes(impression_change_followup)) +
   geom_histogram()
 ```
 
@@ -391,27 +384,6 @@ duration_model = lm(number_of_days_in_treatment ~
 
 ```{r}
 car::Anova(duration_model)
-```
-
-```{r}
-change_model = lm(impression_change_followup ~
-                               stressful_life.happened_to_you_total
-                             + age 
-                             + gender
-                             + education
-                             + number_of_sober_days
-                             + number_of_days_in_treatment
-                             + SUD.is_sum
-                             + social_support.total
-                             + aana_affiliation.aaas_total
-                             + aana_affiliation.tspe_positive
-                             + childhood_total
-                             + religion.positive_spiritual_cope, 
-                             all_addiction_data)
-```
-
-```{r}
-car::Anova(change_model)
 ```
 
 ```{r}
