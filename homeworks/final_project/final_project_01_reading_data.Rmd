@@ -409,7 +409,7 @@ factored_addiction_data <- all_addiction_data |>
   mutate(SUD.is_Nicotine = as_factor(sa_dx___7.baseline)) |>
   mutate(SUD.is_Inhalant = as_factor(sa_dx___8.baseline)) |>
   mutate(SUD.is_psychoactive = as_factor(sa_dx___9.baseline)) |>
-  mutate(SUD.is_sum = sa_dx_sum.baseline) |>
+  mutate(SUD.sum = sa_dx_sum.baseline) |>
   
   # Social support
   # 1. There is a special person who is around when I am in need.
@@ -767,16 +767,43 @@ factored_addiction_data <- all_addiction_data |>
   filter(number_of_days_in_treatment >= 0) |>
   drop_na() |>
 
-  # Feature engineering 
-  mutate(SUD.sum_legal = as.numeric(as.character(SUD.is_Alchohol)) + as.numeric(as.character(SUD.is_Cannabis)) + as.numeric(as.character(SUD.is_Nicotine))) |>
+  # Feature engineering
+  ## Substances
+  mutate(SUD.sum_legal = as.numeric(as.character(SUD.is_Alchohol)) +
+           as.numeric(as.character(SUD.is_Cannabis)) +
+           as.numeric(as.character(SUD.is_Nicotine)) +
+           as.numeric(as.character(SUD.is_Inhalant))) |>
+  
+  mutate(SUD.does_legal_drugs = as_factor(if_else(SUD.sum_legal >= 1, TRUE, FALSE))) |>
   
   mutate(SUD.sum_illegal = as.numeric(as.character(SUD.is_Opioid)) +
            as.numeric(as.character(SUD.is_sedative_hypnotic_anxiolytic)) +
            as.numeric(as.character(SUD.is_Cocaine)) +
-           # as.numeric(as.character(SUD.is_Other_stimulant)) +
-           # as.numeric(as.character(SUD.is_Inhalant)) +
-           as.numeric(as.character(SUD.is_psychoactive))
-         )
+           as.numeric(as.character(SUD.is_Other_stimulant)) +
+           as.numeric(as.character(SUD.is_psychoactive)) +
+           as.numeric(as.character(SUD.is_Hallucinogen))
+         ) |>
+  
+  mutate(SUD.does_illegal_drugs = as_factor(if_else(SUD.sum_illegal >= 1, TRUE, FALSE))) |>
+
+  ## Religion
+  mutate(religion.is_religious = as.numeric(as.character(religion.Other)) +
+           as.numeric(as.character(religion.Non_denominational_Christian)) +
+           as.numeric(as.character(religion.Baptist)) +
+           as.numeric(as.character(religion.Buddhist)) +
+           as.numeric(as.character(religion.Hindu)) +
+           as.numeric(as.character(religion.Jewish)) +
+           as.numeric(as.character(religion.Muslim)) +
+                      as.numeric(as.character(religion.Catholic)) +
+                      as.numeric(as.character(religion.Protestant))) |>
+  
+  mutate(religion.is_religious = as_factor(if_else(religion.is_religious >= 1, TRUE, FALSE))) |>
+  
+  mutate(religion.is_not_religious = as.numeric(as.character(religion.No_affiliation)) +
+         as.numeric(as.character(religion.Agnostic)) +
+         as.numeric(as.character(religion.Atheist))) |>
+  
+  mutate(religion.is_not_religious = as_factor(if_else(religion.is_not_religious >= 1, TRUE, FALSE)))
 
 ```
 
@@ -785,7 +812,7 @@ factored_addiction_data |> filter(SUD.sum_illegal == 0)
 ```
 
 ```{r}
-counts <- colSums(select(select(factored_addiction_data, starts_with("SUD.is_")), -SUD.is_sum) == 1)
+counts <- colSums(select(factored_addiction_data, starts_with("SUD.is_")) == 1)
 
 counts_df <- as.data.frame(counts) |>
   mutate(column_names = row.names(counts_df)) |>
@@ -798,20 +825,6 @@ counts_df |> ggplot(aes(column_names, counts)) +
   geom_bar(stat="identity") +
   theme(axis.text.x = element_text(angle = 90)) +
   labs(title = "Distribution of addicted substances")
-```
-
-```{r}
-# factored_addiction_data |> filter(SUD.sum_illegal == 0)
-
-factored_addiction_data |> filter(SUD.is_Cocaine == 1)
-
-```
-
-```{r}
-factored_addiction_data |> mutate(SUD.is_Alchohol = as.numeric(as.character(SUD.is_Alchohol))) |>
-  select(SUD.is_Alchohol)
-
- # as.numeric(as.character(factor_vector))
 ```
 
 # Saving the Tibble to file

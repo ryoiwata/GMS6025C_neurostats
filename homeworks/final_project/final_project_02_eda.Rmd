@@ -131,7 +131,7 @@ cleaned_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
 
 ```
 ```{r}
-cleaned_addiction_data |> ggplot(aes(SUD.is_sum, color=gender, fill=gender)) +
+cleaned_addiction_data |> ggplot(aes(SUD.sum, color=gender, fill=gender)) +
   geom_histogram(bins = 8) +
   facet_wrap(vars(gender)) +
   labs(title = "Distribution of addicted substances")
@@ -216,7 +216,7 @@ ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) +
 ```
 
 ```{r}
-ggheat(matrix_for_chord)
+# ggheat(matrix_for_chord)
 ```
 
 ```{r}
@@ -231,7 +231,7 @@ cleaned_addiction_data |> ggplot(aes(number_of_days_in_treatment)) +
 filtered_alcohol_data <- cleaned_addiction_data |>
   # Getting only the people that are addicted to alcohol
   filter(SUD.is_Alchohol == 1) |>
-  filter(SUD.is_sum == 1) 
+  filter(SUD.sum == 1) 
 
 filtered_alcohol_data
 
@@ -340,7 +340,7 @@ filtered_cocaine_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witness
 ```
 
 ```{r}
-cleaned_addiction_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=SUD.is_sum)) +
+cleaned_addiction_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=SUD.sum)) +
   geom_jitter() 
 ```
 
@@ -392,7 +392,7 @@ stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
                              + education
                              + number_of_sober_days
                              + number_of_days_in_treatment
-                             + SUD.is_sum
+                             + SUD.sum
                              + social_support.total
                              + aana_affiliation.aaas_total
                              + aana_affiliation.tspe_positive
@@ -406,7 +406,7 @@ car::Anova(stress_to_abstain_model)
 ```
 
 ```{r}
-cleaned_addiction_data |> ggplot(aes(x=aana_affiliation.tspe_positive, y=abstain_confidence_neg_mean_baseline, color=SUD.is_sum)) +
+cleaned_addiction_data |> ggplot(aes(x=aana_affiliation.tspe_positive, y=abstain_confidence_neg_mean_baseline, color=SUD.sum)) +
   geom_jitter()
 ```
 
@@ -418,7 +418,7 @@ qol_model = lm(qol.mean_baseline ~
                              + education
                              + number_of_sober_days
                              + number_of_days_in_treatment
-                             + SUD.is_sum
+                             + SUD.sum
                              + social_support.total
                              + aana_affiliation.aaas_total
                              + aana_affiliation.tspe_positive
@@ -432,7 +432,7 @@ car::Anova(qol_model)
 ```
 
 ```{r}
-cleaned_addiction_data |> ggplot(aes(x=social_support.total, y=qol.mean_baseline, color=SUD.is_sum)) +
+cleaned_addiction_data |> ggplot(aes(x=social_support.total, y=qol.mean_baseline, color=SUD.sum)) +
   geom_jitter()
 ```
 
@@ -444,7 +444,7 @@ duration_model = lm(number_of_days_in_treatment ~
                              + education
                              + number_of_sober_days
                              + number_of_days_in_treatment
-                             + SUD.is_sum
+                             + SUD.sum
                              + social_support.total
                              + aana_affiliation.aaas_total
                              + aana_affiliation.tspe_positive
@@ -470,7 +470,7 @@ commitment_model = lm(commit_to_change.total ~
                              + education
                              + number_of_sober_days
                              + number_of_days_in_treatment
-                             + SUD.is_sum
+                             + SUD.sum
                              + social_support.total
                              + aana_affiliation.aaas_total
                              + aana_affiliation.tspe_positive
@@ -491,7 +491,7 @@ stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
                              + education
                              + number_of_sober_days
                              + number_of_days_in_treatment
-                             + SUD.is_sum
+                             + SUD.sum
                              + social_support.total
                              + aana_affiliation.aaas_total
                              + aana_affiliation.tspe_positive
