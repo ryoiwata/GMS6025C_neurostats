@@ -710,9 +710,6 @@ factored_addiction_data <- all_addiction_data |>
   mutate(qol.environmental_health_discharge =  who_env_total.discharge) |>
   mutate(qol.mean_discharge =  qol_mean.discharge) |>
 
-  # Commitment
-  mutate(commit_to_change.total = commit_to_change.total.baseline) |>
-  
   # Cravings
   # Please read each statement and indicate how confident you are RIGHT NOW that you would not choose to use a drug or drugs if they were readily available to you TODAY. 
   # 1, Not at all confident | 2, Not Very confident | 3, Moderately confident | 4, Very confident | 5, Extremely confident
@@ -805,6 +802,10 @@ factored_addiction_data <- all_addiction_data |>
          as.numeric(as.character(religion.Atheist))) |>
   
   mutate(religion.is_not_religious = as_factor(if_else(religion.is_not_religious >= 1, TRUE, FALSE)))
+  
+
+
+
 
 ```
 

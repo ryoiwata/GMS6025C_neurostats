@@ -175,24 +175,6 @@ cleaned_addiction_data |> ggplot(aes(x=number_of_days_in_treatment, color=educat
   geom_density()
 ```
 
-```{r}
-commitment_model = lm(commit_to_change.total ~
-                               stressful_life.happened_to_you_total 
-                             + age 
-                             + gender
-                             + education
-                             + number_of_sober_days
-                             + number_of_days_in_treatment
-                             + SUD.sum
-                             + social_support.total
-                             + aana_affiliation.aaas_total
-                             + aana_affiliation.tspe_positive
-                             + childhood_total
-                             + religion.positive_spiritual_cope
-                      + religion.is_religious
-                             + SUD.does_illegal_drugs, 
-                             cleaned_addiction_data)
-```
 
 ```{r}
 car::Anova(commitment_model)
