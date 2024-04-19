@@ -710,11 +710,9 @@ factored_addiction_data <- all_addiction_data |>
   mutate(qol.environmental_health_discharge =  who_env_total.discharge) |>
   mutate(qol.mean_discharge =  qol_mean.discharge) |>
 
-
   # Commitment
   mutate(commit_to_change.total = commit_to_change.total.baseline) |>
   
-
   # Cravings
   # Please read each statement and indicate how confident you are RIGHT NOW that you would not choose to use a drug or drugs if they were readily available to you TODAY. 
   # 1, Not at all confident | 2, Not Very confident | 3, Moderately confident | 4, Very confident | 5, Extremely confident
@@ -758,13 +756,16 @@ factored_addiction_data <- all_addiction_data |>
   mutate(abstain_confidence_crv_mean_discharge = dase_neg_mean.discharge) |>
   mutate(abstain_confidence_tot_mean_discharge = dase_neg_mean.discharge) |>
 
+  # Removing redundant columns and columns that won't be used
   select(-contains(".baseline")) |>
   select(-contains(".discharge")) |>
   select(-contains(".followup")) |>
   select(-contains(".x.x")) |>
   select(-contains(".y.y")) |>
   
+  # Removing weird outlier of negative days
   filter(number_of_days_in_treatment >= 0) |>
+  # Removing all rows with NANs in any column
   drop_na() |>
 
   # Feature engineering
@@ -807,36 +808,12 @@ factored_addiction_data <- all_addiction_data |>
 
 ```
 
-```{r}
-factored_addiction_data |> filter(SUD.sum_illegal == 0)
-```
-
-```{r}
-counts <- colSums(select(factored_addiction_data, starts_with("SUD.is_")) == 1)
-
-counts_df <- as.data.frame(counts) |>
-  mutate(column_names = row.names(counts_df)) |>
-  mutate(column_names = str_replace(column_names, "SUD.is_", "")) |>
-  mutate(column_names = str_replace_all(column_names, "_", " "))
-
-  
-
-counts_df |> ggplot(aes(column_names, counts)) +
-  geom_bar(stat="identity") +
-  theme(axis.text.x = element_text(angle = 90)) +
-  labs(title = "Distribution of addicted substances")
-```
-
 # Saving the Tibble to file
 
 ```{r}
 saveRDS(factored_addiction_data, "addiction.rds")
 ```
 
-```{r}
-str(factored_addiction_data)
-
-```
 
 
 

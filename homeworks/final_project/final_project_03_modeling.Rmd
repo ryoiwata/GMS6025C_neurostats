@@ -1,0 +1,233 @@
+---
+title: "Final Project"
+author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(knitr)
+library(car)
+# install.packages("ggalluvial")
+library(ggalluvial)
+# install.packages("circlize")
+library(circlize)
+library(stringr)
+# install.packages("cowplot")
+library(cowplot)
+# install.packages("ggpie")
+library(ggpie)
+# to control default number formatting, no need for specifying digits in kable.
+# install.packages("ggheatmap")
+library(ggheatmap)
+# install.packages("ggcorrplot")
+library(ggcorrplot)
+
+options(scipen = 3, digits = 5) 
+```
+
+```{r}
+cleaned_addiction_data = read_rds("./addiction.rds")
+```
+
+```{r}
+cleaned_addiction_data
+```
+
+# Overview of what we're working with
+
+### Things that can predict
+- number of sober days
+- days since baseline
+- age
+- gender
+- education
+- drop out yes no
+- SUD is alcholoc
+- SUD is other
+- Social support
+  - family
+  - friends
+  - sig other
+  - total
+- Substance use history
+  - Tried tobacco/alcohol
+  - Age of first use
+  - Regular use
+  - Age of regular use
+- AA/NA affiliation
+  - Lifetime number of meetings
+  - Last year number of meetings
+  - Degree of affiliation
+  - Positive thoughts
+  - Negative thoughts
+- Stressful life
+  - happened
+  - witnessed
+  - learned about
+  - exposed
+  - total of all things
+- Childhood
+- Religion
+  - Religious affiliation
+  - Positive
+  - Negative
+- Life quality
+
+### Things we can predict
+- impression change
+- length of stay
+- Life quality
+- Commitment to change
+- Cravings
+  - baseline
+  - baseline vs followup
+- Impression of change
+
+# Looking at the basic demographics
+
+```{r}
+stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope
+                             + religion.is_religious
+                             + SUD.does_illegal_drugs,
+                             cleaned_addiction_data)
+```
+
+```{r}
+car::Anova(stress_to_abstain_model)
+```
+
+```{r}
+cleaned_addiction_data |> ggplot(aes(x=aana_affiliation.tspe_positive, y=abstain_confidence_neg_mean_baseline, color=SUD.sum)) +
+  geom_jitter()
+```
+
+```{r}
+qol_model = lm(qol.mean_baseline ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope 
+               + religion.is_religious 
+               +  SUD.does_illegal_drugs, 
+                             cleaned_addiction_data)
+```
+
+```{r}
+car::Anova(qol_model)
+```
+
+```{r}
+cleaned_addiction_data |> ggplot(aes(x=social_support.total, y=qol.mean_baseline, color=SUD.sum)) +
+  geom_jitter()
+```
+
+```{r}
+duration_model = lm(number_of_days_in_treatment ~
+                               stressful_life.happened_to_you_total
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope
+                    + religion.is_religious
+                             + SUD.does_illegal_drugs, 
+                             cleaned_addiction_data)
+```
+
+```{r}
+car::Anova(duration_model)
+```
+
+```{r}
+cleaned_addiction_data |> ggplot(aes(x=number_of_days_in_treatment, color=education,)) +
+  geom_density()
+```
+
+```{r}
+commitment_model = lm(commit_to_change.total ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope
+                      + religion.is_religious
+                             + SUD.does_illegal_drugs, 
+                             cleaned_addiction_data)
+```
+
+```{r}
+car::Anova(commitment_model)
+```
+
+```{r}
+stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
+                               stressful_life.happened_to_you_total 
+                             + age 
+                             + gender
+                             + education
+                             + number_of_sober_days
+                             + number_of_days_in_treatment
+                             + SUD.sum
+                             + social_support.total
+                             + aana_affiliation.aaas_total
+                             + aana_affiliation.tspe_positive
+                             + childhood_total
+                             + religion.positive_spiritual_cope
+                             + religion.is_religious
+                             + SUD.does_illegal_drugs,
+                             cleaned_addiction_data)
+```
+
+  + SUD.is_Alchohol
+  + SUD.is_Opioid 
+  + SUD.is_Cannabis
+  + SUD.is_sedative_hypnotic_anxiolytic 
+  + SUD.is_Cocaine 
+  + SUD.is_Other_stimulant 
+  + SUD.is_Hallucinogen 
+  + SUD.is_Nicotine 
+  + SUD.is_Inhalant 
+  + SUD.is_psychoactive 
+
+```{r}
+car::Anova(stress_to_abstain_model)
+```
