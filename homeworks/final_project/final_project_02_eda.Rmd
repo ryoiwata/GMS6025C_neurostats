@@ -90,6 +90,18 @@ cleaned_addiction_data
 - Impression of change
 
 # Looking at the basic demographics
+```{r}
+install.packages("ggcorrplot")
+```
+
+```{r}
+cleaned_addiction_data |>
+  select(ends_with("baseline")) |> 
+  cor() |>
+  ggcorrplot()
+  
+```
+
 
 ```{r}
 # donut plot

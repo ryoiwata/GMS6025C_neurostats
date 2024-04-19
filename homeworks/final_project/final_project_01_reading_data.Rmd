@@ -75,6 +75,7 @@ problems(raw_aana_affiliation)
 # but includes events that have happened to the participant 
 #AND events that the participant has witnessed.
 
+# TODO STARTING HERE
 raw_stressful_life  <- read_delim("./data/lec.damon.csv", 
                                delim = ",",
                                progress = FALSE,
@@ -393,9 +394,9 @@ factored_addiction_data <- all_addiction_data |>
   
   
   # 17a. # of sobriety days (calculated)
-  mutate(number_of_sober_days = sobriety_calc.baseline) |>
+  mutate(num_sober_days = sobriety_calc.baseline) |>
   # B4. Number of days since baseline.
-  mutate(number_of_days_in_treatment = days_in_tx_clean.baseline) |>
+  mutate(num_treatment_days = days_in_tx_clean.baseline) |>
   mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
 
   # SUD
@@ -696,19 +697,19 @@ factored_addiction_data <- all_addiction_data |>
   mutate(qol.physical_health_baseline =  who_ph_total.baseline) |>
   mutate(qol.social_health_baseline =  who_soc_rel_total.baseline) |>
   mutate(qol.environmental_health_baseline =  who_env_total.baseline) |>
-  mutate(qol.mean_baseline =  qol_mean.baseline) |>
+  mutate(qol._baseline =  qol_mean.baseline) |>
   mutate(qol.general_health_followup =  who_qol_gh_total.followup) |>
   mutate(qol.psychological_health_followup =  who_psy_total.followup) |>
   mutate(qol.physical_health_followup =  who_ph_total.followup) |>
   mutate(qol.social_health_followup =  who_soc_rel_total.followup) |>
   mutate(qol.environmental_health_followup =  who_env_total.followup) |>
-  mutate(qol.mean_followup =  qol_mean.followup) |>
+  mutate(qol.followup =  qol_mean.followup) |>
   mutate(qol.general_health_discharge =  who_qol_gh_total.discharge) |>
   mutate(qol.psychological_health_discharge =  who_psy_total.discharge) |>
   mutate(qol.physical_health_discharge =  who_ph_total.discharge) |>
   mutate(qol.social_health_discharge =  who_soc_rel_total.discharge) |>
   mutate(qol.environmental_health_discharge =  who_env_total.discharge) |>
-  mutate(qol.mean_discharge =  qol_mean.discharge) |>
+  mutate(qol.discharge =  qol_mean.discharge) |>
 
   # Cravings
   # Please read each statement and indicate how confident you are RIGHT NOW that you would not choose to use a drug or drugs if they were readily available to you TODAY. 
@@ -737,21 +738,25 @@ factored_addiction_data <- all_addiction_data |>
   # DASE Social/Positive Subscale	sum([dase4],[dase8],[dase15],[dase17],[dase20])
   # DASE Physical Subscale	sum([dase2],[dase5],[dase9],[dase12],[dase13])
   # DASE Cravings and Urges Subscale	sum([dase1],[dase7],[dase10],[dase11],[dase19])
-  mutate(abstain_confidence_neg_mean_baseline = dase_neg_mean.baseline) |>
-  mutate(abstain_confidence_pos_mean_baseline = dase_neg_mean.baseline) |>
-  mutate(abstain_confidence_phy_mean_baseline = dase_neg_mean.baseline) |>
-  mutate(abstain_confidence_crv_mean_baseline = dase_neg_mean.baseline) |>
-  mutate(abstain_confidence_tot_mean_baseline = dase_neg_mean.baseline) |>
-  mutate(abstain_confidence_neg_mean_followup = dase_neg_mean.followup) |>
-  mutate(abstain_confidence_pos_mean_followup = dase_neg_mean.followup) |>
-  mutate(abstain_confidence_phy_mean_followup = dase_neg_mean.followup) |>
-  mutate(abstain_confidence_crv_mean_followup = dase_neg_mean.followup) |>
-  mutate(abstain_confidence_tot_mean_followup = dase_neg_mean.followup) |>
-  mutate(abstain_confidence_neg_mean_discharge = dase_neg_mean.discharge) |>
-  mutate(abstain_confidence_pos_mean_discharge = dase_neg_mean.discharge) |>
-  mutate(abstain_confidence_phy_mean_discharge = dase_neg_mean.discharge) |>
-  mutate(abstain_confidence_crv_mean_discharge = dase_neg_mean.discharge) |>
-  mutate(abstain_confidence_tot_mean_discharge = dase_neg_mean.discharge) |>
+  mutate(abstain_neg_baseline = dase_neg_mean.baseline) |>
+  mutate(abstain_pos_baseline = dase_pos_mean.baseline) |>
+  mutate(abstain_phy_baseline = dase_phy_mean.baseline) |>
+  mutate(abstain_crv_baseline = dase_crv_mean.baseline) |>
+  mutate(abstain_total_baseline = dase_total_mean.baseline) |>
+  mutate(abstain_neg_followup = dase_neg_mean.followup) |>
+  mutate(abstain_pos_followup = dase_pos_mean.followup) |>
+  mutate(abstain_phy_followup = dase_phy_mean.followup) |>
+  mutate(abstain_crv_followup = dase_crv_mean.followup) |>
+  mutate(abstain_total_followup = dase_total_mean.followup) |>
+  mutate(abstain_neg_discharge = dase_neg_mean.discharge) |>
+  mutate(abstain_pos_discharge = dase_pos_mean.discharge) |>
+  mutate(abstain_phy_discharge = dase_phy_mean.discharge) |>
+  mutate(abstain_crv_discharge = dase_crv_mean.discharge) |>
+  mutate(abstain_total_discharge = dase_total_mean.baseline) |>
+  
+  mutate(craving.baseline = pacs_mean.baseline) |>
+  mutate(craving.followup = pacs_mean.followup) |>
+  mutate(craving.discharge = pacs_mean.discharge) |>
 
   # Removing redundant columns and columns that won't be used
   select(-contains(".baseline")) |>
