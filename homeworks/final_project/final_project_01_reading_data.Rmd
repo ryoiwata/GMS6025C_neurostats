@@ -20,8 +20,6 @@ options(scipen = 3, digits = 5)
 
 # Inputting the data
 
-## 1.A Load data and prepare data for analysis 
-
 ```{r loading in data}
 # Reading in the data
 
@@ -125,21 +123,6 @@ raw_data_dictionary <- read_delim("./data/Data Dictionary.csv",
                                   show_col_types = FALSE)
 ```
 
-
-```{r}
-# str(raw_demographics)
-# str(raw_SUD)
-# str(raw_social_support)
-# str(raw_sub_history)
-# str(raw_aana_affiliation)
-# str(raw_stressful_life)
-# str(raw_spiritual)
-# str(raw_childhood)
-# str(raw_life_quality)
-# str(raw_commitment)
-# str(raw_craving)
-# str(raw_data_dictionary)
-```
 
 ```{r}
 # Filtering for subjects that are in each time
@@ -389,28 +372,141 @@ factored_addiction_data <- all_addiction_data |>
   # Demographics
   mutate(age = age_today.baseline) |>
   mutate(gender = as_factor(gender.baseline)) |>
-  # mutate(education = as_factor(ed_summary.baseline)) |>
-  mutate(education = factor(ed_summary.baseline, levels = c("High School/GED or less", "Associate's/Some College", "Bachelor's", "Master's", "Doctoral"))) |>
-  
+  mutate(education = factor(ed_summary.baseline, levels = 
+                              c("High School/GED or less", 
+                                "Associate's/Some College", 
+                                "Bachelor's", 
+                                "Master's", 
+                                "Doctoral"))) |>
   
   # 17a. # of sobriety days (calculated)
-  mutate(num_sober_days = sobriety_calc.baseline) |>
+  mutate(sober_days = sobriety_calc.baseline) |>
   # B4. Number of days since baseline.
-  mutate(num_treatment_days = days_in_tx_clean.baseline) |>
+  mutate(treatment_days = days_in_tx_clean.baseline) |>
   mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
 
   # SUD
-  mutate(SUD.is_Alchohol = as_factor(sa_dx___0.baseline)) |>
-  mutate(SUD.is_Opioid = as_factor(sa_dx___1.baseline)) |>
-  mutate(SUD.is_Cannabis = as_factor(sa_dx___2.baseline)) |>
-  mutate(SUD.is_sedative_hypnotic_anxiolytic = as_factor(sa_dx___3.baseline)) |>
-  mutate(SUD.is_Cocaine = as_factor(sa_dx___4.baseline)) |>
-  mutate(SUD.is_Other_stimulant = as_factor(sa_dx___5.baseline)) |>
-  mutate(SUD.is_Hallucinogen = as_factor(sa_dx___6.baseline)) |>
-  mutate(SUD.is_Nicotine = as_factor(sa_dx___7.baseline)) |>
-  mutate(SUD.is_Inhalant = as_factor(sa_dx___8.baseline)) |>
-  mutate(SUD.is_psychoactive = as_factor(sa_dx___9.baseline)) |>
-  mutate(SUD.sum = sa_dx_sum.baseline) |>
+  mutate(SUD.Alchohol = as_factor(sa_dx___0.baseline)) |>
+  mutate(SUD.Opioid = as_factor(sa_dx___1.baseline)) |>
+  mutate(SUD.Cannabis = as_factor(sa_dx___2.baseline)) |>
+  mutate(SUD.sedative_hypnotic_anxiolytic = as_factor(sa_dx___3.baseline)) |>
+  mutate(SUD.Cocaine = as_factor(sa_dx___4.baseline)) |>
+  mutate(SUD.Other_stimulant = as_factor(sa_dx___5.baseline)) |>
+  mutate(SUD.Hallucinogen = as_factor(sa_dx___6.baseline)) |>
+  mutate(SUD.Nicotine = as_factor(sa_dx___7.baseline)) |>
+  mutate(SUD.Inhalant = as_factor(sa_dx___8.baseline)) |>
+  mutate(SUD.psychoactive = as_factor(sa_dx___9.baseline)) |>
+  mutate(SUD_sum = sa_dx_sum.baseline) |>
+  
+  # 1. People at AA/NA could give me a lot of support
+  # 2. Going to AA/NA meetings can help me use some of my free time.
+  # 3. Going to AA/NA meetings would help me remember why I want to stay sober.
+  # 4. I could learn a lot by working on the Twelve Steps of AA or NA.
+  # 5. Being part of AA/NA would make me feel more hopeful.
+  # 6. Many people have encouraged me to go to AA or NA.
+  # 7. I would get bored easily at AA/NA meetings.
+  # 8. I would feel embarrassed going to an AA/NA meeting.
+  # 9. Going to AA or NA would depress me.
+  # 10. I would feel very nervous going to an AA/NA meeting.
+  # 11. I would not want to speak in front of a group at an AA/NA meeting.
+  # 12. I do not think I would like the people I meet at AA/NA.
+  # 13. I don't want people at AA or NA telling me how I should lead my life.
+  # 14. I don't want to hear other people talk about their problems at AA/NA meetings.
+  # 15. I feel very uncomfortable with the religious (or spiritual) aspects of AA/NA.
+  # 16. I don't have enough time to attend AA/NA meetings.
+  # TSPE Positive Score	sum([tspe_1]+[tspe_2]+[tspe_3]+[tspe_4]+[tspe_5]+[tspe_6])
+  # TSPE Negative Score	sum([tspe_7]+[tspe_8]+[tspe_9]+[tspe_10]+[tspe_11]+[tspe_12]+[tspe_13]+[tspe_14]+[tspe_15]+[tpse_16])
+  mutate(aana_positive = tspe_positive.baseline) |>
+  mutate(aana_negative = tspe_negative.baseline) |>
+  
+ # Childhood
+  #   "1. Did a parent or other adult in the household often or very often... 
+  # 
+  # Swear at you, insult you, put you down, or humiliate you?   
+  # 
+  #           OR
+  # 
+  # Act in a way that made you afraid that you might be physically hurt?"
+  mutate(childhood.verbal_abuse = as_factor(ace1.baseline)) |>
+  # "2. Did a parent or other adult in the household often or very often... 
+  # 
+  # Push, grab, slap, or throw something at you?
+  # 
+  #            OR    
+  # 
+  # Ever hit you so hard that you had marks or were injured?"
+  mutate(childhood.physical_abuse = as_factor(ace2.baseline)) |>
+  # "3. Did an adult or person at least 5 years older than you ever...
+  # 
+  # Touch or fondle you or have you touch their body in a sexual way?
+  # 
+  #            OR    
+  # 
+  # Attempt or actually have oral, anal, or vaginal intercourse with you?"
+  mutate(childhood.sexual_abuse = as_factor(ace3.baseline)) |>
+  # "4. Did you often or very often feel that ...
+  # 
+  # No one in your family loved you or thought you were important or special?
+  # 
+  #            OR    
+  # 
+  # Your family didn't look out for each other, feel close to each other, or support each other?"
+  mutate(childhood.alone = as_factor(ace4.baseline)) |>
+  # "5. Did you often or very often feel that ...
+  # 
+  # You didn't have enough to eat, had to wear dirty clothes, and had no one to protect you?
+  # 
+  #            OR    
+  # 
+  # Your parents were too drunk or high to take care of you or take you to the doctor if you needed it?"
+  mutate(childhood.neglected = as_factor(ace5.baseline)) |>
+  # 6. Were your parents ever separated or divorced?
+  mutate(childhood.divorced = as_factor(ace6.baseline)) |>
+  # "7. Was your mother or stepmother (or father/stepfather):
+  # 
+  # Often or very often pushed, grabbed, slapped, or had something thrown at her/him?
+  # 
+  #            OR    
+  # 
+  # Sometimes, often, or very often kicked, bitten, hit with a fist, or hit with something hard?
+  # 
+  #            OR    
+  # 
+  # Ever repeatedly hit at least a few minutes or threatened with a gun or knife?"
+  mutate(childhood.parent_was_abused = as_factor(ace7.baseline)) |>
+  # 7a. For Q7, indicate which parent was violated 
+  # 8. Did you live with anyone who was a problem drinker or alcoholic or who used street drugs?
+  mutate(childhood.other_was_addicted = as_factor(ace8.baseline)) |>
+  # 9. Was a household member depressed or mentally ill, or did a household member attempt suicide?
+  mutate(childhood.other_was_stressed = as_factor(ace9.baseline)) |>
+  # 10. Did a household member go to prison?
+  mutate(childhood.other_was_prisoned = as_factor(ace10.baseline)) |>
+  # Total childhood
+  mutate(childhood_sum = total_ace_score.baseline)
+  
+```
+
+```{r}
+filtered_addiction_data <- factored_addiction_data |>
+  # Removing redundant columns and columns that won't be used
+  select(-contains(".baseline")) |>
+  select(-contains(".discharge")) |>
+  select(-contains(".followup")) |>
+  select(-contains(".x.x")) |>
+  select(-contains(".y.y")) |>
+  
+  # Removing weird outlier of negative days
+  filter(treatment_days >= 0) |>
+  # Removing all rows with NANs in any column
+  drop_na()
+```
+
+```{r}
+blah
+```
+
+```{r}
+
   
   # Social support
   # 1. There is a special person who is around when I am in need.
@@ -447,43 +543,16 @@ factored_addiction_data <- all_addiction_data |>
   mutate(sub_history.has_tried_alcohol = as_factor(newace18a___2.baseline)) |>
   mutate(sub_history.has_tried_other = as_factor(newace18a___10.baseline)) |>
   
-  # AA/NA Affiliation
-  # 1. Have you ever considered yourself a member of AA or NA?
-  # 2. Have you ever called an AA or NA member for help?
-  # 3. Do you now have an AA or NA sponsor?
-  # 4. Have you ever sponsored anyone in AA or NA?
-  # 5. Have you had a spiritual awakening or conversion experience through your involvement with AA or NA?
-  # 6. In the past 12 months, have you read AA or NA literature? 
-  # 7. In the past 12 months, have you done service, helped newcomers, or set up chairs, made coffee, cleaned up after a meeting, etc.? 
-  # 8. How many AA or NA meetings would you estimate that you've gone to during your lifetime?
-  # 9. How many meetings have you gone to in the last 12 months?
-  # Lifetime meetings calculation	if([aaas_8]=0, 0,if([aaas_8]>0 and [aaas_8]<=30, 0.25, if([aaas_8]>=31 and [aaas_8]<=90,0.50, if([aaas_8]>90 and [aaas_8]<=500, 0.75, if([aaas_8]>=501,1,0)))))
-  mutate(aana_affiliation.aaas_calc_lifetime = aaas_calc_lifetime.baseline) |>
- # Past year meetings calculation	if([aaas_9]=0,0,if([aaas_9]>0 and [aaas_9]<=65, 0.25, if([aaas_9]>=66 and [aaas_9]<=130, 0.50, if([aaas_9]>130 and [aaas_9]<=195, 0.75, if([aaas_9]>=196,1,0)))))
-  mutate(aana_affiliation.aaas_calc_past_year = aaas_calc_past_year.baseline) |>
-# Total AAAS Score	sum([aaas_1],[aaas_2],[aaas_3],[aaas_4],[aaas_5],[aaas_6],[aaas_7],[aaas_calc_lifetime],[aaas_calc_past_year])
-  mutate(aana_affiliation.aaas_total = aaas_total.baseline) |>
-  # 1. People at AA/NA could give me a lot of support
-  # 2. Going to AA/NA meetings can help me use some of my free time.
-  # 3. Going to AA/NA meetings would help me remember why I want to stay sober.
-  # 4. I could learn a lot by working on the Twelve Steps of AA or NA.
-  # 5. Being part of AA/NA would make me feel more hopeful.
-  # 6. Many people have encouraged me to go to AA or NA.
-  # 7. I would get bored easily at AA/NA meetings.
-  # 8. I would feel embarrassed going to an AA/NA meeting.
-  # 9. Going to AA or NA would depress me.
-  # 10. I would feel very nervous going to an AA/NA meeting.
-  # 11. I would not want to speak in front of a group at an AA/NA meeting.
-  # 12. I do not think I would like the people I meet at AA/NA.
-  # 13. I don't want people at AA or NA telling me how I should lead my life.
-  # 14. I don't want to hear other people talk about their problems at AA/NA meetings.
-  # 15. I feel very uncomfortable with the religious (or spiritual) aspects of AA/NA.
-  # 16. I don't have enough time to attend AA/NA meetings.
-  # TSPE Positive Score	sum([tspe_1]+[tspe_2]+[tspe_3]+[tspe_4]+[tspe_5]+[tspe_6])
-  # TSPE Negative Score	sum([tspe_7]+[tspe_8]+[tspe_9]+[tspe_10]+[tspe_11]+[tspe_12]+[tspe_13]+[tspe_14]+[tspe_15]+[tpse_16])
-  mutate(aana_affiliation.tspe_positive = tspe_positive.baseline) |>
-  mutate(aana_affiliation.tspe_negative = tspe_negative.baseline) |>
+  
+  
 
+
+  
+  
+  
+  
+  
+  
   # Stressful life events
   # 1, Happened to you | 2, Witnessed it happen | 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 6, Doesn't apply
   # 1. Natural disaster	
@@ -576,71 +645,14 @@ factored_addiction_data <- all_addiction_data |>
   mutate(stressful_life.happened_to_you_and_witnessed_total = toyou_wit_total.baseline) |>
   mutate(stressful_life.witnessed_total = witnessed_total.baseline) |>
 
-  # Childhood
-  #   "1. Did a parent or other adult in the household often or very often... 
-  # 
-  # Swear at you, insult you, put you down, or humiliate you?   
-  # 
-  #           OR
-  # 
-  # Act in a way that made you afraid that you might be physically hurt?"
-  mutate(childhood.verbal_abuse = as_factor(ace1.baseline)) |>
-  # "2. Did a parent or other adult in the household often or very often... 
-  # 
-  # Push, grab, slap, or throw something at you?
-  # 
-  #            OR    
-  # 
-  # Ever hit you so hard that you had marks or were injured?"
-  mutate(childhood.physical_abuse = as_factor(ace2.baseline)) |>
-  # "3. Did an adult or person at least 5 years older than you ever...
-  # 
-  # Touch or fondle you or have you touch their body in a sexual way?
-  # 
-  #            OR    
-  # 
-  # Attempt or actually have oral, anal, or vaginal intercourse with you?"
-  mutate(childhood.sexual_abuse = as_factor(ace3.baseline)) |>
-  # "4. Did you often or very often feel that ...
-  # 
-  # No one in your family loved you or thought you were important or special?
-  # 
-  #            OR    
-  # 
-  # Your family didn't look out for each other, feel close to each other, or support each other?"
-  mutate(childhood.alone = as_factor(ace4.baseline)) |>
-  # "5. Did you often or very often feel that ...
-  # 
-  # You didn't have enough to eat, had to wear dirty clothes, and had no one to protect you?
-  # 
-  #            OR    
-  # 
-  # Your parents were too drunk or high to take care of you or take you to the doctor if you needed it?"
-  mutate(childhood.neglected = as_factor(ace5.baseline)) |>
-  # 6. Were your parents ever separated or divorced?
-  mutate(childhood.divorced = as_factor(ace2.baseline)) |>
-  # "7. Was your mother or stepmother (or father/stepfather):
-  # 
-  # Often or very often pushed, grabbed, slapped, or had something thrown at her/him?
-  # 
-  #            OR    
-  # 
-  # Sometimes, often, or very often kicked, bitten, hit with a fist, or hit with something hard?
-  # 
-  #            OR    
-  # 
-  # Ever repeatedly hit at least a few minutes or threatened with a gun or knife?"
-  mutate(childhood.parent_was_abused = as_factor(ace7.baseline)) |>
-  # 7a. For Q7, indicate which parent was violated 
-  # 8. Did you live with anyone who was a problem drinker or alcoholic or who used street drugs?
-  mutate(childhood.other_was_addicted = as_factor(ace8.baseline)) |>
-  # 9. Was a household member depressed or mentally ill, or did a household member attempt suicide?
-  mutate(childhood.other_was_stressed = as_factor(ace9.baseline)) |>
-  # 10. Did a household member go to prison?
-  mutate(childhood.other_was_prisoned = as_factor(ace10.baseline)) |>
-  # Total childhood
-  mutate(childhood_total = total_ace_score.baseline) |>
+  
+  
+ 
 
+  
+  
+  
+  
   # Spirituality and religion
   # 0, Atheist | 1, Agnostic | 2, Protestant | 3, Catholic | 4, Muslim | 5, Jewish | 6, Hindu | 7, Buddhist | 8, Baptist | 9, No religious affiliation | 10, Non-denominational Christian | 15, Other
   mutate(religion.Atheist = as_factor(brc_rel___0.baseline)) |>
@@ -758,33 +770,23 @@ factored_addiction_data <- all_addiction_data |>
   mutate(craving.followup = pacs_mean.followup) |>
   mutate(craving.discharge = pacs_mean.discharge) |>
 
-  # Removing redundant columns and columns that won't be used
-  select(-contains(".baseline")) |>
-  select(-contains(".discharge")) |>
-  select(-contains(".followup")) |>
-  select(-contains(".x.x")) |>
-  select(-contains(".y.y")) |>
-  
-  # Removing weird outlier of negative days
-  filter(number_of_days_in_treatment >= 0) |>
-  # Removing all rows with NANs in any column
-  drop_na() |>
+
 
   # Feature engineering
   ## Substances
-  mutate(SUD.sum_legal = as.numeric(as.character(SUD.is_Alchohol)) +
-           as.numeric(as.character(SUD.is_Cannabis)) +
-           as.numeric(as.character(SUD.is_Nicotine)) +
-           as.numeric(as.character(SUD.is_Inhalant))) |>
+  mutate(SUD.sum_legal = as.numeric(as.character(SUD.Alchohol)) +
+           as.numeric(as.character(SUD.Cannabis)) +
+           as.numeric(as.character(SUD.Nicotine)) +
+           as.numeric(as.character(SUD.Inhalant))) |>
   
   mutate(SUD.does_legal_drugs = as_factor(if_else(SUD.sum_legal >= 1, TRUE, FALSE))) |>
   
-  mutate(SUD.sum_illegal = as.numeric(as.character(SUD.is_Opioid)) +
-           as.numeric(as.character(SUD.is_sedative_hypnotic_anxiolytic)) +
-           as.numeric(as.character(SUD.is_Cocaine)) +
-           as.numeric(as.character(SUD.is_Other_stimulant)) +
-           as.numeric(as.character(SUD.is_psychoactive)) +
-           as.numeric(as.character(SUD.is_Hallucinogen))
+  mutate(SUD.sum_illegal = as.numeric(as.character(SUD.Opioid)) +
+           as.numeric(as.character(SUD.sedative_hypnotic_anxiolytic)) +
+           as.numeric(as.character(SUD.Cocaine)) +
+           as.numeric(as.character(SUD.Other_stimulant)) +
+           as.numeric(as.character(SUD.psychoactive)) +
+           as.numeric(as.character(SUD.Hallucinogen))
          ) |>
   
   mutate(SUD.does_illegal_drugs = as_factor(if_else(SUD.sum_illegal >= 1, TRUE, FALSE))) |>
