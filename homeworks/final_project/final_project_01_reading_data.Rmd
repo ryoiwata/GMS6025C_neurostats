@@ -95,7 +95,7 @@ raw_childhood <- read_delim("./data/aces.damon.csv",
 
 ```{r}
 # Things to predict
-## Quality of Life (WHOQOL-BREF): Evaluates general, physical, psychological health, social relationships, and environment.
+## Quality of Life (WHOQOL-BREF): Evaluates general, physical, psych health, social relationships, and environment.
 raw_life_quality <- read_delim("./data/QOL.damon.csv",
                                delim = ",",
                                progress = FALSE,
@@ -482,7 +482,150 @@ factored_addiction_data <- all_addiction_data |>
   # 10. Did a household member go to prison?
   mutate(childhood.other_was_prisoned = as_factor(ace10.baseline)) |>
   # Total childhood
-  mutate(childhood_sum = total_ace_score.baseline)
+  mutate(childhood_sum = total_ace_score.baseline) |>
+  
+  # Commitment
+  
+  # 1. Staying sober is the most important thing in my life.
+  # 2. I am totally committed to staying off alcohol/drugs.
+  # 3. I will do whatever it takes to recover from my addiction.
+  # 4. I never want to return to alcohol/drug use again.
+  # 5. I have had enough alcohol and drugs.
+  # Commitment to Change Total	sum([change_1], [change_2], [change_3],[change_4], [change_5])
+  mutate(commit.BL = commit_to_change.total.baseline) |>
+
+  mutate(commit.DC = commit_to_change.total.discharge) |>
+  mutate(commit.FU = commit_to_change.total.followup) |>
+
+
+  # Cravings
+  # Please read each statement and indicate how confident you are RIGHT NOW that you would not choose to use a drug or drugs if they were readily available to you TODAY. 
+  # 1, Not at all confident | 2, Not Very confident | 3, Moderately confident | 4, Very confident | 5, Extremely confident
+  # 1. When I am in agony because of stopping or withdrawing from drug use.
+  # 2. When I have a headache.
+  # 3. When I am feeling depressed.
+  # 4. When I am on vacation and want to relax.
+  # 5. When I am concerned about someone.
+  # 6. When I am worried.
+  # 7. When I have the urge to use drugs to see what happens.
+  # 8. When I am being offered drugs in a social situation.
+  # 9. When I dream about using drugs.
+  # 10. When I want to test my will power over using drugs.
+  # 11. When I am feeling a physical need or craving for drugs.
+  # 12. When I am physically tired.
+  # 13. When I am experiencing some physical pain or injury.
+  # 14. When I feel like blowing up because of frustration.
+  # 15. When I see others using drugs at a bar or a party.
+  # 16. When I sense everything is going wrong for me.
+  # 17. When people I used to use drugs with encourage me to use drugs.
+  # 18. When I am feeling angry inside.
+  # 19. When I experience an urge or impulse to use drugs that catches me unprepared.
+  # 20. When I am excited or celebrating with others.
+  # DASE Neg Affect Subscale	sum([dase3],[dase6],[dase14],[dase16],[dase18])
+  # DASE Social/Positive Subscale	sum([dase4],[dase8],[dase15],[dase17],[dase20])
+  # DASE Physical Subscale	sum([dase2],[dase5],[dase9],[dase12],[dase13])
+  # DASE Cravings and Urges Subscale	sum([dase1],[dase7],[dase10],[dase11],[dase19])
+  mutate(abstain_neg.BL = daase_low_neg_mean.baseline) |>
+  mutate(abstain_pos.BL = daase_low_pos_mean.baseline) |>
+  mutate(abstain_phy.BL = daase_low_phy_mean.baseline) |>
+  mutate(abstain_crv.BL = daase_low_crv_mean.baseline) |>
+  mutate(abstain_total.BL = daase_low_tot_mean.baseline) |>
+  mutate(abstain_neg.FU = daase_low_neg_mean.followup) |>
+  mutate(abstain_pos.FU = daase_low_pos_mean.followup) |>
+  mutate(abstain_phy.FU = daase_low_phy_mean.followup) |>
+  mutate(abstain_crv.FU = daase_low_crv_mean.followup) |>
+  mutate(abstain_total.FU = daase_low_tot_mean.followup) |>
+  mutate(abstain_neg.DC = daase_low_neg_mean.discharge) |>
+  mutate(abstain_pos.DC = daase_low_pos_mean.discharge) |>
+  mutate(abstain_phy.DC = daase_low_phy_mean.discharge) |>
+  mutate(abstain_crv.DC = daase_low_crv_mean.discharge) |>
+  mutate(abstain_total.DC = daase_low_tot_mean.discharge) |>
+  
+  # 1. During the past week HOW OFTEN have you thought about drinking or using drugs, or about how good drinking/using would make you feel? 
+  # 2. At its most severe point, HOW STRONG was your craving during the past week? 
+  # 3. During the past week HOW MUCH TIME have you spent thinking about drinking or using drugs, or about how good drinking/using would make you feel? 
+  # 4. During the past week HOW DIFFICULT WOULD IT HAVE BEEN TO RESIST taking a drink or using drugs if you had known that alcohol or drugs were in your current place of residence?
+  # 5. Keeping in mind your responses to the previous questions, please rate your overall AVERAGE ALCOHOL AND DRUG CRAVING for the past week. 
+  # PACS Total Score
+  mutate(craving.baseline = pacs_mean.baseline) |>
+  mutate(craving.followup = pacs_mean.followup) |>
+  mutate(craving.discharge = pacs_mean.discharge) |>
+  
+  # Life Quality
+  # 1. How would you rate your quality of life?
+  # 2. How satisfied are you with your health?
+  # 3. To what extent do you feel that physical pain prevents you from doing what you need to do?
+  # 4. How much do you need any medical treatment to function in your daily life?
+  # 5. How much do you enjoy life?
+  # 6. To what extent do you feel your life to be meaningful?
+  # 7. How well are you able to concentrate?
+  # 8. How safe do you feel in your daily life?
+  # 9. How healthy is your physical environment?
+  # 10. Do you have enough energy for everyday life?
+  # 11. Are you able to accept your bodily appearance?
+  # 12. Have you enough money to meet your needs?
+  # 13. How available to you is the information you need in your day-to-day life?
+  # 14. To what extent do you have the opportunity for leisure activities?
+  # 15. How well are you able to get around?
+  # 16. How satisfied are you with your sleep?
+  # 17. How satisfied are you with your ability to perform your daily living activities?
+  # 18. How satisfied are you with your capacity for work?
+  # 19. How satisfied are you with yourself?
+  # 20. How satisfied are you with your personal relationships?
+  # 21. How satisfied are you with your sex life?
+  # 22. How satisfied are you with the support you get from your friends?
+  # 23. How satisfied are you with the conditions of your living place?
+  # 24. How satisfied are you with your access to health services?
+  # 25. How satisfied are you with your mode of transportation?
+  # 26. How often do you have negative feelings, such as blue mood, despair, anxiety, or depression?
+
+  # General Health	sum([who_1],[who_2])
+  # psych Health	sum([who_5],[who_6],[who_7],[who_11],[who_19],[who_26])
+  # Physical Health	sum([who_3],[who_4],[who_10],[who_15],[who_16],[who_17],[who_18])
+  # Social Relationships	sum([who_20],[who_21],[who_22])
+  # Environment	sum([who_8],[who_9],[who_12],[who_13],[who_14],[who_23],[who_24],[who_25])
+  
+  mutate(qol_general_health.BL =  who_qol_gh_total.baseline) |>
+  mutate(qol_psych.BL =  who_psy_total.baseline) |>
+  mutate(qol_physical.BL =  who_ph_total.baseline) |>
+  mutate(qol_social.BL =  who_soc_rel_total.baseline) |>
+  mutate(qol_env.BL =  who_env_total.baseline) |>
+  mutate(qol.BL =  qol_mean.baseline) |>
+  mutate(qol_general_health.FU =  who_qol_gh_total.followup) |>
+  mutate(qol_psych.FU =  who_psy_total.followup) |>
+  mutate(qol_physical.FU =  who_ph_total.followup) |>
+  mutate(qol_social.FU =  who_soc_rel_total.followup) |>
+  mutate(qol_env.FU =  who_env_total.followup) |>
+  mutate(qol.FU =  qol_mean.followup) |>
+  mutate(qol_general_health.DC =  who_qol_gh_total.discharge) |>
+  mutate(qol_psych.DC =  who_psy_total.discharge) |>
+  mutate(qol_physical.DC =  who_ph_total.discharge) |>
+  mutate(qol_social.DC =  who_soc_rel_total.discharge) |>
+  mutate(qol_env.DC =  who_env_total.discharge) |>
+  mutate(qol.DC =  qol_mean.discharge) |>
+  
+  # Social support
+  # 1. There is a special person who is around when I am in need.
+  # 2. There is a special person with whom I can share joys and sorrows.
+  # 3. My family really tries to help me.
+  # 4. I get the emotional help & support I need from my family.
+  # 5. I have a special person who is a real source of comfort to me.
+  # 6. My friends really try to help me.
+  # 7. I can count on my friends when things go wrong.
+  # 8. I can talk about my problems with my family.
+  # 9. I have friends with whom I can share my joys and sorrows.
+  # 10. There is a special person in my life who cares about my feelings.
+  # 11. My family is willing to help me make decisions.
+  # 12. I can talk about my problems with my friends.
+  # MSPSS Family Subscale	sum([mspss3],[mspss4],[mspss8],[mspss11])/4
+  # MSPSS Friends Subscale	sum([mspss6],[mspss7],[mspss9],[mspss12])/4
+  # MSPSS Significant Other Subscale	sum([mspss1], [mspss2], [mspss5], [mspss10])/4
+  # MSPSS Total	round(sum( [mspss1],[mspss2],[mspss3],[mspss4],[mspss5],[mspss6],[mspss7],[mspss8],[mspss9],[mspss10],[mspss11],[mspss12] )/12,2)
+  mutate(social_support.fam_sub_total = mspss_fam_sub_total.baseline) |>
+  mutate(social_support.friends_sub_total = mspss_friends_sub_total.baseline) |>
+  mutate(social_support.total = mspss_total.baseline) |>
+  mutate(social_support.sig_other_sub_total = mspss_sig_other_sub_total.baseline) |>
+
   
 ```
 
@@ -508,27 +651,7 @@ blah
 ```{r}
 
   
-  # Social support
-  # 1. There is a special person who is around when I am in need.
-  # 2. There is a special person with whom I can share joys and sorrows.
-  # 3. My family really tries to help me.
-  # 4. I get the emotional help & support I need from my family.
-  # 5. I have a special person who is a real source of comfort to me.
-  # 6. My friends really try to help me.
-  # 7. I can count on my friends when things go wrong.
-  # 8. I can talk about my problems with my family.
-  # 9. I have friends with whom I can share my joys and sorrows.
-  # 10. There is a special person in my life who cares about my feelings.
-  # 11. My family is willing to help me make decisions.
-  # 12. I can talk about my problems with my friends.
-  # MSPSS Family Subscale	sum([mspss3],[mspss4],[mspss8],[mspss11])/4
-  # MSPSS Friends Subscale	sum([mspss6],[mspss7],[mspss9],[mspss12])/4
-  # MSPSS Significant Other Subscale	sum([mspss1], [mspss2], [mspss5], [mspss10])/4
-  # MSPSS Total	round(sum( [mspss1],[mspss2],[mspss3],[mspss4],[mspss5],[mspss6],[mspss7],[mspss8],[mspss9],[mspss10],[mspss11],[mspss12] )/12,2)
-  mutate(social_support.fam_sub_total = mspss_fam_sub_total.baseline) |>
-  mutate(social_support.friends_sub_total = mspss_friends_sub_total.baseline) |>
-  mutate(social_support.total = mspss_total.baseline) |>
-  mutate(social_support.sig_other_sub_total = mspss_sig_other_sub_total.baseline) |>
+
   
   # Substance use history
   # 18. Please indicate which of these substances you have EVER TRIED:	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drug(s)
@@ -670,105 +793,9 @@ blah
   mutate(religion.positive_spiritual_cope = pos_cope.baseline) |>
   mutate(religion.negative_spiritual_cope = neg_cope.baseline) |>
 
-  # Life Quality
-  # 1. How would you rate your quality of life?
-  # 2. How satisfied are you with your health?
-  # 3. To what extent do you feel that physical pain prevents you from doing what you need to do?
-  # 4. How much do you need any medical treatment to function in your daily life?
-  # 5. How much do you enjoy life?
-  # 6. To what extent do you feel your life to be meaningful?
-  # 7. How well are you able to concentrate?
-  # 8. How safe do you feel in your daily life?
-  # 9. How healthy is your physical environment?
-  # 10. Do you have enough energy for everyday life?
-  # 11. Are you able to accept your bodily appearance?
-  # 12. Have you enough money to meet your needs?
-  # 13. How available to you is the information you need in your day-to-day life?
-  # 14. To what extent do you have the opportunity for leisure activities?
-  # 15. How well are you able to get around?
-  # 16. How satisfied are you with your sleep?
-  # 17. How satisfied are you with your ability to perform your daily living activities?
-  # 18. How satisfied are you with your capacity for work?
-  # 19. How satisfied are you with yourself?
-  # 20. How satisfied are you with your personal relationships?
-  # 21. How satisfied are you with your sex life?
-  # 22. How satisfied are you with the support you get from your friends?
-  # 23. How satisfied are you with the conditions of your living place?
-  # 24. How satisfied are you with your access to health services?
-  # 25. How satisfied are you with your mode of transportation?
-  # 26. How often do you have negative feelings, such as blue mood, despair, anxiety, or depression?
 
-  # General Health	sum([who_1],[who_2])
-  # Psychological Health	sum([who_5],[who_6],[who_7],[who_11],[who_19],[who_26])
-  # Physical Health	sum([who_3],[who_4],[who_10],[who_15],[who_16],[who_17],[who_18])
-  # Social Relationships	sum([who_20],[who_21],[who_22])
-  # Environment	sum([who_8],[who_9],[who_12],[who_13],[who_14],[who_23],[who_24],[who_25])
-  
-  mutate(qol.general_health_baseline =  who_qol_gh_total.baseline) |>
-  mutate(qol.psychological_health_baseline =  who_psy_total.baseline) |>
-  mutate(qol.physical_health_baseline =  who_ph_total.baseline) |>
-  mutate(qol.social_health_baseline =  who_soc_rel_total.baseline) |>
-  mutate(qol.environmental_health_baseline =  who_env_total.baseline) |>
-  mutate(qol._baseline =  qol_mean.baseline) |>
-  mutate(qol.general_health_followup =  who_qol_gh_total.followup) |>
-  mutate(qol.psychological_health_followup =  who_psy_total.followup) |>
-  mutate(qol.physical_health_followup =  who_ph_total.followup) |>
-  mutate(qol.social_health_followup =  who_soc_rel_total.followup) |>
-  mutate(qol.environmental_health_followup =  who_env_total.followup) |>
-  mutate(qol.followup =  qol_mean.followup) |>
-  mutate(qol.general_health_discharge =  who_qol_gh_total.discharge) |>
-  mutate(qol.psychological_health_discharge =  who_psy_total.discharge) |>
-  mutate(qol.physical_health_discharge =  who_ph_total.discharge) |>
-  mutate(qol.social_health_discharge =  who_soc_rel_total.discharge) |>
-  mutate(qol.environmental_health_discharge =  who_env_total.discharge) |>
-  mutate(qol.discharge =  qol_mean.discharge) |>
 
-  # Cravings
-  # Please read each statement and indicate how confident you are RIGHT NOW that you would not choose to use a drug or drugs if they were readily available to you TODAY. 
-  # 1, Not at all confident | 2, Not Very confident | 3, Moderately confident | 4, Very confident | 5, Extremely confident
-  # 1. When I am in agony because of stopping or withdrawing from drug use.
-  # 2. When I have a headache.
-  # 3. When I am feeling depressed.
-  # 4. When I am on vacation and want to relax.
-  # 5. When I am concerned about someone.
-  # 6. When I am worried.
-  # 7. When I have the urge to use drugs to see what happens.
-  # 8. When I am being offered drugs in a social situation.
-  # 9. When I dream about using drugs.
-  # 10. When I want to test my will power over using drugs.
-  # 11. When I am feeling a physical need or craving for drugs.
-  # 12. When I am physically tired.
-  # 13. When I am experiencing some physical pain or injury.
-  # 14. When I feel like blowing up because of frustration.
-  # 15. When I see others using drugs at a bar or a party.
-  # 16. When I sense everything is going wrong for me.
-  # 17. When people I used to use drugs with encourage me to use drugs.
-  # 18. When I am feeling angry inside.
-  # 19. When I experience an urge or impulse to use drugs that catches me unprepared.
-  # 20. When I am excited or celebrating with others.
-  # DASE Neg Affect Subscale	sum([dase3],[dase6],[dase14],[dase16],[dase18])
-  # DASE Social/Positive Subscale	sum([dase4],[dase8],[dase15],[dase17],[dase20])
-  # DASE Physical Subscale	sum([dase2],[dase5],[dase9],[dase12],[dase13])
-  # DASE Cravings and Urges Subscale	sum([dase1],[dase7],[dase10],[dase11],[dase19])
-  mutate(abstain_neg_baseline = dase_neg_mean.baseline) |>
-  mutate(abstain_pos_baseline = dase_pos_mean.baseline) |>
-  mutate(abstain_phy_baseline = dase_phy_mean.baseline) |>
-  mutate(abstain_crv_baseline = dase_crv_mean.baseline) |>
-  mutate(abstain_total_baseline = dase_total_mean.baseline) |>
-  mutate(abstain_neg_followup = dase_neg_mean.followup) |>
-  mutate(abstain_pos_followup = dase_pos_mean.followup) |>
-  mutate(abstain_phy_followup = dase_phy_mean.followup) |>
-  mutate(abstain_crv_followup = dase_crv_mean.followup) |>
-  mutate(abstain_total_followup = dase_total_mean.followup) |>
-  mutate(abstain_neg_discharge = dase_neg_mean.discharge) |>
-  mutate(abstain_pos_discharge = dase_pos_mean.discharge) |>
-  mutate(abstain_phy_discharge = dase_phy_mean.discharge) |>
-  mutate(abstain_crv_discharge = dase_crv_mean.discharge) |>
-  mutate(abstain_total_discharge = dase_total_mean.baseline) |>
-  
-  mutate(craving.baseline = pacs_mean.baseline) |>
-  mutate(craving.followup = pacs_mean.followup) |>
-  mutate(craving.discharge = pacs_mean.discharge) |>
+
 
 
 
