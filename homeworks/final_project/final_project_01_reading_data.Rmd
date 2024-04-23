@@ -38,7 +38,7 @@ raw_SUD <- read_delim("./data/SUDdiagnosis.damon.csv",
                                show_col_types = FALSE)
 
 ## Social Support (MSPSS)
-raw_social_support <- read_delim("./data/mspss.damon.csv", 
+raw_social <- read_delim("./data/mspss.damon.csv", 
                                delim = ",",
                                progress = FALSE,
                                show_col_types = FALSE)
@@ -74,7 +74,7 @@ problems(raw_aana_affiliation)
 #AND events that the participant has witnessed.
 
 # TODO STARTING HERE
-raw_stressful_life  <- read_delim("./data/lec.damon.csv", 
+raw_stress  <- read_delim("./data/lec.damon.csv", 
                                delim = ",",
                                progress = FALSE,
                                show_col_types = FALSE)
@@ -172,21 +172,21 @@ joined_SUD <- baseline_SUD |>
 ```{r social support}
 # Filtering for subjects that are in each time
 
-discharged_social_support <- raw_social_support |>
+discharged_social <- raw_social |>
   filter(str_detect(redcap_event_name,'discharge')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
 
-baseline_social_support <- raw_social_support |>
+baseline_social <- raw_social |>
   filter(str_detect(redcap_event_name,'baseline')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
 
-followup_social_support <- raw_social_support |>
+followup_social <- raw_social |>
   filter(str_detect(redcap_event_name,'followup')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
 
-joined_social_support <- baseline_social_support |> 
-  inner_join(discharged_social_support, by="record_id") |>
-  inner_join(followup_social_support, by="record_id")
+joined_social <- baseline_social |> 
+  inner_join(discharged_social, by="record_id") |>
+  inner_join(followup_social, by="record_id")
 ```
 
 ```{r substance history}
@@ -232,21 +232,21 @@ joined_aana_affiliation <- baseline_aana_affiliation |>
 ```{r stressful life}
 # Filtering for subjects that are in each time
 
-discharged_stressful_life <- raw_stressful_life |>
+discharged_stress <- raw_stress |>
   filter(str_detect(redcap_event_name,'discharge')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
 
-baseline_stressful_life <- raw_stressful_life |>
+baseline_stress <- raw_stress |>
   filter(str_detect(redcap_event_name,'baseline')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".baseline")))
 
-followup_stressful_life <- raw_stressful_life |>
+followup_stress <- raw_stress |>
   filter(str_detect(redcap_event_name,'followup')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
 
-joined_stressful_life <- baseline_stressful_life |> 
-  inner_join(discharged_stressful_life, by="record_id") |>
-  inner_join(followup_stressful_life, by="record_id")
+joined_stress <- baseline_stress |> 
+  inner_join(discharged_stress, by="record_id") |>
+  inner_join(followup_stress, by="record_id")
 ```
 
 ```{r spirituality}
@@ -357,9 +357,9 @@ all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, b
   inner_join(joined_childhood, by="record_id") |>
   inner_join(joined_craving, by="record_id") |>
   inner_join(joined_life_quality, by="record_id") |>
-  inner_join(joined_social_support, by="record_id") |>
+  inner_join(joined_social, by="record_id") |>
   inner_join(joined_spiritual, by="record_id") |>
-  inner_join(joined_stressful_life, by="record_id") |>
+  inner_join(joined_stress, by="record_id") |>
   inner_join(joined_sub_history, by="record_id") |>
   inner_join(joined_SUD, by="record_id")
 
@@ -397,6 +397,25 @@ factored_addiction_data <- all_addiction_data |>
   mutate(SUD.Inhalant = as_factor(sa_dx___8.baseline)) |>
   mutate(SUD.psychoactive = as_factor(sa_dx___9.baseline)) |>
   mutate(SUD_sum = sa_dx_sum.baseline) |>
+  
+  # Feature engineering
+  ## Substances
+  mutate(SUD.sum_legal = as.numeric(as.character(SUD.Alchohol)) +
+           as.numeric(as.character(SUD.Cannabis)) +
+           as.numeric(as.character(SUD.Nicotine)) +
+           as.numeric(as.character(SUD.Inhalant))) |>
+  
+  mutate(SUD.uses_legal = as_factor(if_else(SUD.sum_legal >= 1, TRUE, FALSE))) |>
+  
+  mutate(SUD.sum_illegal = as.numeric(as.character(SUD.Opioid)) +
+           as.numeric(as.character(SUD.sedative_hypnotic_anxiolytic)) +
+           as.numeric(as.character(SUD.Cocaine)) +
+           as.numeric(as.character(SUD.Other_stimulant)) +
+           as.numeric(as.character(SUD.psychoactive)) +
+           as.numeric(as.character(SUD.Hallucinogen))
+         ) |>
+  
+  mutate(SUD.uses_illegal = as_factor(if_else(SUD.sum_illegal >= 1, TRUE, FALSE))) |>
   
   # 1. People at AA/NA could give me a lot of support
   # 2. Going to AA/NA meetings can help me use some of my free time.
@@ -621,11 +640,153 @@ factored_addiction_data <- all_addiction_data |>
   # MSPSS Friends Subscale	sum([mspss6],[mspss7],[mspss9],[mspss12])/4
   # MSPSS Significant Other Subscale	sum([mspss1], [mspss2], [mspss5], [mspss10])/4
   # MSPSS Total	round(sum( [mspss1],[mspss2],[mspss3],[mspss4],[mspss5],[mspss6],[mspss7],[mspss8],[mspss9],[mspss10],[mspss11],[mspss12] )/12,2)
-  mutate(social_support.fam_sub_total = mspss_fam_sub_total.baseline) |>
-  mutate(social_support.friends_sub_total = mspss_friends_sub_total.baseline) |>
-  mutate(social_support.total = mspss_total.baseline) |>
-  mutate(social_support.sig_other_sub_total = mspss_sig_other_sub_total.baseline) |>
+  mutate(social.family = mspss_fam_sub_total.baseline) |>
+  mutate(social.friends = mspss_friends_sub_total.baseline) |>
+  mutate(social.family_and_friends = mspss_fam_friends_tot.baseline) |>
+  mutate(social.sig_other = mspss_sig_other_sub_total.baseline) |>
+  mutate(social = mspss_total.baseline) |>
 
+  
+  # Spirituality and religion
+  # 0, Atheist | 1, Agnostic | 2, Protestant | 3, Catholic | 4, Muslim | 5, Jewish | 6, Hindu | 7, Buddhist | 8, Baptist | 9, No religious affiliation | 10, Non-denominational Christian | 15, Other
+  mutate(rel.is_Atheist = as_factor(brc_rel___0.baseline)) |>
+  mutate(rel.is_Agnostic = as_factor(brc_rel___1.baseline)) |>
+  mutate(rel.is_Protestant = as_factor(brc_rel___2.baseline)) |>
+  mutate(rel.is_Catholic = as_factor(brc_rel___3.baseline)) |>
+  mutate(rel.is_Muslim = as_factor(brc_rel___4.baseline)) |>
+  mutate(rel.is_Jewish = as_factor(brc_rel___5.baseline)) |>
+  mutate(rel.is_Hindu = as_factor(brc_rel___6.baseline)) |>
+  mutate(rel.is_Buddhist = as_factor(brc_rel___7.baseline)) |>
+  mutate(rel.is_Baptist = as_factor(brc_rel___8.baseline)) |>
+  mutate(rel.is_No_affiliation = as_factor(brc_rel___9.baseline)) |>
+  mutate(rel.is_Non_denominational_Christian = as_factor(brc_rel___10.baseline)) |>
+  mutate(rel.is_Other = as_factor(brc_rel___15.baseline)) |>
+  mutate(religion_pos = pos_cope.baseline) |>
+  mutate(religion_neg = neg_cope.baseline) |>
+    
+  # Religion
+  mutate(rel.is_religious = as.numeric(as.character(rel.is_Other)) +
+           as.numeric(as.character(rel.is_Non_denominational_Christian)) +
+           as.numeric(as.character(rel.is_Baptist)) +
+           as.numeric(as.character(rel.is_Buddhist)) +
+           as.numeric(as.character(rel.is_Hindu)) +
+           as.numeric(as.character(rel.is_Jewish)) +
+           as.numeric(as.character(rel.is_Muslim)) +
+                      as.numeric(as.character(rel.is_Catholic)) +
+                      as.numeric(as.character(rel.is_Protestant))) |>
+  
+  mutate(rel.is_religious = as_factor(if_else(rel.is_religious >= 1, TRUE, FALSE))) |>
+  
+  mutate(rel.is_not_religious = as.numeric(as.character(rel.is_No_affiliation)) +
+         as.numeric(as.character(rel.is_Agnostic)) +
+         as.numeric(as.character(rel.is_Atheist))) |>
+  
+  mutate(rel.is_not_religious = as_factor(if_else(rel.is_not_religious >= 1, TRUE, FALSE))) |>
+  
+    # Stressful life events
+  # 1, Happened to you | 2, Witnessed it happen | 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 6, Doesn't apply
+  # 1. Natural disaster	
+  mutate(stress.natural_disaster.to_subj = as_factor(lec_2_1___1.baseline)) |>
+  mutate(stress.natural_disaster.witnessed = as_factor(lec_2_1___2.baseline)) |>
+  mutate(stress.natural_disaster.learned = as_factor(lec_2_1___3.baseline)) |>
+  mutate(stress.natural_disaster.exposed = as_factor(lec_2_1___4.baseline)) |>
+  # 2. Fire or explosion
+  mutate(stress.fire.to_subj = as_factor(lec_2_2___1.baseline)) |>
+  mutate(stress.fire.witnessed = as_factor(lec_2_2___2.baseline)) |>
+  mutate(stress.fire.learned = as_factor(lec_2_2___3.baseline)) |>
+  mutate(stress.fire.exposed = as_factor(lec_2_2___4.baseline)) |>
+  # 3. Transportation accident
+  mutate(stress.transportation_accident.to_subj = as_factor(lec_2_3___1.baseline)) |>
+  mutate(stress.transportation_accident.witnessed = as_factor(lec_2_3___2.baseline)) |>
+  mutate(stress.transportation_accident.learned = as_factor(lec_2_3___3.baseline)) |>
+  mutate(stress.transportation_accident.exposed = as_factor(lec_2_3___4.baseline)) |>
+  # 4. Serious accident
+  mutate(stress.serious_accident.to_subj = as_factor(lec_2_4___1.baseline)) |>
+  mutate(stress.serious_accident.witnessed = as_factor(lec_2_4___2.baseline)) |>
+  mutate(stress.serious_accident.learned = as_factor(lec_2_4___3.baseline)) |>
+  mutate(stress.serious_accident.exposed = as_factor(lec_2_4___4.baseline)) |>
+  # 5. Toxic substance
+  mutate(stress.toxic.to_subj = as_factor(lec_2_5___1.baseline)) |>
+  mutate(stress.toxic.witnessed = as_factor(lec_2_5___2.baseline)) |>
+  mutate(stress.toxic.learned = as_factor(lec_2_5___3.baseline)) |>
+  mutate(stress.toxic.exposed = as_factor(lec_2_5___4.baseline)) |>
+  # 6. Physical assault
+  mutate(stress.physical_assault.to_subj = as_factor(lec_2_6___1.baseline)) |>
+  mutate(stress.physical_assault.witnessed = as_factor(lec_2_6___2.baseline)) |>
+  mutate(stress.physical_assault.learned = as_factor(lec_2_6___3.baseline)) |>
+  mutate(stress.physical_assault.exposed = as_factor(lec_2_6___4.baseline)) |>
+  # 7. Assault with weapon
+  mutate(stress.weapon_assault.to_subj = as_factor(lec_2_7___1.baseline)) |>
+  mutate(stress.weapon_assault.witnessed = as_factor(lec_2_7___2.baseline)) |>
+  mutate(stress.weapon_assault.learned = as_factor(lec_2_7___3.baseline)) |>
+  mutate(stress.weapon_assault.exposed = as_factor(lec_2_7___4.baseline)) |>
+  # 8. Sexual assault
+  mutate(stress.sexual_assault.to_subj = as_factor(lec_2_8___1.baseline)) |>
+  mutate(stress.sexual_assault.witnessed = as_factor(lec_2_8___2.baseline)) |>
+  mutate(stress.sexual_assault.learned = as_factor(lec_2_8___3.baseline)) |>
+  mutate(stress.sexual_assault.exposed = as_factor(lec_2_8___4.baseline)) |>
+  # 9. Unwanted sexual experience
+  mutate(stress.unwanted_sexual.to_subj = as_factor(lec_2_9___1.baseline)) |>
+  mutate(stress.unwanted_sexual.witnessed = as_factor(lec_2_9___2.baseline)) |>
+  mutate(stress.unwanted_sexual.learned = as_factor(lec_2_9___3.baseline)) |>
+  mutate(stress.unwanted_sexual.exposed = as_factor(lec_2_9___4.baseline)) |>
+  # 10. Combat or war exposure
+  mutate(stress.combat.to_subj = as_factor(lec_2_10___1.baseline)) |>
+  mutate(stress.combat.witnessed = as_factor(lec_2_10___2.baseline)) |>
+  mutate(stress.combat.learned = as_factor(lec_2_10___3.baseline)) |>
+  mutate(stress.combat.exposed = as_factor(lec_2_10___4.baseline)) |>
+  # 11. Captivity
+  mutate(stress.captivity.to_subj = as_factor(lec_2_11___1.baseline)) |>
+  mutate(stress.captivity.witnessed = as_factor(lec_2_11___2.baseline)) |>
+  mutate(stress.captivity.learned = as_factor(lec_2_11___3.baseline)) |>
+  mutate(stress.captivity.exposed = as_factor(lec_2_11___4.baseline)) |>
+  # 12. Life-threatening illness
+  mutate(stress.illness.to_subj = as_factor(lec_2_12___1.baseline)) |>
+  mutate(stress.illness.witnessed = as_factor(lec_2_12___2.baseline)) |>
+  mutate(stress.illness.learned = as_factor(lec_2_12___3.baseline)) |>
+  mutate(stress.illness.exposed = as_factor(lec_2_12___4.baseline)) |>
+  # 13. Severe human suffering
+  mutate(stress.severe_suffering.to_subj = as_factor(lec_2_13___1.baseline)) |>
+  mutate(stress.severe_suffering.witnessed = as_factor(lec_2_13___2.baseline)) |>
+  mutate(stress.severe_suffering.learned = as_factor(lec_2_13___3.baseline)) |>
+  mutate(stress.severe_suffering.exposed = as_factor(lec_2_13___4.baseline)) |>
+  # 14. Sudden violent death
+  mutate(stress.sudden_violent_death.to_subj = as_factor(lec_2_14___1.baseline)) |>
+  mutate(stress.sudden_violent_death.witnessed = as_factor(lec_2_14___2.baseline)) |>
+  mutate(stress.sudden_violent_death.learned = as_factor(lec_2_14___3.baseline)) |>
+  mutate(stress.sudden_violent_death.exposed = as_factor(lec_2_14___4.baseline)) |>
+  # 15. Sudden accidental death
+  mutate(stress.sudden_accidental_death.to_subj = as_factor(lec_2_15___1.baseline)) |>
+  mutate(stress.sudden_accidental_death.witnessed = as_factor(lec_2_15___2.baseline)) |>
+  mutate(stress.sudden_accidental_death.learned = as_factor(lec_2_15___3.baseline)) |>
+  mutate(stress.sudden_accidental_death.exposed = as_factor(lec_2_15___4.baseline)) |>
+  # 16. Serious injury or harm caused to someone else
+  mutate(stress.harm_to_others.to_subj = as_factor(lec_2_16___1.baseline)) |>
+  mutate(stress.harm_to_others.witnessed = as_factor(lec_2_16___2.baseline)) |>
+  mutate(stress.harm_to_others.learned = as_factor(lec_2_16___3.baseline)) |>
+  mutate(stress.harm_to_others.exposed = as_factor(lec_2_16___4.baseline)) |>
+  # 17. Any other very stressful experience
+  mutate(stress.other_stressful.to_subj = as_factor(lec_2_17___1.baseline)) |>
+  mutate(stress.other_stressful.witnessed = as_factor(lec_2_17___2.baseline)) |>
+  mutate(stress.other_stressful.learned = as_factor(lec_2_17___3.baseline)) |>
+  mutate(stress.other_stressful.exposed = as_factor(lec_2_17___4.baseline)) |>
+  # Total stress
+  mutate(stress.to_subj = toyou_total.baseline) |>
+  mutate(stress.to_subj_and_wit = toyou_wit_total.baseline) |>
+  mutate(stress.wit = witnessed_total.baseline) |>
+
+  # Substance use history
+  # 18. Please indicate which of these substances you have EVER TRIED:	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drug(s)
+  # Tobacco (including e-cigarettes or vaping): Age you first tried any tobacco/nicotine product.	
+  # Alcohol: Age you first tried any type of alcohol.	
+  # Other drug(s): Age you first tried any type of mood altering substance.	
+  # 19. Please indicate which substances you   REGULARLY used (for any consistent amount of time):	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drugs
+  # Tobacco (including e-cigarettes or vaping): Age at which you began regular use of tobacco/nicotine product (even if you have since quit).	
+  # Alcohol: Age at which you began regular use of any type of alcohol product (even if you have since quit).	
+  # Other drug(s): Age at which you began regular use of any type of mood altering substance (even if you have since quit).	
+  mutate(history.tobacco = as_factor(newace18a___1.baseline)) |>
+  mutate(history.alcohol = as_factor(newace18a___2.baseline)) |>
+  mutate(history.other = as_factor(newace18a___10.baseline)) |>
   
 ```
 
@@ -653,18 +814,7 @@ blah
   
 
   
-  # Substance use history
-  # 18. Please indicate which of these substances you have EVER TRIED:	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drug(s)
-  # Tobacco (including e-cigarettes or vaping): Age you first tried any tobacco/nicotine product.	
-  # Alcohol: Age you first tried any type of alcohol.	
-  # Other drug(s): Age you first tried any type of mood altering substance.	
-  # 19. Please indicate which substances you   REGULARLY used (for any consistent amount of time):	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drugs
-  # Tobacco (including e-cigarettes or vaping): Age at which you began regular use of tobacco/nicotine product (even if you have since quit).	
-  # Alcohol: Age at which you began regular use of any type of alcohol product (even if you have since quit).	
-  # Other drug(s): Age at which you began regular use of any type of mood altering substance (even if you have since quit).	
-  mutate(sub_history.has_tried_tobacco = as_factor(newace18a___1.baseline)) |>
-  mutate(sub_history.has_tried_alcohol = as_factor(newace18a___2.baseline)) |>
-  mutate(sub_history.has_tried_other = as_factor(newace18a___10.baseline)) |>
+
   
   
   
@@ -676,97 +826,7 @@ blah
   
   
   
-  # Stressful life events
-  # 1, Happened to you | 2, Witnessed it happen | 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 6, Doesn't apply
-  # 1. Natural disaster	
-  mutate(stressful_life.natural_disaster.happened_to_you = as_factor(lec_2_1___1.baseline)) |>
-  mutate(stressful_life.natural_disaster.witnessed = as_factor(lec_2_1___2.baseline)) |>
-  mutate(stressful_life.natural_disaster.learned = as_factor(lec_2_1___3.baseline)) |>
-  mutate(stressful_life.natural_disaster.exposed = as_factor(lec_2_1___4.baseline)) |>
-  # 2. Fire or explosion
-  mutate(stressful_life.fire.happened_to_you = as_factor(lec_2_2___1.baseline)) |>
-  mutate(stressful_life.fire.witnessed = as_factor(lec_2_2___2.baseline)) |>
-  mutate(stressful_life.fire.learned = as_factor(lec_2_2___3.baseline)) |>
-  mutate(stressful_life.fire.exposed = as_factor(lec_2_2___4.baseline)) |>
-  # 3. Transportation accident
-  mutate(stressful_life.transportation_accident.happened_to_you = as_factor(lec_2_3___1.baseline)) |>
-  mutate(stressful_life.transportation_accident.witnessed = as_factor(lec_2_3___2.baseline)) |>
-  mutate(stressful_life.transportation_accident.learned = as_factor(lec_2_3___3.baseline)) |>
-  mutate(stressful_life.transportation_accident.exposed = as_factor(lec_2_3___4.baseline)) |>
-  # 4. Serious accident
-  mutate(stressful_life.serious_accident.happened_to_you = as_factor(lec_2_4___1.baseline)) |>
-  mutate(stressful_life.serious_accident.witnessed = as_factor(lec_2_4___2.baseline)) |>
-  mutate(stressful_life.serious_accident.learned = as_factor(lec_2_4___3.baseline)) |>
-  mutate(stressful_life.serious_accident.exposed = as_factor(lec_2_4___4.baseline)) |>
-  # 5. Toxic substance
-  mutate(stressful_life.toxic.happened_to_you = as_factor(lec_2_5___1.baseline)) |>
-  mutate(stressful_life.toxic.witnessed = as_factor(lec_2_5___2.baseline)) |>
-  mutate(stressful_life.toxic.learned = as_factor(lec_2_5___3.baseline)) |>
-  mutate(stressful_life.toxic.exposed = as_factor(lec_2_5___4.baseline)) |>
-  # 6. Physical assault
-  mutate(stressful_life.physical_assault.happened_to_you = as_factor(lec_2_6___1.baseline)) |>
-  mutate(stressful_life.physical_assault.witnessed = as_factor(lec_2_6___2.baseline)) |>
-  mutate(stressful_life.physical_assault.learned = as_factor(lec_2_6___3.baseline)) |>
-  mutate(stressful_life.physical_assault.exposed = as_factor(lec_2_6___4.baseline)) |>
-  # 7. Assault with weapon
-  mutate(stressful_life.weapon_assault.happened_to_you = as_factor(lec_2_7___1.baseline)) |>
-  mutate(stressful_life.weapon_assault.witnessed = as_factor(lec_2_7___2.baseline)) |>
-  mutate(stressful_life.weapon_assault.learned = as_factor(lec_2_7___3.baseline)) |>
-  mutate(stressful_life.weapon_assault.exposed = as_factor(lec_2_7___4.baseline)) |>
-  # 8. Sexual assault
-  mutate(stressful_life.sexual_assault.happened_to_you = as_factor(lec_2_8___1.baseline)) |>
-  mutate(stressful_life.sexual_assault.witnessed = as_factor(lec_2_8___2.baseline)) |>
-  mutate(stressful_life.sexual_assault.learned = as_factor(lec_2_8___3.baseline)) |>
-  mutate(stressful_life.sexual_assault.exposed = as_factor(lec_2_8___4.baseline)) |>
-  # 9. Unwanted sexual experience
-  mutate(stressful_life.unwanted_sexual.happened_to_you = as_factor(lec_2_9___1.baseline)) |>
-  mutate(stressful_life.unwanted_sexual.witnessed = as_factor(lec_2_9___2.baseline)) |>
-  mutate(stressful_life.unwanted_sexual.learned = as_factor(lec_2_9___3.baseline)) |>
-  mutate(stressful_life.unwanted_sexual.exposed = as_factor(lec_2_9___4.baseline)) |>
-  # 10. Combat or war exposure
-  mutate(stressful_life.combat.happened_to_you = as_factor(lec_2_10___1.baseline)) |>
-  mutate(stressful_life.combat.witnessed = as_factor(lec_2_10___2.baseline)) |>
-  mutate(stressful_life.combat.learned = as_factor(lec_2_10___3.baseline)) |>
-  mutate(stressful_life.combat.exposed = as_factor(lec_2_10___4.baseline)) |>
-  # 11. Captivity
-  mutate(stressful_life.captivity.happened_to_you = as_factor(lec_2_11___1.baseline)) |>
-  mutate(stressful_life.captivity.witnessed = as_factor(lec_2_11___2.baseline)) |>
-  mutate(stressful_life.captivity.learned = as_factor(lec_2_11___3.baseline)) |>
-  mutate(stressful_life.captivity.exposed = as_factor(lec_2_11___4.baseline)) |>
-  # 12. Life-threatening illness
-  mutate(stressful_life.illness.happened_to_you = as_factor(lec_2_12___1.baseline)) |>
-  mutate(stressful_life.illness.witnessed = as_factor(lec_2_12___2.baseline)) |>
-  mutate(stressful_life.illness.learned = as_factor(lec_2_12___3.baseline)) |>
-  mutate(stressful_life.illness.exposed = as_factor(lec_2_12___4.baseline)) |>
-  # 13. Severe human suffering
-  mutate(stressful_life.severe_suffering.happened_to_you = as_factor(lec_2_13___1.baseline)) |>
-  mutate(stressful_life.severe_suffering.witnessed = as_factor(lec_2_13___2.baseline)) |>
-  mutate(stressful_life.severe_suffering.learned = as_factor(lec_2_13___3.baseline)) |>
-  mutate(stressful_life.severe_suffering.exposed = as_factor(lec_2_13___4.baseline)) |>
-  # 14. Sudden violent death
-  mutate(stressful_life.sudden_violent_death.happened_to_you = as_factor(lec_2_14___1.baseline)) |>
-  mutate(stressful_life.sudden_violent_death.witnessed = as_factor(lec_2_14___2.baseline)) |>
-  mutate(stressful_life.sudden_violent_death.learned = as_factor(lec_2_14___3.baseline)) |>
-  mutate(stressful_life.sudden_violent_death.exposed = as_factor(lec_2_14___4.baseline)) |>
-  # 15. Sudden accidental death
-  mutate(stressful_life.sudden_accidental_death.happened_to_you = as_factor(lec_2_15___1.baseline)) |>
-  mutate(stressful_life.sudden_accidental_death.witnessed = as_factor(lec_2_15___2.baseline)) |>
-  mutate(stressful_life.sudden_accidental_death.learned = as_factor(lec_2_15___3.baseline)) |>
-  mutate(stressful_life.sudden_accidental_death.exposed = as_factor(lec_2_15___4.baseline)) |>
-  # 16. Serious injury or harm caused to someone else
-  mutate(stressful_life.harm_to_others.happened_to_you = as_factor(lec_2_16___1.baseline)) |>
-  mutate(stressful_life.harm_to_others.witnessed = as_factor(lec_2_16___2.baseline)) |>
-  mutate(stressful_life.harm_to_others.learned = as_factor(lec_2_16___3.baseline)) |>
-  mutate(stressful_life.harm_to_others.exposed = as_factor(lec_2_16___4.baseline)) |>
-  # 17. Any other very stressful experience
-  mutate(stressful_life.other_stressful.happened_to_you = as_factor(lec_2_17___1.baseline)) |>
-  mutate(stressful_life.other_stressful.witnessed = as_factor(lec_2_17___2.baseline)) |>
-  mutate(stressful_life.other_stressful.learned = as_factor(lec_2_17___3.baseline)) |>
-  mutate(stressful_life.other_stressful.exposed = as_factor(lec_2_17___4.baseline)) |>
-  # Total stress
-  mutate(stressful_life.happened_to_you_total = toyou_total.baseline) |>
-  mutate(stressful_life.happened_to_you_and_witnessed_total = toyou_wit_total.baseline) |>
-  mutate(stressful_life.witnessed_total = witnessed_total.baseline) |>
+
 
   
   
@@ -775,23 +835,6 @@ blah
   
   
   
-  
-  # Spirituality and religion
-  # 0, Atheist | 1, Agnostic | 2, Protestant | 3, Catholic | 4, Muslim | 5, Jewish | 6, Hindu | 7, Buddhist | 8, Baptist | 9, No religious affiliation | 10, Non-denominational Christian | 15, Other
-  mutate(religion.Atheist = as_factor(brc_rel___0.baseline)) |>
-  mutate(religion.Agnostic = as_factor(brc_rel___1.baseline)) |>
-  mutate(religion.Protestant = as_factor(brc_rel___2.baseline)) |>
-  mutate(religion.Catholic = as_factor(brc_rel___3.baseline)) |>
-  mutate(religion.Muslim = as_factor(brc_rel___4.baseline)) |>
-  mutate(religion.Jewish = as_factor(brc_rel___5.baseline)) |>
-  mutate(religion.Hindu = as_factor(brc_rel___6.baseline)) |>
-  mutate(religion.Buddhist = as_factor(brc_rel___7.baseline)) |>
-  mutate(religion.Baptist = as_factor(brc_rel___8.baseline)) |>
-  mutate(religion.No_affiliation = as_factor(brc_rel___9.baseline)) |>
-  mutate(religion.Non_denominational_Christian = as_factor(brc_rel___10.baseline)) |>
-  mutate(religion.Other = as_factor(brc_rel___15.baseline)) |>
-  mutate(religion.positive_spiritual_cope = pos_cope.baseline) |>
-  mutate(religion.negative_spiritual_cope = neg_cope.baseline) |>
 
 
 
@@ -799,43 +842,10 @@ blah
 
 
 
-  # Feature engineering
-  ## Substances
-  mutate(SUD.sum_legal = as.numeric(as.character(SUD.Alchohol)) +
-           as.numeric(as.character(SUD.Cannabis)) +
-           as.numeric(as.character(SUD.Nicotine)) +
-           as.numeric(as.character(SUD.Inhalant))) |>
-  
-  mutate(SUD.does_legal_drugs = as_factor(if_else(SUD.sum_legal >= 1, TRUE, FALSE))) |>
-  
-  mutate(SUD.sum_illegal = as.numeric(as.character(SUD.Opioid)) +
-           as.numeric(as.character(SUD.sedative_hypnotic_anxiolytic)) +
-           as.numeric(as.character(SUD.Cocaine)) +
-           as.numeric(as.character(SUD.Other_stimulant)) +
-           as.numeric(as.character(SUD.psychoactive)) +
-           as.numeric(as.character(SUD.Hallucinogen))
-         ) |>
-  
-  mutate(SUD.does_illegal_drugs = as_factor(if_else(SUD.sum_illegal >= 1, TRUE, FALSE))) |>
 
-  ## Religion
-  mutate(religion.is_religious = as.numeric(as.character(religion.Other)) +
-           as.numeric(as.character(religion.Non_denominational_Christian)) +
-           as.numeric(as.character(religion.Baptist)) +
-           as.numeric(as.character(religion.Buddhist)) +
-           as.numeric(as.character(religion.Hindu)) +
-           as.numeric(as.character(religion.Jewish)) +
-           as.numeric(as.character(religion.Muslim)) +
-                      as.numeric(as.character(religion.Catholic)) +
-                      as.numeric(as.character(religion.Protestant))) |>
-  
-  mutate(religion.is_religious = as_factor(if_else(religion.is_religious >= 1, TRUE, FALSE))) |>
-  
-  mutate(religion.is_not_religious = as.numeric(as.character(religion.No_affiliation)) +
-         as.numeric(as.character(religion.Agnostic)) +
-         as.numeric(as.character(religion.Atheist))) |>
-  
-  mutate(religion.is_not_religious = as_factor(if_else(religion.is_not_religious >= 1, TRUE, FALSE)))
+
+
+
   
 
 
