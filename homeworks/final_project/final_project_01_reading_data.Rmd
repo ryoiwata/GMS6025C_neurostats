@@ -766,14 +766,14 @@ factored_addiction_data <- all_addiction_data |>
   mutate(stress.harm_to_others.learned = as_factor(lec_2_16___3.baseline)) |>
   mutate(stress.harm_to_others.exposed = as_factor(lec_2_16___4.baseline)) |>
   # 17. Any other very stressful experience
-  mutate(stress.other_stressful.to_subj = as_factor(lec_2_17___1.baseline)) |>
-  mutate(stress.other_stressful.witnessed = as_factor(lec_2_17___2.baseline)) |>
-  mutate(stress.other_stressful.learned = as_factor(lec_2_17___3.baseline)) |>
-  mutate(stress.other_stressful.exposed = as_factor(lec_2_17___4.baseline)) |>
+  mutate(stress.other.to_subj = as_factor(lec_2_17___1.baseline)) |>
+  mutate(stress.other.witnessed = as_factor(lec_2_17___2.baseline)) |>
+  mutate(stress.other.learned = as_factor(lec_2_17___3.baseline)) |>
+  mutate(stress.other.exposed = as_factor(lec_2_17___4.baseline)) |>
   # Total stress
-  mutate(stress.to_subj = toyou_total.baseline) |>
-  mutate(stress.to_subj_and_wit = toyou_wit_total.baseline) |>
-  mutate(stress.wit = witnessed_total.baseline) |>
+  mutate(stress_to_subj = toyou_total.baseline) |>
+  mutate(stress_to_subj_and_wit = toyou_wit_total.baseline) |>
+  mutate(stress_wit = witnessed_total.baseline) |>
 
   # Substance use history
   # 18. Please indicate which of these substances you have EVER TRIED:	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drug(s)
@@ -786,9 +786,11 @@ factored_addiction_data <- all_addiction_data |>
   # Other drug(s): Age at which you began regular use of any type of mood altering substance (even if you have since quit).	
   mutate(history.tobacco = as_factor(newace18a___1.baseline)) |>
   mutate(history.alcohol = as_factor(newace18a___2.baseline)) |>
-  mutate(history.other = as_factor(newace18a___10.baseline)) |>
+  mutate(history.other = as_factor(newace18a___10.baseline))
   
 ```
+
+# Filtering rows and columns
 
 ```{r}
 filtered_addiction_data <- factored_addiction_data |>
@@ -805,58 +807,11 @@ filtered_addiction_data <- factored_addiction_data |>
   drop_na()
 ```
 
-```{r}
-blah
-```
-
-```{r}
-
-  
-
-  
-
-  
-  
-  
-
-
-  
-  
-  
-  
-  
-  
-
-
-  
-  
- 
-
-  
-  
-  
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-```
 
 # Saving the Tibble to file
 
 ```{r}
-saveRDS(factored_addiction_data, "addiction.rds")
+saveRDS(filtered_addiction_data, "addiction.rds")
 ```
 
 

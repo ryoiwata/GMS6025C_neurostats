@@ -90,8 +90,12 @@ cleaned_addiction_data
 - Impression of change
 
 # Looking at the basic demographics
+
 ```{r}
-install.packages("ggcorrplot")
+
+ggplot(data, aes(fill=condition, y=value, x=specie)) + 
+    geom_bar(position="stack", stat="identity")
+
 ```
 
 ```{r}
