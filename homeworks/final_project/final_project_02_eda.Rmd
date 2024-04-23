@@ -121,9 +121,6 @@ cleaned_addiction_data |> ggplot(aes(SUD.sum, color=gender, fill=gender)) +
 ```
 ```{r}
 
-# cleaned_addiction_data |>
-#   starts_with(row.names(cleaned_addiction_data), "SUD_is")
-
 SUD_count_df <- cleaned_addiction_data |>
   pivot_longer(colnames(select(cleaned_addiction_data, starts_with("SUD_is"))), names_to = "SUD", values_to = "SUD_yn") |>
   filter(SUD_yn == "1") |>
@@ -137,12 +134,47 @@ SUD_count_df |> ggplot(aes(fill=gender, x=SUD)) +
   labs(title = "Subject count by substance use disorder")
   
 ```
+
+```{r}
+
+religion_count_df <- cleaned_addiction_data |>
+  pivot_longer(colnames(select(cleaned_addiction_data, starts_with("rel.is_"))), names_to = "religion", values_to = "religion_yn") |>
+  filter(religion_yn == "1") |>
+  mutate(religion = str_replace(religion, "rel.is_", "")) |>
+  mutate(religion = str_replace(religion, "_", "\n")) |>
+  mutate(religion = str_replace(religion, "_", "\n")) 
+
+
+
+religion_count_df |> ggplot(aes(fill=gender, x=religion)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=10)) +
+  labs(title = "Subject count by religion")
+
+  
+```
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(commit.BL, commit.DC)) +
+  geom_count() +
+  scale_x_continuous(n.breaks=29) +
+  scale_y_continuous(n.breaks=29) +
+  geom_abline(slope=1, intercept = 0, color="red", size=1, alpha=3) +
+  labs(title = "Commitment to sobriety baseline to discharge")
+
+
+```
+
 ################################################
+
+```{r}
+blah
+```
 
 ```{r}
 SUD_counts <- colSums(select(cleaned_addiction_data, starts_with("SUD_is")) == 1)
 
-counts_df <- as.data.frame(SUD_counts) |>
+counts_df <- as.data.frame(SUDg_counts) |>
   rownames_to_column() |>
   # filter(row) |>
   mutate(rowname = str_replace(rowname, "SUD_is_", "")) |>
