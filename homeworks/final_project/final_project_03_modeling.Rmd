@@ -32,11 +32,13 @@ options(scipen = 3, digits = 5)
 ```
 
 ```{r}
-cleaned_addiction_data = read_rds("./addiction.rds")
+cleaned_addiction_data = read_rds("./addiction.rds") |>
+  mutate(commit_change = commit.DC - commit.BL)
+
 ```
 
 ```{r}
-cleaned_addiction_data
+cleaned_addiction_data 
 ```
 
 # Overview of what we're working with
@@ -90,6 +92,199 @@ cleaned_addiction_data
 - Impression of change
 
 # Looking at the basic demographics
+
+# Change Commitment model
+
+```{r}
+commit_model <- lm(commit_change ~ 
+                + age 
+                + gender
+                + education
+                + rel.is_religious
+                + religion_pos
+                + religion_neg
+                + aana_past_year
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                ,cleaned_addiction_data)
+```
+
+```{r}
+kable(tidy(commit_model))
+```
+
+```{r}
+car::Anova(commit_model)
+```
+
+
+```{r}
+abstain_model = lm(abstain_total.BL ~
+                             + age 
+                             + gender
+                             + education
+                             # + treatment_days
+                             + SUD.sum_illegal
+                             + SUD.sum_legal
+                             # + aana_positive
+                             + childhood_sum
+                             # + commit.BL
+                             + social
+                             + religion_pos
+                             + rel.is_religious 
+                   
+                             # + religion_neg
+                             + stress_to_subj
+                             + stress_wit,
+                             cleaned_addiction_data)
+```
+```{r}
+car::Anova(abstain_model)
+
+```
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(education, abstain_total.BL, color=education)) +
+  geom_violin() +
+  geom_jitter(height = 0, width = 0.1) +
+  # geom_count() +
+  stat_summary(fun = "mean",
+             geom = "crossbar",
+             color = "red") +
+  # geom_boxplot(width=0.1) +
+  labs(title = "Education and confidence to abstain") +
+  # facet_wrap(vars(SUD.uses_illegal)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=10))
+
+  
+```
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(age, abstain_total.BL, color=education)) +
+  geom_jitter() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "Abstain confidence baseline to discharge") +
+  facet_wrap(vars(education))
+  
+```
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(religion_pos, abstain_total.BL, color=rel.is_religious)) +
+  geom_jitter() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "Abstain confidence baseline to discharge") +
+  facet_wrap(vars(rel.is_religious))
+  
+```
+```{r}
+craving_model = lm(craving.BL ~
+                             + age 
+                             + gender
+                             + education
+                             # + treatment_days
+                             + SUD.sum_illegal
+                             + SUD.sum_legal
+                             # + aana_positive
+                             # + childhood_sum
+                             # + commit.BL
+                             + social
+                             + religion_pos
+                             + rel.is_religious
+                              # + aana_life 
+                   + aana_past_year
+                   + aana_positive
+                   
+                             # + religion_neg
+                             + stress_to_subj
+                             # + stress_wit,
+                   ,
+                             cleaned_addiction_data)
+```
+```{r}
+car::Anova(craving_model)
+
+```
+
+
+```{r}
+qol_model = lm(qol.BL ~
+                          + age 
+                             + gender
+                             + education
+                             # + treatment_days
+                             + SUD.sum_illegal
+                             + SUD.sum_legal
+                             # + aana_positive
+                             # + childhood_sum
+                             # + commit.BL
+                             + social
+                             + religion_pos
+                             + rel.is_religious 
+                   
+                             # + religion_neg
+                             + stress_to_subj
+                             # + stress_wit,
+                   ,
+                             cleaned_addiction_data)
+```
+```{r}
+car::Anova(qol_model)
+
+```
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(religion_pos, qol.BL, color=rel.is_religious)) +
+  geom_jitter() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "Abstain confidence baseline to discharge") +
+  facet_wrap(vars(rel.is_religious))
+  
+```
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(social, qol.BL, color=rel.is_religious)) +
+  geom_jitter() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "Abstain confidence baseline to discharge") +
+  facet_wrap(vars(rel.is_religious))
+  
+```
+
+
+##############################################################
+```{r}
+blah
+
+                             + age 
+                             + gender
+                             + education
+                             + treatment_days
+                             + SUD.sum_illegal
+                             + SUD.sum_legal
+                             + aana_positive
+                             + aana_negative
+                             + childhood_sum
+                             + commit.BL
+                             + abstain_total.BL
+                             + qol.BL
+                             + social
+                             + religion_pos
+                             + religion_neg
+                             + stress_to_subj
+                             + stress_wit
+                             + craving.BL,
+```
+```{r}
+age, treatment_days, SUD.sum_illegal, SUD.sum_legal, aana_positive, aana_negative, childhood_sum, commit.BL, abstain_total.BL, qol.BL, social, religion_pos, religion_neg, stress_to_subj, stress_wit, craving.BL
+```
 
 ```{r}
 stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~

@@ -165,6 +165,115 @@ cleaned_addiction_data |>
 
 ```
 
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(craving.BL, craving.FU, color=SUD.uses_illegal)) +
+  geom_count() +
+  scale_x_continuous(n.breaks=20) +
+  scale_y_continuous(n.breaks=20) +
+  geom_abline(slope=1, intercept = 0, color="red", size=1, alpha=3) +
+  labs(title = "Alcholol/Drug craving baseline to discharge") +
+  facet_wrap(vars(SUD.uses_illegal))
+  
+```
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(SUD.uses_illegal, craving.BL, color=SUD.uses_illegal)) +
+  geom_violin() + 
+  geom_jitter(height = 0, width = 0.3) +
+  # geom_count() +
+  stat_summary(fun = "mean",
+             geom = "crossbar",
+             color = "red") +
+  # geom_boxplot(width=0.1) +
+  labs(title = "Craving distribution") 
+
+```
+
+```{r}
+cleaned_addiction_data |> 
+  ggplot(aes(SUD.uses_illegal, treatment_days, color=SUD.uses_illegal)) +
+  geom_violin() +
+  # geom_jitter(height = 0, width = 0.1) +
+  geom_count() +
+  stat_summary(fun = "mean",
+             geom = "crossbar",
+             color = "red") +
+  # geom_boxplot(width=0.1) +
+  labs(title = "Craving distribution") 
+  # facet_wrap(vars(SUD.uses_illegal))
+```
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(abstain_total.BL, abstain_total.DC, color=SUD.uses_illegal)) +
+  geom_count() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  geom_abline(slope=1, intercept = 0, color="red", size=1, alpha=3) +
+  labs(title = "Abstain confidence baseline to discharge") +
+  facet_wrap(vars(SUD.uses_illegal))
+  
+```
+```{r}
+cleaned_addiction_data |>
+  # select(ends_with("BL")) |> 
+  select(age, treatment_days, SUD.sum_illegal, SUD.sum_legal, aana_positive, aana_negative, childhood_sum, commit.BL, abstain_total.BL, qol.BL, social, religion_pos, religion_neg, stress_to_subj, stress_wit, craving.BL) |>
+
+  cor() |>
+  ggcorrplot(colors = c("red", "white", "blue"), 
+             type = "upper",
+             ggtheme = ggplot2::theme_gray,
+             # hc.order = TRUE
+             ) +
+  
+  labs(title = "Correlation matrix of geneal features")
+  
+```
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(aana_positive, abstain_total.BL, color=SUD.uses_illegal)) +
+  geom_count() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "AA/NA positive regard and abstain confidence") +
+  facet_wrap(vars(SUD.uses_illegal))
+  
+```
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(qol.BL, abstain_total.BL, color=SUD.uses_illegal)) +
+  geom_count() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "Quality of life and abstain confidence") +
+  facet_wrap(vars(SUD.uses_illegal))
+  
+```
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(social, qol.BL, color=SUD.uses_illegal)) +
+  # geom_count() +
+  geom_jitter() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "Abstain confidence baseline to discharge") +
+  facet_wrap(vars(SUD.uses_illegal))
+  
+```
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(craving.BL, abstain_total.BL, color=SUD.uses_illegal)) +
+  geom_count() +
+  # scale_x_continuous(n.breaks=20) +
+  # scale_y_continuous(n.breaks=20) +
+  labs(title = "Craving to abstain confidence") +
+  facet_wrap(vars(SUD.uses_illegal))
+  
+```
+
 ################################################
 
 ```{r}

@@ -1,0 +1,287 @@
+---
+title: "Final Project"
+author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(knitr)
+library(car)
+# install.packages("ggalluvial")
+library(ggalluvial)
+# install.packages("circlize")
+library(circlize)
+library(stringr)
+# install.packages("cowplot")
+library(cowplot)
+# install.packages("ggpie")
+library(ggpie)
+# to control default number formatting, no need for specifying digits in kable.
+# install.packages("ggheatmap")
+library(ggheatmap)
+# install.packages("ggcorrplot")
+library(ggcorrplot)
+
+options(scipen = 3, digits = 5) 
+```
+
+```{r}
+cleaned_addiction_data = read_rds("./addiction.rds")
+  # mutate(commit_change = (commit.DC - commit.BL) / (commit.BL + commit.DC))
+  # mutate(commit_change = (commit.DC - commit.BL))
+
+```
+
+```{r}
+cleaned_addiction_data 
+```
+
+# Overview of what we're working with
+
+### Things that can predict
+- number of sober days
+- days since baseline
+- age
+- gender
+- education
+- drop out yes no
+- SUD is alcholoc
+- SUD is other
+- Social support
+  - family
+  - friends
+  - sig other
+  - total
+- Substance use history
+  - Tried tobacco/alcohol
+  - Age of first use
+  - Regular use
+  - Age of regular use
+- AA/NA affiliation
+  - Lifetime number of meetings
+  - Last year number of meetings
+  - Degree of affiliation
+  - Positive thoughts
+  - Negative thoughts
+- Stressful life
+  - happened
+  - witnessed
+  - learned about
+  - exposed
+  - total of all things
+- Childhood
+- Religion
+  - Religious affiliation
+  - Positive
+  - Negative
+- Life quality
+
+### Things we can predict
+- impression change
+- length of stay
+- Life quality
+- Commitment to change
+- Cravings
+  - baseline
+  - baseline vs followup
+- Impression of change
+
+# Final model
+
+```{r}
+# final_model <- lm(craving.BL ~ 
+final_model <- lm(abstain_total.BL ~ age 
+                + gender
+                + education
+                + rel.is_religious
+                + religion_pos
+                # + rel.is_religious * religion_pos
+                + aana_past_year
+                + aana_positive
+                + social
+                # + SUD.uses_illegal
+                # + SUD.sum
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                ,cleaned_addiction_data)
+```
+
+# Other models
+
+```{r}
+model_1 <- lm(abstain_total.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + rel.is_religious
+                # + religion_pos
+                # + aana_past_year
+                # + aana_positive
+                # + social
+                ,cleaned_addiction_data)
+
+model_2 <- lm(abstain_total.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + rel.is_religious
+                + religion_pos
+                # + aana_past_year
+                # + aana_positive
+                # + social
+                ,cleaned_addiction_data)
+
+model_3 <- lm(abstain_total.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + rel.is_religious
+                # + religion_pos
+                + aana_past_year
+                # + aana_positive
+                # + social
+                ,cleaned_addiction_data)
+
+model_4 <- lm(abstain_total.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + rel.is_religious
+                # + religion_pos
+                # + aana_past_year
+                + aana_positive
+                # + social
+                ,cleaned_addiction_data)
+
+model_5 <- lm(abstain_total.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + rel.is_religious
+                # + religion_pos
+                # + aana_past_year
+                + aana_positive
+                # + social
+                ,cleaned_addiction_data)
+
+```
+
+```{r}
+kable(AIC(final_model, model_1, model_2, model_3, model_4))
+```
+
+```{r}
+tidy(final_model)
+```
+
+```{r}
+car::Anova(final_model)
+```
+
+# Model Diagnostics
+
+```{r}
+library(MASS)  # For stepwise selection
+
+
+# Stepwise selection based on AIC
+stepwise_model_aic <- stepAIC(final_model, direction = "both")
+
+# Stepwise selection based on BIC (using AIC function but changing k)
+stepwise_model_bic <- stepAIC(final_model, direction = "both", k = log(nrow(cleaned_addiction_data)))
+```
+
+```{r}
+# Compare models
+summary(stepwise_model_aic)
+```
+
+```{r}
+summary(stepwise_model_bic)
+
+```
+
+
+################################################################################################
+
+# Change Commitment model
+
+
+
+```{r}
+commit_model <- lm(commit.BL ~ 
+                + age 
+                + gender
+                + education
+                + rel.is_religious
+                + religion_pos
+                + religion_neg
+                + aana_past_year
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                ,cleaned_addiction_data)
+```
+
+```{r}
+tidy(commit_model)
+```
+
+```{r}
+car::Anova(commit_model)
+
+```
+
+```{r}
+tidy(commit_model) |>
+  select() |>
+  kable()
+```
+
+```{r}
+glance(commit_model)
+```
+
+```{r}
+summary(commit_model)
+```
+
+```{r}
+craving_model <- lm(craving.BL ~ 
+                + age 
+                + gender
+                + education
+                + rel.is_religious
+                + religion_pos
+                + religion_neg
+                + aana_past_year
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                ,cleaned_addiction_data)
+```
+```
+
+
+
+```{r}
+cleaned_addiction_data |> ggplot(aes(commit.BL, commit.DC)) +
+  geom_count() +
+  geom_abline(slope=1, intercept=0, color="red", size=1) +
+  labs(title="Change in degree of commitment to sobriety")
+```
+
+```{r}
+cleaned_addiction_data |> ggplot(aes(education, commit_change)) +
+  geom_boxplot()
+```
+

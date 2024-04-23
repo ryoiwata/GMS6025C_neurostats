@@ -437,6 +437,10 @@ factored_addiction_data <- all_addiction_data |>
   # TSPE Negative Score	sum([tspe_7]+[tspe_8]+[tspe_9]+[tspe_10]+[tspe_11]+[tspe_12]+[tspe_13]+[tspe_14]+[tspe_15]+[tpse_16])
   mutate(aana_positive = tspe_positive.baseline) |>
   mutate(aana_negative = tspe_negative.baseline) |>
+  mutate(aana_life = as.factor(aaas_calc_lifetime.baseline)) |>
+  mutate(aana_past_year = as.factor(aaas_calc_past_year.baseline))  |>
+
+
   
  # Childhood
   #   "1. Did a parent or other adult in the household often or very often... 
@@ -566,9 +570,9 @@ factored_addiction_data <- all_addiction_data |>
   # 4. During the past week HOW DIFFICULT WOULD IT HAVE BEEN TO RESIST taking a drink or using drugs if you had known that alcohol or drugs were in your current place of residence?
   # 5. Keeping in mind your responses to the previous questions, please rate your overall AVERAGE ALCOHOL AND DRUG CRAVING for the past week. 
   # PACS Total Score
-  mutate(craving.baseline = pacs_mean.baseline) |>
-  mutate(craving.followup = pacs_mean.followup) |>
-  mutate(craving.discharge = pacs_mean.discharge) |>
+  mutate(craving.BL = pacs_mean.baseline) |>
+  mutate(craving.FU = pacs_mean.followup) |>
+  mutate(craving.DC = pacs_mean.discharge) |>
   
   # Life Quality
   # 1. How would you rate your quality of life?
