@@ -92,11 +92,95 @@ cleaned_addiction_data
 # Looking at the basic demographics
 
 ```{r}
+cleaned_addiction_data |> ggplot(aes(fill=education, x=gender)) +
+  geom_bar() +
+  labs(title = "Subject education and gender count")
 
-ggplot(data, aes(fill=condition, y=value, x=specie)) + 
-    geom_bar(position="stack", stat="identity")
 
 ```
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(gender, age, color=gender)) +
+  geom_violin() + 
+  geom_jitter(height = 0, width = 0.3) +
+  stat_summary(fun = "mean",
+             geom = "crossbar",
+             color = "red") +
+  # geom_boxplot(width=0.1) +
+  labs(title = "Age distribution") 
+
+```
+```{r}
+cleaned_addiction_data |> ggplot(aes(SUD.sum, color=gender, fill=gender)) +
+  geom_histogram(bins = 8) +
+  facet_wrap(vars(gender)) + 
+  scale_x_continuous(n.breaks=10) +
+  scale_y_continuous(n.breaks=20) +
+
+  labs(title = "Number of addicted substances")
+```
+```{r}
+
+# cleaned_addiction_data |>
+#   starts_with(row.names(cleaned_addiction_data), "SUD_is")
+
+SUD_count_df <- cleaned_addiction_data |>
+  pivot_longer(colnames(select(cleaned_addiction_data, starts_with("SUD_is"))), names_to = "SUD", values_to = "SUD_yn") |>
+  filter(SUD_yn == "1") |>
+  mutate(SUD = str_replace(SUD, "SUD_is_", "")) |>
+  mutate(SUD = str_replace(SUD, "_", "\n"))
+
+
+SUD_count_df |> ggplot(aes(fill=gender, x=SUD)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=15)) +
+  labs(title = "Subject count by substance use disorder")
+  
+```
+################################################
+
+```{r}
+SUD_counts <- colSums(select(cleaned_addiction_data, starts_with("SUD_is")) == 1)
+
+counts_df <- as.data.frame(SUD_counts) |>
+  rownames_to_column() |>
+  # filter(row) |>
+  mutate(rowname = str_replace(rowname, "SUD_is_", "")) |>
+  mutate(rowname = str_replace_all(rowname, "_", " "))
+
+counts_df |>
+  ggplot(aes(rowname, SUD_counts)) +
+  geom_bar(stat="identity") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title = "Distribution of addicted substances")
+
+```
+
+  
+
+counts_df |> ggplot(aes(column_names, counts)) +
+  geom_bar(stat="identity") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title = "Distribution of addicted substances")
+```
+
+```{r}
+counts
+```
+
+##############################################################################
+
+```{r}
+
+age_mean <- cleaned_addiction_data |>
+  group_by(gender) %>%
+  summarize(mean = mean(age))
+
+cleaned_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
+  geom_density(alpha=.4) +
+
+```
+
 
 ```{r}
 cleaned_addiction_data |>
@@ -129,29 +213,8 @@ cowplot::plot_grid(p2)
 ```
 
 
-```{r}
 
-age_mean <- cleaned_addiction_data |>
-  group_by(gender) %>%
-  summarize(mean = mean(age))
 
-# ggplot(data, aes(x=Accuracy, fill=Modality)) +
-#   geom_density(alpha=0.4)+
-#   facet_wrap(. ~ Species) +
-#   xlab("Accuracy") + ylab("Density") +
-#   geom_vline(data = dummy, aes(xintercept = mean, color = Modality))
-
-cleaned_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
-  geom_density(alpha=.4) +
-  labs(title = "Age distribution")
-
-```
-```{r}
-cleaned_addiction_data |> ggplot(aes(SUD.sum, color=gender, fill=gender)) +
-  geom_histogram(bins = 8) +
-  facet_wrap(vars(gender)) +
-  labs(title = "Distribution of addicted substances")
-```
 
 
 ```{r}
@@ -328,21 +391,7 @@ cleaned_addiction_data |> ggplot(aes(qol.environmental_health_followup)) +
   geom_histogram()
 ```
 
-```{r}
-counts <- colSums(select(factored_addiction_data, starts_with("SUD.is_")) == 1)
 
-counts_df <- as.data.frame(counts) |>
-  mutate(column_names = row.names(counts_df)) |>
-  mutate(column_names = str_replace(column_names, "SUD.is_", "")) |>
-  mutate(column_names = str_replace_all(column_names, "_", " "))
-
-  
-
-counts_df |> ggplot(aes(column_names, counts)) +
-  geom_bar(stat="identity") +
-  theme(axis.text.x = element_text(angle = 90)) +
-  labs(title = "Distribution of addicted substances")
-```
 
 ```{r}
 cleaned_addiction_data |> 

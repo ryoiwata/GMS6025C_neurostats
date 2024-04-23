@@ -386,33 +386,33 @@ factored_addiction_data <- all_addiction_data |>
   mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
 
   # SUD
-  mutate(SUD.Alchohol = as_factor(sa_dx___0.baseline)) |>
-  mutate(SUD.Opioid = as_factor(sa_dx___1.baseline)) |>
-  mutate(SUD.Cannabis = as_factor(sa_dx___2.baseline)) |>
-  mutate(SUD.sedative_hypnotic_anxiolytic = as_factor(sa_dx___3.baseline)) |>
-  mutate(SUD.Cocaine = as_factor(sa_dx___4.baseline)) |>
-  mutate(SUD.Other_stimulant = as_factor(sa_dx___5.baseline)) |>
-  mutate(SUD.Hallucinogen = as_factor(sa_dx___6.baseline)) |>
-  mutate(SUD.Nicotine = as_factor(sa_dx___7.baseline)) |>
-  mutate(SUD.Inhalant = as_factor(sa_dx___8.baseline)) |>
-  mutate(SUD.psychoactive = as_factor(sa_dx___9.baseline)) |>
-  mutate(SUD_sum = sa_dx_sum.baseline) |>
+  mutate(SUD_is_Alchohol = as_factor(sa_dx___0.baseline)) |>
+  mutate(SUD_is_Opioid = as_factor(sa_dx___1.baseline)) |>
+  mutate(SUD_is_Cannabis = as_factor(sa_dx___2.baseline)) |>
+  mutate(SUD_is_depressants_anxiolytic = as_factor(sa_dx___3.baseline)) |>
+  mutate(SUD_is_Cocaine = as_factor(sa_dx___4.baseline)) |>
+  mutate(SUD_is_Other_stimulant = as_factor(sa_dx___5.baseline)) |>
+  mutate(SUD_is_Hallucinogen = as_factor(sa_dx___6.baseline)) |>
+  mutate(SUD_is_Nicotine = as_factor(sa_dx___7.baseline)) |>
+  mutate(SUD_is_Inhalant = as_factor(sa_dx___8.baseline)) |>
+  mutate(SUD_is_psychoactive = as_factor(sa_dx___9.baseline)) |>
+  mutate(SUD.sum = sa_dx_sum.baseline) |>
   
   # Feature engineering
   ## Substances
-  mutate(SUD.sum_legal = as.numeric(as.character(SUD.Alchohol)) +
-           as.numeric(as.character(SUD.Cannabis)) +
-           as.numeric(as.character(SUD.Nicotine)) +
-           as.numeric(as.character(SUD.Inhalant))) |>
+  mutate(SUD.sum_legal = as.numeric(as.character(SUD_is_Alchohol)) +
+           as.numeric(as.character(SUD_is_Cannabis)) +
+           as.numeric(as.character(SUD_is_Nicotine)) +
+           as.numeric(as.character(SUD_is_Inhalant))) |>
   
   mutate(SUD.uses_legal = as_factor(if_else(SUD.sum_legal >= 1, TRUE, FALSE))) |>
   
-  mutate(SUD.sum_illegal = as.numeric(as.character(SUD.Opioid)) +
-           as.numeric(as.character(SUD.sedative_hypnotic_anxiolytic)) +
-           as.numeric(as.character(SUD.Cocaine)) +
-           as.numeric(as.character(SUD.Other_stimulant)) +
-           as.numeric(as.character(SUD.psychoactive)) +
-           as.numeric(as.character(SUD.Hallucinogen))
+  mutate(SUD.sum_illegal = as.numeric(as.character(SUD_is_Opioid)) +
+           as.numeric(as.character(SUD_is_depressants_anxiolytic)) +
+           as.numeric(as.character(SUD_is_Cocaine)) +
+           as.numeric(as.character(SUD_is_Other_stimulant)) +
+           as.numeric(as.character(SUD_is_psychoactive)) +
+           as.numeric(as.character(SUD_is_Hallucinogen))
          ) |>
   
   mutate(SUD.uses_illegal = as_factor(if_else(SUD.sum_illegal >= 1, TRUE, FALSE))) |>
