@@ -1,5 +1,5 @@
 ---
-title: "Final Project"
+title: "GMS6025C: Final Project 1 Part 2 Exploratory Data Analysis"
 author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -35,9 +35,11 @@ options(scipen = 3, digits = 5)
 cleaned_addiction_data = read_rds("./addiction.rds")
 ```
 
-```{r}
-cleaned_addiction_data
-```
+# About the data
+
+**Name:** Addiction Patient Assessment Measures
+
+**Description:** Data are gathered from a residential treatment facility for substance use disorders. Data include item-level responses for all questionnaires listed below. Data are available at initiation of treatment, after one month of treatment, and at treatment discharge.
 
 # Overview of what we're working with
 

@@ -1,5 +1,5 @@
 ---
-title: "GMS6025C: Final Project 1"
+title: "GMS6025C: Final Project 1 Part 1 Preprocessing Data"
 author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
