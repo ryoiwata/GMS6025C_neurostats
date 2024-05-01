@@ -34,13 +34,10 @@ options(scipen = 3, digits = 5)
 ```{r}
 cleaned_addiction_data = read_rds("./addiction.rds") |>
   # mutate(commit_change = (commit.DC - commit.BL) / (commit.BL + commit.DC))
-  mutate(commit_change = (commit.DC - commit.BL))
-
-```
-
-```{r}
-cleaned_addiction_data <- cleaned_addiction_data |>
+  mutate(commit_change = (commit.DC - commit.BL)) |>
   mutate(no_social_qol.BL = (qol_general_health.BL + qol_psych.BL + qol_physical.BL + qol_env.BL)/23)
+
+
 ```
 
 ```{r}
@@ -228,7 +225,6 @@ qol_model <- lm(no_social_qol.BL ~ age
                 + aana_positive
                 + social
                 + stress_to_subj
-
                 ,cleaned_addiction_data)
 ```
 
@@ -242,6 +238,152 @@ Anova(qol_model, type=2, digits=4) |>
 tidy() |>
   kable() 
 ```
+
+```{r}
+```
+
+# Plotting the adjusted data
+
+
+```{r}
+tidy_qol_model <- tidy(qol_model)
+
+# Getting the coefficient
+coef_social <- 
+  pull(filter(tidy_qol_model, 
+              term == "social"), 
+       estimate)
+
+coef_stress_to_subj <- 
+  pull(filter(tidy_qol_model, 
+              term == "stress_to_subj"), 
+       estimate)
+
+coef_aana_past_year <- 
+  pull(filter(tidy_qol_model, 
+              term == "aana_past_year"), 
+       estimate)
+
+coef_aana_positive <- 
+  pull(filter(tidy_qol_model, 
+              term == "aana_positive"), 
+       estimate)
+
+coef_religion_pos  <- 
+  pull(filter(tidy_qol_model, 
+              term == "religion_pos"), 
+       estimate)
+
+# Adjusting for Glu or PLP
+
+adjusted_addiction_data <- augment(qol_model) |>
+  mutate(QOL_adjusted = 
+           no_social_qol.BL - 
+           stress_to_subj * coef_stress -
+           aana_positive * coef_aana_positive -
+           religion_pos * coef_religion_pos)
+
+
+```
+
+
+
+```{r}
+intercept = pull(filter(tidy_qol_model, term == "(Intercept)"), estimate)
+stress_to_subj_slope = pull(filter(tidy_qol_model, term == "stress_to_subj"), estimate)
+aana_positive_slope = pull(filter(tidy_qol_model, term == "aana_positive"), estimate)
+religion_pos_slope = pull(filter(tidy_qol_model, term == "religion_pos"), estimate)
+
+stress_to_subj_mean = mean(adjusted_addiction_data$stress_to_subj)
+aana_positive_mean = mean(adjusted_addiction_data$aana_positive)
+religion_pos_mean = mean(adjusted_addiction_data$religion_pos)
+
+```
+
+```{r}
+adjusted_addiction_data |>
+  ggplot(aes(social, QOL_adjusted, color=education)) +
+  geom_point() +
+  geom_abline(slope=coef_social, intercept = intercept + 
+                stress_to_subj_slope * stress_to_subj_mean +
+                aana_positive_slope * aana_positive_mean +
+                religion_pos_slope * religion_pos_mean, size=1) +
+  facet_wrap(vars(education)) +
+  labs(title="Quality of life adjusted for stress, AANA positive, positive religious coping")
+```
+
+```{r}
+adjusted_addiction_data |>
+  ggplot(aes(social, QOL_adjusted, color=rel.is_religious)) +
+  geom_point() +
+  geom_abline(slope=coef_social, intercept = intercept + 
+                stress_to_subj_slope * stress_to_subj_mean +
+                aana_positive_slope * aana_positive_mean +
+                religion_pos_slope * religion_pos_mean, size=1) +
+  facet_wrap(vars(rel.is_religious)) +
+  labs(title="Quality of life adjusted for stress, AANA positive, positive religious coping")
+```
+```{r}
+adjusted_addiction_data |>
+  ggplot(aes(social, QOL_adjusted, color=gender)) +
+  geom_point() +
+  geom_abline(slope=coef_social, intercept = intercept + 
+                stress_to_subj_slope * stress_to_subj_mean +
+                aana_positive_slope * aana_positive_mean +
+                religion_pos_slope * religion_pos_mean, size=1) +
+  facet_wrap(vars(gender)) +
+  labs(title="Quality of life adjusted for stress, AANA positive, positive religious coping")
+```
+
+
+```{r}
+adjusted_addiction_data |> 
+  ggplot(aes(adjusted_addiction_data))
+```
+
+```{r}
+str(cleaned_addiction_data)
+```
+```{r}
+cleaned_addiction_data |>
+  select(age) |>
+  str()
+```
+
+
+```{r}
+qol_model
+```
+
+
+
+## 1.E. Using your models from C and D, calculate activity after removing the estimated contribution of (1) glutamate and (2) pyridoxal phosphate concentrations (note: create 2 new variables). Recreate figure 1.B.3 for each of these with a separate facet for each (will require some data carpentry). (10 pt)
+
+
+```{r}
+# Getting the glutamate coefficient
+glu_coef_for_variant_and_glu_to_activity <- 
+  pull(filter(variant_and_glu_to_activity_tidy, 
+              term == "Glu"), 
+       estimate)
+
+# Getting the glutamate coefficient
+PLP_coef_for_variant_and_glu_to_activity <-
+  pull(filter(variant_and_PLP_to_activity_tidy, 
+              term == "`pyridoxal phosphate conc.`"), 
+       estimate)
+
+# Adjusting for Glu or PLP
+glu_and_PLP_adjusted_gad65_data <- 
+  fixed_gad65_data |>
+  mutate(`Glu adjusted` = 
+           `Enz Activity` - 
+           Glu * glu_coef_for_variant_and_glu_to_activity,
+         `PLP adjusted` = 
+           `Enz Activity` - 
+           `pyridoxal phosphate conc.` * PLP_coef_for_variant_and_glu_to_activity) |>
+  pivot_longer(cols=c(`Enz Activity`, `Glu adjusted`, `PLP adjusted`), 
+               values_to = "Enz Activity")
 
 \newpage
 # Looking at model metrics

@@ -1,5 +1,5 @@
 ---
-title: "Final Project"
+title: "GMS6025C: Final Project 1"
 author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -17,10 +17,15 @@ library(car)
 options(scipen = 3, digits = 5) 
 ```
 
+# About the data
+
+**Name:** Addiction Patient Assessment Measures
+
+**Description:** Data are gathered from a residential treatment facility for substance use disorders. Data include item-level responses for all questionnaires listed below. Data are available at initiation of treatment, after one month of treatment, and at treatment discharge.
 
 # Inputting the data
 
-```{r loading in data}
+```{r loading in data, warning = FALSE}
 # Reading in the data
 
 # Predictor
@@ -49,7 +54,7 @@ raw_sub_history <- read_delim("./data/subuse.damon.csv",
                                progress = FALSE,
                                show_col_types = FALSE)
 
-problems(raw_sub_history)
+# problems(raw_sub_history)
 
 
 ## AA/NA Affiliation 
@@ -58,9 +63,7 @@ raw_aana_affiliation <- read_delim("./data/aana.damon.csv",
                                progress = FALSE,
                                show_col_types = FALSE)
 
-problems(raw_aana_affiliation)
-
-
+# problems(raw_aana_affiliation)
 ```
 
 ```{r}
@@ -73,7 +76,6 @@ problems(raw_aana_affiliation)
 # but includes events that have happened to the participant 
 #AND events that the participant has witnessed.
 
-# TODO STARTING HERE
 raw_stress  <- read_delim("./data/lec.damon.csv", 
                                delim = ",",
                                progress = FALSE,
@@ -95,7 +97,10 @@ raw_childhood <- read_delim("./data/aces.damon.csv",
 
 ```{r}
 # Things to predict
-## Quality of Life (WHOQOL-BREF): Evaluates general, physical, psych health, social relationships, and environment.
+
+## Quality of Life (WHOQOL-BREF): 
+# Evaluates general, physical, psych health, social relationships, and environment.
+
 raw_life_quality <- read_delim("./data/QOL.damon.csv",
                                delim = ",",
                                progress = FALSE,
@@ -123,6 +128,7 @@ raw_data_dictionary <- read_delim("./data/Data Dictionary.csv",
                                   show_col_types = FALSE)
 ```
 
+# Getting baseline, followup, discharge for all datasets
 
 ```{r}
 # Filtering for subjects that are in each time
@@ -139,18 +145,16 @@ followup_demo <- raw_demographics |>
   filter(str_detect(redcap_event_name,'followup')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".followup")))
 
-```
+# Joining each filtered timepoint within a dataset based on subject 
 
-```{r}
 joined_demographics <- baseline_demo |> 
   inner_join(discharged_demo, by="record_id") |>
   inner_join(followup_demo, by="record_id")
-
 ```
 
-# Getting baseline, followup, discharge for all datasets
-
 ```{r SUD}
+# Filtering for subjects that are in each time
+
 discharged_SUD <- raw_SUD |>
   filter(str_detect(redcap_event_name,'discharge')) |>
   rename_with(~ ifelse(.x == "record_id", .x, paste0(.x, ".discharge")))
@@ -289,7 +293,7 @@ joined_childhood <- baseline_childhood |>
   inner_join(followup_childhood, by="record_id")
 ```
 
-```{r}
+```{r quality of life}
 # Filtering for subjects that are in each time
 
 discharged_life_quality <- raw_life_quality |>
@@ -329,7 +333,7 @@ joined_craving <- baseline_craving |>
   inner_join(followup_craving, by="record_id")
 ```
 
-```{r}
+```{r commitment to sobriety}
 # Filtering for subjects that are in each time
 
 discharged_commitment <- raw_commitment |>
@@ -351,8 +355,13 @@ joined_commitment <- baseline_commitment |>
 
 # Joining all 
 
-```{r}
-all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, by="record_id") |>
+```{r Combine datasets}
+
+# Combining all the datasets by subject ID
+
+all_addiction_data <- inner_join(joined_demographics, 
+                                 joined_aana_affiliation, 
+                                 by="record_id") |>
   inner_join(joined_commitment, by="record_id") |>
   inner_join(joined_childhood, by="record_id") |>
   inner_join(joined_craving, by="record_id") |>
@@ -365,10 +374,11 @@ all_addiction_data <- inner_join(joined_demographics, joined_aana_affiliation, b
 
 ```
 
-# Filtering for columns that have data and factoring as needed
+# Creating/renaming columns to remove redundancy and factoring as needed
 
 ```{r}
 factored_addiction_data <- all_addiction_data |>
+  
   # Demographics
   mutate(age = age_today.baseline) |>
   mutate(gender = as_factor(gender.baseline)) |>
@@ -385,7 +395,7 @@ factored_addiction_data <- all_addiction_data |>
   mutate(treatment_days = days_in_tx_clean.baseline) |>
   mutate(dropout_yn = as_factor(dropout_yn.baseline)) |>
 
-  # SUD
+  # Making factors from the substance of concern
   mutate(SUD_is_Alchohol = as_factor(sa_dx___0.baseline)) |>
   mutate(SUD_is_Opioid = as_factor(sa_dx___1.baseline)) |>
   mutate(SUD_is_Cannabis = as_factor(sa_dx___2.baseline)) |>
@@ -399,14 +409,19 @@ factored_addiction_data <- all_addiction_data |>
   mutate(SUD.sum = sa_dx_sum.baseline) |>
   
   # Feature engineering
+  
   ## Substances
+  
+  ### Summing up the number of legal substances
   mutate(SUD.sum_legal = as.numeric(as.character(SUD_is_Alchohol)) +
            as.numeric(as.character(SUD_is_Cannabis)) +
            as.numeric(as.character(SUD_is_Nicotine)) +
            as.numeric(as.character(SUD_is_Inhalant))) |>
   
+  ### Boolean of if legal substance is used or not
   mutate(SUD.uses_legal = as_factor(if_else(SUD.sum_legal >= 1, TRUE, FALSE))) |>
   
+  ### Summing up the number of illegal substances
   mutate(SUD.sum_illegal = as.numeric(as.character(SUD_is_Opioid)) +
            as.numeric(as.character(SUD_is_depressants_anxiolytic)) +
            as.numeric(as.character(SUD_is_Cocaine)) +
@@ -415,7 +430,11 @@ factored_addiction_data <- all_addiction_data |>
            as.numeric(as.character(SUD_is_Hallucinogen))
          ) |>
   
+  ### Boolean of if illegal substance is used or not
   mutate(SUD.uses_illegal = as_factor(if_else(SUD.sum_illegal >= 1, TRUE, FALSE))) |>
+  
+  
+  ## AA/NA affiliation and regard
   
   # 1. People at AA/NA could give me a lot of support
   # 2. Going to AA/NA meetings can help me use some of my free time.
@@ -434,15 +453,17 @@ factored_addiction_data <- all_addiction_data |>
   # 15. I feel very uncomfortable with the religious (or spiritual) aspects of AA/NA.
   # 16. I don't have enough time to attend AA/NA meetings.
   # TSPE Positive Score	sum([tspe_1]+[tspe_2]+[tspe_3]+[tspe_4]+[tspe_5]+[tspe_6])
-  # TSPE Negative Score	sum([tspe_7]+[tspe_8]+[tspe_9]+[tspe_10]+[tspe_11]+[tspe_12]+[tspe_13]+[tspe_14]+[tspe_15]+[tpse_16])
+  # TSPE Negative Score	
+  # sum([tspe_7]+[tspe_8]+[tspe_9]+[tspe_10]+[tspe_11]+
+  # [tspe_12]+[tspe_13]+[tspe_14]+[tspe_15]+[tpse_16])
   mutate(aana_positive = tspe_positive.baseline) |>
   mutate(aana_negative = tspe_negative.baseline) |>
   mutate(aana_life = as.factor(aaas_calc_lifetime.baseline)) |>
   mutate(aana_past_year = as.factor(aaas_calc_past_year.baseline))  |>
 
-
   
- # Childhood
+  ## Childhood
+
   #   "1. Did a parent or other adult in the household often or very often... 
   # 
   # Swear at you, insult you, put you down, or humiliate you?   
@@ -451,6 +472,7 @@ factored_addiction_data <- all_addiction_data |>
   # 
   # Act in a way that made you afraid that you might be physically hurt?"
   mutate(childhood.verbal_abuse = as_factor(ace1.baseline)) |>
+  
   # "2. Did a parent or other adult in the household often or very often... 
   # 
   # Push, grab, slap, or throw something at you?
@@ -459,6 +481,7 @@ factored_addiction_data <- all_addiction_data |>
   # 
   # Ever hit you so hard that you had marks or were injured?"
   mutate(childhood.physical_abuse = as_factor(ace2.baseline)) |>
+  
   # "3. Did an adult or person at least 5 years older than you ever...
   # 
   # Touch or fondle you or have you touch their body in a sexual way?
@@ -467,63 +490,86 @@ factored_addiction_data <- all_addiction_data |>
   # 
   # Attempt or actually have oral, anal, or vaginal intercourse with you?"
   mutate(childhood.sexual_abuse = as_factor(ace3.baseline)) |>
+  
   # "4. Did you often or very often feel that ...
   # 
   # No one in your family loved you or thought you were important or special?
   # 
   #            OR    
   # 
-  # Your family didn't look out for each other, feel close to each other, or support each other?"
+  # Your family didn't look out for each other, 
+  # feel close to each other, or support each other?"
   mutate(childhood.alone = as_factor(ace4.baseline)) |>
+  
   # "5. Did you often or very often feel that ...
   # 
-  # You didn't have enough to eat, had to wear dirty clothes, and had no one to protect you?
+  # You didn't have enough to eat, had to wear dirty clothes,
+  # and had no one to protect you?
   # 
   #            OR    
   # 
-  # Your parents were too drunk or high to take care of you or take you to the doctor if you needed it?"
+  # Your parents were too drunk or high to take care of you or 
+  # take you to the doctor if you needed it?"
   mutate(childhood.neglected = as_factor(ace5.baseline)) |>
+  
   # 6. Were your parents ever separated or divorced?
   mutate(childhood.divorced = as_factor(ace6.baseline)) |>
+  
   # "7. Was your mother or stepmother (or father/stepfather):
   # 
-  # Often or very often pushed, grabbed, slapped, or had something thrown at her/him?
+  # Often or very often pushed, grabbed, slapped,
+  # or had something thrown at her/him?
   # 
   #            OR    
   # 
-  # Sometimes, often, or very often kicked, bitten, hit with a fist, or hit with something hard?
+  # Sometimes, often, or very often kicked, bitten, hit with a fist, 
+  # or hit with something hard?
   # 
   #            OR    
   # 
-  # Ever repeatedly hit at least a few minutes or threatened with a gun or knife?"
+  # Ever repeatedly hit at least a few minutes
+  # or threatened with a gun or knife?"
   mutate(childhood.parent_was_abused = as_factor(ace7.baseline)) |>
+  
   # 7a. For Q7, indicate which parent was violated 
-  # 8. Did you live with anyone who was a problem drinker or alcoholic or who used street drugs?
+  # 8. Did you live with anyone who was a problem drinker 
+  # or alcoholic or who used street drugs?
   mutate(childhood.other_was_addicted = as_factor(ace8.baseline)) |>
-  # 9. Was a household member depressed or mentally ill, or did a household member attempt suicide?
+  
+  # 9. Was a household member depressed or mentally ill, 
+  # or did a household member attempt suicide?
   mutate(childhood.other_was_stressed = as_factor(ace9.baseline)) |>
+  
   # 10. Did a household member go to prison?
   mutate(childhood.other_was_prisoned = as_factor(ace10.baseline)) |>
+  
   # Total childhood
   mutate(childhood_sum = total_ace_score.baseline) |>
   
-  # Commitment
+  
+  ## Commitment
   
   # 1. Staying sober is the most important thing in my life.
   # 2. I am totally committed to staying off alcohol/drugs.
   # 3. I will do whatever it takes to recover from my addiction.
   # 4. I never want to return to alcohol/drug use again.
   # 5. I have had enough alcohol and drugs.
-  # Commitment to Change Total	sum([change_1], [change_2], [change_3],[change_4], [change_5])
+  # Commitment to Change Total	
+  # sum([change_1], [change_2], [change_3],[change_4], [change_5])
   mutate(commit.BL = commit_to_change.total.baseline) |>
-
   mutate(commit.DC = commit_to_change.total.discharge) |>
   mutate(commit.FU = commit_to_change.total.followup) |>
 
 
-  # Cravings
-  # Please read each statement and indicate how confident you are RIGHT NOW that you would not choose to use a drug or drugs if they were readily available to you TODAY. 
-  # 1, Not at all confident | 2, Not Very confident | 3, Moderately confident | 4, Very confident | 5, Extremely confident
+  ## Cravings
+  
+  # Please read each statement 
+  # and indicate how confident you are RIGHT NOW 
+  # that you would not choose to use a drug or drugs 
+  # if they were readily available to you TODAY. 
+  # 1, Not at all confident | 2, Not Very confident | 3, Moderately confident | 
+  # 4, Very confident | 5, Extremely confident
+  
   # 1. When I am in agony because of stopping or withdrawing from drug use.
   # 2. When I have a headache.
   # 3. When I am feeling depressed.
@@ -542,12 +588,16 @@ factored_addiction_data <- all_addiction_data |>
   # 16. When I sense everything is going wrong for me.
   # 17. When people I used to use drugs with encourage me to use drugs.
   # 18. When I am feeling angry inside.
-  # 19. When I experience an urge or impulse to use drugs that catches me unprepared.
+  # 19. When I experience an urge or 
+  # impulse to use drugs that catches me unprepared.
   # 20. When I am excited or celebrating with others.
-  # DASE Neg Affect Subscale	sum([dase3],[dase6],[dase14],[dase16],[dase18])
-  # DASE Social/Positive Subscale	sum([dase4],[dase8],[dase15],[dase17],[dase20])
+  # DASE Neg Affect Subscale	
+  # sum([dase3],[dase6],[dase14],[dase16],[dase18])
+  # DASE Social/Positive Subscale	
+  # sum([dase4],[dase8],[dase15],[dase17],[dase20])
   # DASE Physical Subscale	sum([dase2],[dase5],[dase9],[dase12],[dase13])
-  # DASE Cravings and Urges Subscale	sum([dase1],[dase7],[dase10],[dase11],[dase19])
+  # DASE Cravings and Urges Subscale	
+  # sum([dase1],[dase7],[dase10],[dase11],[dase19])
   mutate(abstain_neg.BL = daase_low_neg_mean.baseline) |>
   mutate(abstain_pos.BL = daase_low_pos_mean.baseline) |>
   mutate(abstain_phy.BL = daase_low_phy_mean.baseline) |>
@@ -564,20 +614,29 @@ factored_addiction_data <- all_addiction_data |>
   mutate(abstain_crv.DC = daase_low_crv_mean.discharge) |>
   mutate(abstain_total.DC = daase_low_tot_mean.discharge) |>
   
-  # 1. During the past week HOW OFTEN have you thought about drinking or using drugs, or about how good drinking/using would make you feel? 
+  # 1. During the past week 
+  # HOW OFTEN have you thought about drinking or using drugs, 
+  # or about how good drinking/using would make you feel? 
   # 2. At its most severe point, HOW STRONG was your craving during the past week? 
-  # 3. During the past week HOW MUCH TIME have you spent thinking about drinking or using drugs, or about how good drinking/using would make you feel? 
-  # 4. During the past week HOW DIFFICULT WOULD IT HAVE BEEN TO RESIST taking a drink or using drugs if you had known that alcohol or drugs were in your current place of residence?
-  # 5. Keeping in mind your responses to the previous questions, please rate your overall AVERAGE ALCOHOL AND DRUG CRAVING for the past week. 
+  # 3. During the past week HOW MUCH TIME have you spent thinking about drinking 
+  # or using drugs, or about how good drinking/using would make you feel? 
+  # 4. During the past week HOW DIFFICULT WOULD IT HAVE BEEN TO RESIST 
+  # taking a drink or using drugs if you had known that alcohol 
+  #or drugs were in your current place of residence?
+  # 5. Keeping in mind your responses to the previous questions, 
+  # please rate your overall AVERAGE ALCOHOL AND DRUG CRAVING for the past week. 
   # PACS Total Score
   mutate(craving.BL = pacs_mean.baseline) |>
   mutate(craving.FU = pacs_mean.followup) |>
   mutate(craving.DC = pacs_mean.discharge) |>
   
-  # Life Quality
+  
+  ## Life Quality
+  
   # 1. How would you rate your quality of life?
   # 2. How satisfied are you with your health?
-  # 3. To what extent do you feel that physical pain prevents you from doing what you need to do?
+  # 3. To what extent do you feel that physical pain 
+  # prevents you from doing what you need to do?
   # 4. How much do you need any medical treatment to function in your daily life?
   # 5. How much do you enjoy life?
   # 6. To what extent do you feel your life to be meaningful?
@@ -591,7 +650,8 @@ factored_addiction_data <- all_addiction_data |>
   # 14. To what extent do you have the opportunity for leisure activities?
   # 15. How well are you able to get around?
   # 16. How satisfied are you with your sleep?
-  # 17. How satisfied are you with your ability to perform your daily living activities?
+  # 17. How satisfied are you 
+  # with your ability to perform your daily living activities?
   # 18. How satisfied are you with your capacity for work?
   # 19. How satisfied are you with yourself?
   # 20. How satisfied are you with your personal relationships?
@@ -600,14 +660,16 @@ factored_addiction_data <- all_addiction_data |>
   # 23. How satisfied are you with the conditions of your living place?
   # 24. How satisfied are you with your access to health services?
   # 25. How satisfied are you with your mode of transportation?
-  # 26. How often do you have negative feelings, such as blue mood, despair, anxiety, or depression?
+  # 26. How often do you have negative feelings, 
+  # such as blue mood, despair, anxiety, or depression?
 
   # General Health	sum([who_1],[who_2])
   # psych Health	sum([who_5],[who_6],[who_7],[who_11],[who_19],[who_26])
-  # Physical Health	sum([who_3],[who_4],[who_10],[who_15],[who_16],[who_17],[who_18])
+  # Physical Health	
+  # sum([who_3],[who_4],[who_10],[who_15],[who_16],[who_17],[who_18])
   # Social Relationships	sum([who_20],[who_21],[who_22])
-  # Environment	sum([who_8],[who_9],[who_12],[who_13],[who_14],[who_23],[who_24],[who_25])
-  
+  # Environment	
+  # sum([who_8],[who_9],[who_12],[who_13],[who_14],[who_23],[who_24],[who_25])
   mutate(qol_general_health.BL =  who_qol_gh_total.baseline) |>
   mutate(qol_psych.BL =  who_psy_total.baseline) |>
   mutate(qol_physical.BL =  who_ph_total.baseline) |>
@@ -627,7 +689,9 @@ factored_addiction_data <- all_addiction_data |>
   mutate(qol_env.DC =  who_env_total.discharge) |>
   mutate(qol.DC =  qol_mean.discharge) |>
   
-  # Social support
+  
+  ## Social support
+  
   # 1. There is a special person who is around when I am in need.
   # 2. There is a special person with whom I can share joys and sorrows.
   # 3. My family really tries to help me.
@@ -642,8 +706,10 @@ factored_addiction_data <- all_addiction_data |>
   # 12. I can talk about my problems with my friends.
   # MSPSS Family Subscale	sum([mspss3],[mspss4],[mspss8],[mspss11])/4
   # MSPSS Friends Subscale	sum([mspss6],[mspss7],[mspss9],[mspss12])/4
-  # MSPSS Significant Other Subscale	sum([mspss1], [mspss2], [mspss5], [mspss10])/4
-  # MSPSS Total	round(sum( [mspss1],[mspss2],[mspss3],[mspss4],[mspss5],[mspss6],[mspss7],[mspss8],[mspss9],[mspss10],[mspss11],[mspss12] )/12,2)
+  # MSPSS Significant Other Subscale	
+  # sum([mspss1], [mspss2], [mspss5], [mspss10])/4
+  # MSPSS Total	round(sum( [mspss1],[mspss2],[mspss3],[mspss4],[mspss5],
+  # [mspss6],[mspss7],[mspss8],[mspss9],[mspss10],[mspss11],[mspss12] )/12,2)
   mutate(social.family = mspss_fam_sub_total.baseline) |>
   mutate(social.friends = mspss_friends_sub_total.baseline) |>
   mutate(social.family_and_friends = mspss_fam_friends_tot.baseline) |>
@@ -651,8 +717,11 @@ factored_addiction_data <- all_addiction_data |>
   mutate(social = mspss_total.baseline) |>
 
   
-  # Spirituality and religion
-  # 0, Atheist | 1, Agnostic | 2, Protestant | 3, Catholic | 4, Muslim | 5, Jewish | 6, Hindu | 7, Buddhist | 8, Baptist | 9, No religious affiliation | 10, Non-denominational Christian | 15, Other
+  ## Spirituality and religion
+  
+  # 0, Atheist | 1, Agnostic | 2, Protestant | 3, Catholic | 4, Muslim |
+  # 5, Jewish | 6, Hindu | 7, Buddhist | 8, Baptist | 
+  # 9, No religious affiliation | 10, Non-denominational Christian | 15, Other
   mutate(rel.is_Atheist = as_factor(brc_rel___0.baseline)) |>
   mutate(rel.is_Agnostic = as_factor(brc_rel___1.baseline)) |>
   mutate(rel.is_Protestant = as_factor(brc_rel___2.baseline)) |>
@@ -663,12 +732,15 @@ factored_addiction_data <- all_addiction_data |>
   mutate(rel.is_Buddhist = as_factor(brc_rel___7.baseline)) |>
   mutate(rel.is_Baptist = as_factor(brc_rel___8.baseline)) |>
   mutate(rel.is_No_affiliation = as_factor(brc_rel___9.baseline)) |>
-  mutate(rel.is_Non_denominational_Christian = as_factor(brc_rel___10.baseline)) |>
+  mutate(rel.is_Non_denominational_Christian = 
+           as_factor(brc_rel___10.baseline)) |>
   mutate(rel.is_Other = as_factor(brc_rel___15.baseline)) |>
   mutate(religion_pos = pos_cope.baseline) |>
   mutate(religion_neg = neg_cope.baseline) |>
+  
     
-  # Religion
+  ## Religion
+  
   mutate(rel.is_religious = as.numeric(as.character(rel.is_Other)) +
            as.numeric(as.character(rel.is_Non_denominational_Christian)) +
            as.numeric(as.character(rel.is_Baptist)) +
@@ -679,16 +751,24 @@ factored_addiction_data <- all_addiction_data |>
                       as.numeric(as.character(rel.is_Catholic)) +
                       as.numeric(as.character(rel.is_Protestant))) |>
   
-  mutate(rel.is_religious = as_factor(if_else(rel.is_religious >= 1, TRUE, FALSE))) |>
+  mutate(rel.is_religious = 
+           as_factor(if_else(rel.is_religious >= 1, TRUE, FALSE))) |>
   
-  mutate(rel.is_not_religious = as.numeric(as.character(rel.is_No_affiliation)) +
+  mutate(rel.is_not_religious = 
+           as.numeric(as.character(rel.is_No_affiliation)) +
          as.numeric(as.character(rel.is_Agnostic)) +
          as.numeric(as.character(rel.is_Atheist))) |>
   
-  mutate(rel.is_not_religious = as_factor(if_else(rel.is_not_religious >= 1, TRUE, FALSE))) |>
+  mutate(rel.is_not_religious =
+           as_factor(if_else(rel.is_not_religious >= 1, TRUE, FALSE))) |>
   
-    # Stressful life events
-  # 1, Happened to you | 2, Witnessed it happen | 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 6, Doesn't apply
+  
+  ## Stressful life events
+
+  # 1, Happened to you | 2, Witnessed it happen | 
+  # 3, Learned about it happening | 4, Exposed as part of job | 5, Not sure | 
+  # 6, Doesn't apply
+  
   # 1. Natural disaster	
   mutate(stress.natural_disaster.to_subj = as_factor(lec_2_1___1.baseline)) |>
   mutate(stress.natural_disaster.witnessed = as_factor(lec_2_1___2.baseline)) |>
@@ -779,24 +859,33 @@ factored_addiction_data <- all_addiction_data |>
   mutate(stress_to_subj_and_wit = toyou_wit_total.baseline) |>
   mutate(stress_wit = witnessed_total.baseline) |>
 
-  # Substance use history
-  # 18. Please indicate which of these substances you have EVER TRIED:	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drug(s)
-  # Tobacco (including e-cigarettes or vaping): Age you first tried any tobacco/nicotine product.	
+  
+  ## Substance use history
+  
+  # 18. Please indicate which of these substances you have EVER TRIED:	
+  # 1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drug(s)
+  # Tobacco (including e-cigarettes or vaping): 
+  # Age you first tried any tobacco/nicotine product.	
   # Alcohol: Age you first tried any type of alcohol.	
   # Other drug(s): Age you first tried any type of mood altering substance.	
-  # 19. Please indicate which substances you   REGULARLY used (for any consistent amount of time):	1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drugs
-  # Tobacco (including e-cigarettes or vaping): Age at which you began regular use of tobacco/nicotine product (even if you have since quit).	
-  # Alcohol: Age at which you began regular use of any type of alcohol product (even if you have since quit).	
-  # Other drug(s): Age at which you began regular use of any type of mood altering substance (even if you have since quit).	
+  # 19. Please indicate which substances you REGULARLY used 
+  # (for any consistent amount of time):	
+  # 1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drugs
+  # Tobacco (including e-cigarettes or vaping): 
+  # Age at which you began regular use of tobacco/nicotine product (even if you have since quit).	
+  # Alcohol: Age at which you began regular use of any type of alcohol product 
+  # (even if you have since quit).	
+  # Other drug(s): Age at which you began regular use of any type of mood altering substance 
+  # (even if you have since quit).	
   mutate(history.tobacco = as_factor(newace18a___1.baseline)) |>
   mutate(history.alcohol = as_factor(newace18a___2.baseline)) |>
   mutate(history.other = as_factor(newace18a___10.baseline))
   
 ```
 
-# Filtering rows and columns
+# Filtering redundant columns and removing rows with NANs
 
-```{r}
+```{r Filter columns and rows}
 filtered_addiction_data <- factored_addiction_data |>
   # Removing redundant columns and columns that won't be used
   select(-contains(".baseline")) |>
