@@ -1,5 +1,5 @@
 ---
-title: "Final Project"
+title: "GMS6025C: Final Project 1 Part 3 Modeling"
 author: "Emely Gazarov, Ryo Iwata, Maria Ramirez"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -22,7 +22,6 @@ library(stringr)
 library(cowplot)
 # install.packages("ggpie")
 library(ggpie)
-# to control default number formatting, no need for specifying digits in kable.
 # install.packages("ggheatmap")
 library(ggheatmap)
 # install.packages("ggcorrplot")
@@ -31,380 +30,640 @@ library(ggcorrplot)
 options(scipen = 3, digits = 5) 
 ```
 
-```{r}
-cleaned_addiction_data = read_rds("./addiction.rds") |>
-  mutate(commit_change = commit.DC - commit.BL)
+# About the data
 
-```
+**Name:** Addiction Patient Assessment Measures
 
-```{r}
-cleaned_addiction_data 
-```
+**Description:** Data are gathered from a residential treatment facility for substance use disorders. Data include item-level responses for all questionnaires listed below. Data are available at initiation of treatment, after one month of treatment, and at treatment discharge.
 
-# Overview of what we're working with
+# Overview of variables in the data
 
-### Things that can predict
-- number of sober days
-- days since baseline
+- Variables that end in `.BL`, `.FU`, `.DC` are indicating that the score was collected at baseline before treatment, 30 days following up after baseline, and during discharge respectively.
+
+## Independent variables
+
+### Basic Demographics
+
 - age
+    - `age`
 - gender
+    - `gender`
 - education
-- drop out yes no
-- SUD is alcholoc
-- SUD is other
-- Social support
+    - `education`
+- number of days sober
+    - `sober_days`
+- If a patient dropped out of the program or not
+    - `dropout_yn`
+
+### Substance use disorders
+  
+- Flag of whether or not the patient is being treated for substance in name
+    - `SUD_is_Alchohol`
+    - `SUD_is_Opioid`
+    - `SUD_is_Cannabis`
+    - `SUD_is_depressants_anxiolytic`
+    - `SUD_is_Cocaine`
+    - `SUD_is_Other_stimulant`
+    - `SUD_is_Hallucinogen`
+    - `SUD_is_Nicotine`
+    - `SUD_is_Inhalant`
+    - `SUD_is_psychoactive`         
+  
+- Number of substances being treated for
+  - Total number of all substances that patient is being treated for
+    - `SUD.sum`
+  - Total number of legal substances that patient is being treated for. (SUD_is_Alchohol, SUD_is_Cannabis, SUD_is_Nicotine, SUD_is_Inhalant)
+    - `SUD.sum_legal`
+  - Total number of legal substances that patient is being treated for. (SUD_is_Opioid, SUD_is_depressants_anxiolytic, SUD_is_Cocaine, SUD_is_Other_stimulant, SUD_is_psychoactive, SUD_is_Hallucinogen)
+    - `SUD.sum_illegal`
+
+- Flag of whether or not the patient is being treated for legal or illegals substances
+    - If patient is being treated for any of the following: SUD_is_Alchohol, SUD_is_Cannabis, SUD_is_Nicotine, SUD_is_Inhalant
+      - `SUD.uses_legal`
+    - If patient is being treated for any of the following: SUD_is_Opioid, SUD_is_depressants_anxiolytic, SUD_is_Cocaine, SUD_is_Other_stimulant, SUD_is_psychoactive, SUD_is_Hallucinogen
+      - `SUD.uses_illegal`  
+  
+### Beliefs about AA/NA (TSPEQ)
+- Categories based on number of AA/NA meetings attended throughout life
+  - `aana_life`
+- Categories based on number of AA/NA meetings attended last year
+  - `aana_pastyear`
+- Total score of questions gauging positive opinions of AA/NA
+  - `aana_positive`
+- Total score of questions gauging negative opinions of AA/NA
+  - `aana_negative`
+    
+### Childhood Experiences (ACE)
+- Binary flags of whether the specified type of negative experience happened during childhood of patient
+  - `childhood.verbal_abuse`
+  - `childhood.physical_abuse`
+  - `childhood.sexual_abuse`
+  - `childhood.alone`
+  - `childhood.neglected`
+  - `childhood.divorced`
+  - `childhood.parent_was_abused`
+  - `childhood.other_was_addicted`
+  - `childhood.other_was_stressed`
+  - `childhood.other_was_prisoned`
+- Sum of number of types of negative experiences that happened during patient's childhood
+  - `childhood_sum`
+
+### Social Support (MSPSS)
+- Total score for questions that measure the perceived level of social support the respondent receives from each of the three subcategories:
   - family
+    - `social.family`
   - friends
-  - sig other
-  - total
-- Substance use history
-  - Tried tobacco/alcohol
-  - Age of first use
-  - Regular use
-  - Age of regular use
-- AA/NA affiliation
-  - Lifetime number of meetings
-  - Last year number of meetings
-  - Degree of affiliation
-  - Positive thoughts
-  - Negative thoughts
-- Stressful life
-  - happened
-  - witnessed
-  - learned about
-  - exposed
-  - total of all things
-- Childhood
+    - `social.friends`
+  - significant other
+    - `social.sig_other`
+  - Sum of family, friends, and significant other
+    - `social`
+
+### Spiritual Experiences (Brief R-COPE)
+- Total score of questions asking the frequency of spiritual coping experience, ranging from 0) Not at all to 3) Nearly every day.
+  - Positive coping
+    - `religion_pos`
+  - Negative coping
+    - `religion_neg`
 - Religion
-  - Religious affiliation
-  - Positive
-  - Negative
-- Life quality
+  - Binary flag of if a patient practices religion that is in the name of the variable
+    - `rel.is_Atheist`
+    - `rel.is_Agnostic`
+    - `rel.is_Protestant`
+    - `rel.is_Catholic`
+    - `rel.is_Muslim`
+    - `rel.is_Jewish`
+    - `rel.is_Hindu`
+    - `rel.is_Buddhist`
+    - `rel.is_Baptist`
+    - `rel.is_No_affiliation`
+    - `rel.is_Non_denominational_Christian`
+    - `rel.is_Other`
+  - Binary flag of if patient is religious or not
+    - `rel.is_religious`
+    - `rel.is_not_religious`
 
-### Things we can predict
-- impression change
-- length of stay
-- Life quality
-- Commitment to change
-- Cravings
-  - baseline
-  - baseline vs followup
-- Impression of change
+### Stressful Life Experiences (LEC-5)
+  - Binary flags of whether a listed stressful life event was either 1) experienced the life event personally, 2) witnessed it happen to someone else, 3) learned about it happening from a close friend or family member, 4) experienced the event due to their job.
+    - Natural disaster
+      - `stress.natural_disaster.to_subj`
+      - `stress.natural_disaster.witnessed`
+      - `stress.natural_disaster.learned`
+      - `stress.natural_disaster.exposed`
+    - Fire or explosion
+      - `stress.fire.to_subj`
+      - `stress.fire.witnessed`
+      - `stress.fire.learned`
+      - `stress.fire.exposed`
+    - Transportation accident
+      - `stress.transportation_accident.to_subj`
+      - `stress.transportation_accident.witnessed`
+      - `stress.transportation_accident.learned`
+      - `stress.transportation_accident.exposed`
+    - Non-transportation accident
+      - `stress.serious_accident.to_subj`
+      - `stress.serious_accident.witnessed`
+      - `stress.serious_accident.learned`
+      - `stress.serious_accident.exposed`
+    - Exposure to toxic substance
+      - `stress.toxic.to_subj`
+      - `stress.toxic.witnessed`
+      - `stress.toxic.learned`
+      - `stress.toxic.exposed`
+    - Physically assaulted
+      - `stress.physical_assault.to_subj`
+      - `stress.physical_assault.witnessed`
+      - `stress.physical_assault.learned`
+      - `stress.physical_assault.exposed`
+    - Assaulted with a weapon
+      - `stress.weapon_assault.to_subj`
+      - `stress.weapon_assault.witnessed`
+      - `stress.weapon_assault.learned`
+      - `stress.weapon_assault.exposed`
+    - Sexual assault
+      - `stress.sexual_assault.to_subj`
+      - `stress.sexual_assault.witnessed`
+      - `stress.sexual_assault.learned`
+      - `stress.sexual_assault.exposed`
+    - Unwanted or uncomfortable sexual experience.
+      - `stress.unwanted_sexual.to_subj`
+      - `stress.unwanted_sexual.witnessed`
+      - `stress.unwanted_sexual.learned`
+      - `stress.unwanted_sexual.exposed`
+    - Combat or exposure to war-zone 
+      - `stress.combat.to_subj`
+      - `stress.combat.witnessed`
+      - `stress.combat.learned`
+      - `stress.combat.exposed`
+    - Captivity 
+      - `stress.captivity.to_subj`
+      - `stress.captivity.witnessed`
+      - `stress.captivity.learned`
+      - `stress.captivity.exposed`
+    - Life-threatening illness or injury.
+      - `stress.illness.to_subj`
+      - `stress.illness.witnessed`
+      - `stress.illness.learned`
+      - `stress.illness.exposed`
+    - Severe human suffering.
+      - `stress.severe_suffering.to_subj`
+      - `stress.severe_suffering.witnessed`
+      - `stress.severe_suffering.learned`
+      - `stress.severe_suffering.exposed`
+    - Sudden violent death (for example, homicide, suicide).
+      - `stress.sudden_violent_death.to_subj`
+      - `stress.sudden_violent_death.witnessed`
+      - `stress.sudden_violent_death.learned`
+      - `stress.sudden_violent_death.exposed`
+    - Sudden accidental death.
+      - `stress.sudden_accidental_death.to_subj`
+      - `stress.sudden_accidental_death.witnessed`
+      - `stress.sudden_accidental_death.learned`
+      - `stress.sudden_accidental_death.exposed`
+    - Serious injury, harm, or death you caused to someone else.
+      - `stress.harm_to_others.to_subj`
+      - `stress.harm_to_others.witnessed`
+      - `stress.harm_to_others.learned`
+      - `stress.harm_to_others.exposed`
+    - Any other very stressful event or experience.
+      - `stress.other.to_subj`
+      - `stress.other.witnessed`
+      - `stress.other.learned`
+      - `stress.other.exposed`
+    - Total score of number of catgories that happened to the patient personally and/or witnessed happend to someone else 
+      - `stress_to_subj`
+      - `stress_to_subj_and_wit`
+      - `stress_wit`
 
-# Looking at the basic demographics
+### Substance use history
+- Binary flag of whether or not patient has used the following:
+  - Tobacco
+    - `history.tobacco`
+  - Alcohol
+    - `history.alcohol`
+  - Other
+    - `history.other`
 
-# Change Commitment model
+## Dependent variables
+
+### Length of stay in treatment
+- number of days in treatment
+  - `treatment_days`
+  
+### Alcohol/Drug Craving (PACS)
+  - Total score that assesses the alcohol/drug cravings the patient has experienced within the past week based on a variety of craving characteristics.
+    - `craving.BL` 
+    - `craving.FU`
+    - `craving.DC`
+  
+### Quality of Life (WHOQOL-BREF)
+- Total scores of assessment that measures different aspects of quality of life
+  - general
+    - `qol_general_health.BL`
+    - `qol_general_health.FU`
+    - `qol_general_health.DC`
+  - physical
+    - `qol_physical.BL`
+    - `qol_physical.FU`
+    - `qol_physical.DC`
+  - psychological health
+    - `qol_psych.BL`
+    - `qol_psych.FU`
+    - `qol_psych.DC`
+  - social relationships
+    - `qol_social.BL`
+    - `qol_social.FU`
+    - `qol_social.DC`
+  - environment
+    - `qol_env.BL`
+    - `qol_env.FU`
+    - `qol_env.DC`
+  - Total scores
+    - `qol.BL`
+    - `qol.FU`
+    - `qol.DC`
+  - Recalculating quality of life scores without social component
+    - `no_social_qol.BL`
+
+### Commitment to Sobriety (CSS-5)
+- Total score of questions gauging patient’s commitment to abstinence from alcohol and drug use
+  - `commit.BL` 
+  - `commit.DC` 
+  - `commit.FU` 
+- The difference of commitment to sobriety score between discharge and baseline
+  - `commit_change`
+
+### Alcohol/Drug Abstinence Experiences (DAASE)
+- Total score of questions that assesses patient’s self-confidence in their ability to remain abstinent from alcohol in various situations.
+  - Negative Affect
+    - `abstain_neg.BL`
+    - `abstain_neg.FU`
+    - `abstain_neg.DC`
+  - Social/Positive
+    - `abstain_pos.BL`
+    - `abstain_pos.FU`
+    - `abstain_pos.DC`
+  - Physical ailments
+    - `abstain_phy.BL`
+    - `abstain_phy.FU`
+    - `abstain_phy.DC` 
+  - Situations associated with cravings
+    - `abstain_crv.BL`
+    - `abstain_crv.FU`
+    - `abstain_crv.DC` 
+  - All previously mentioned conditions
+    - `abstain_total.BL`
+    - `abstain_total.FU`
+    - `abstain_total.DC` 
 
 ```{r}
-commit_model <- lm(commit_change ~ 
-                + age 
+cleaned_addiction_data = read_rds("./addiction.rds")
+```
+
+
+# First hypothesis: 
+
+```{r}
+commitment_model <- lm(commit_change ~ age 
                 + gender
                 + education
                 + rel.is_religious
                 + religion_pos
-                + religion_neg
                 + aana_past_year
                 + SUD.sum_illegal
                 + SUD.sum_legal
                 ,cleaned_addiction_data)
 ```
 
+
+$$
+\begin{split}
+\hat{y} = \beta_0 & + \beta_{Age}Age \\
+& + \beta_{Male}Male? \\
+& + \beta_{EduAA}EduAA? + \beta_{EduBS}EduBS? + \beta_{EduMS}EduMS? + \beta_{EduPhD}EduPhD? \\
+& + \beta_{Religious}Religious? + \beta_{PositiveReligion}PositiveReligion \\
+& + \beta_{AANAParticipation}AANAParticipation \\
+& + \beta_{NumIllegal}NumIllegal + \beta_{NumIllegal}NumIllegal
+\end{split}
+$$
+
+$$
+\begin{split}
+P(A \cup B) &= P(A) + P(B) - P(A \cap B) \\
+&= 0.5 + 0.2 - 0.3 \\
+&= 0.4
+\end{split}
+]
+$$
+
 ```{r}
-kable(tidy(commit_model))
+summary(commitment_model)
+```
+- Hypothesis: Individuals with higher involvement in AA/NA activities will show a greater increase in their CSS-5 relative change scores.
+
+### Looking to see if difference of commitment to sobriety from baseline to discharge is normally distributed
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(sample=commit_change)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(
+    title = "Q-Q plot of difference of commitment to sobriety at baseline to discharge",
+    y = "Commitment to change quantiles",
+    x = "Normal distribution quantiles")
 ```
 
+### Looking to see if difference of commitment to sobriety from baseline to discharge is normally distributed
+
 ```{r}
-car::Anova(commit_model)
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(commit.BL)) +
+  geom_histogram() +
+  labs(
+    title = "Distribution of baseline abstaining confidence")
+```
+
+### Looking to see if difference of commitment to sobriety from baseline to discharge is normally distributed
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(sample=commit.BL)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(
+    title = "Q-Q plot of commitment to change at baseline",
+    y = "Commitment to change quantiles",
+    x = "Normal distribution quantiles")
+```
+
+# Looking for other normally distributed things to predict
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(sample=craving.BL)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(
+    title = "Q-Q plot of craving scale at baseline",
+    y = "Craving scale quantiles",
+    x = "Normal distribution quantiles")
+```
+
+##
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(sample=abstain_total.BL)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(
+    title = "Q-Q plot of abstaining confidence at baseline",
+    y = "Abstaining confidence quantiles",
+    x = "Normal distribution quantiles")
+```
+
+##
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(sample=qol.BL)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(
+    title = "Q-Q plot of quality of life at baseline",
+    y = "Quality of life quantiles",
+    x = "Normal distribution quantiles")
+```
+
+##
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(qol.BL)) +
+  geom_histogram() +
+  labs(
+    title = "Distribution of quality of life")
+```
+
+##
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(sample=no_social_qol.BL)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(
+    title = "Q-Q plot of quality of life without social component at baseline",
+    y = "Quality of life quantiles",
+    x = "Normal distribution quantiles")
+```
+
+##
+
+```{r}
+# and now the Q-Q plots
+cleaned_addiction_data |>
+  ggplot(aes(no_social_qol.BL)) +
+  geom_histogram() +
+  labs(
+    title = "Distribution of quality of life without social component")
+```
+
+# Second hypothesis
+
+```{r}
+qol_model <- lm(no_social_qol.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + rel.is_religious
+                + religion_pos
+                + aana_past_year
+                + aana_positive
+                + social
+                + stress_to_subj
+                ,cleaned_addiction_data)
+```
+
+##
+
+```{r}
+summary(qol_model)
+```
+
+##
+
+```{r}
+
+Anova(qol_model, type=2, digits=4) |>
+tidy() |>
+  kable() 
+```
+
+\newpage
+# Plotting the adjusted data
+
+```{r}
+tidy_qol_model <- tidy(qol_model)
+
+# Getting the slope and intercept for perceived social support
+coef_social <- 
+  pull(filter(tidy_qol_model, 
+              term == "social"), 
+       estimate)
+
+intercept <- pull(filter(tidy_qol_model, term == "(Intercept)"), estimate)
+
+# Getting the slope of the other variables
+
+stress_to_subj_slope <- pull(filter(tidy_qol_model, term == "stress_to_subj"), estimate)
+aana_positive_slope <- pull(filter(tidy_qol_model, term == "aana_positive"), estimate)
+religion_pos_slope <- pull(filter(tidy_qol_model, term == "religion_pos"), estimate)
+
+# Getting the mean of other variables
+
+stress_to_subj_mean <- cleaned_addiction_data |>
+  summarize(Mean = mean(stress_to_subj)) |>
+  pull(Mean)
+
+aana_positive_mean <- cleaned_addiction_data |>
+  summarize(Mean = mean(aana_positive)) |>
+  pull(Mean)
+
+religion_pos_mean <- cleaned_addiction_data |>
+  summarize(Mean = mean(religion_pos)) |>
+  pull(Mean)
+
+```
+
+- Based on the following formula:
+  
+- We are adjusting for other things. 
+
+##
+
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(social, no_social_qol.BL, color=education)) +
+  geom_point() +
+  geom_abline(slope=coef_social, intercept = intercept + 
+                stress_to_subj_slope * stress_to_subj_mean +
+                aana_positive_slope * aana_positive_mean +
+                religion_pos_slope * religion_pos_mean, linewidth=1) +
+  facet_wrap(vars(education)) +
+  labs(title="Quality of life adjusted for stress, AANA positive, positive religious coping")
 ```
 
 
-```{r}
-abstain_model = lm(abstain_total.BL ~
-                             + age 
-                             + gender
-                             + education
-                             # + treatment_days
-                             + SUD.sum_illegal
-                             + SUD.sum_legal
-                             # + aana_positive
-                             + childhood_sum
-                             # + commit.BL
-                             + social
-                             + religion_pos
-                             + rel.is_religious 
-                   
-                             # + religion_neg
-                             + stress_to_subj
-                             + stress_wit,
-                             cleaned_addiction_data)
-```
-```{r}
-car::Anova(abstain_model)
+##
 
+```{r}
+cleaned_addiction_data |>
+  ggplot(aes(social, no_social_qol.BL, color=rel.is_religious)) +
+  geom_point() +
+  geom_abline(slope=coef_social, intercept = intercept + 
+                stress_to_subj_slope * stress_to_subj_mean +
+                aana_positive_slope * aana_positive_mean +
+                religion_pos_slope * religion_pos_mean, linewidth=1) +
+  facet_wrap(vars(rel.is_religious)) +
+  labs(title="Quality of life adjusted for stress, AANA positive, positive religious coping")
 ```
 
 ```{r}
 cleaned_addiction_data |>
-  ggplot(aes(education, abstain_total.BL, color=education)) +
-  geom_violin() +
-  geom_jitter(height = 0, width = 0.1) +
-  # geom_count() +
-  stat_summary(fun = "mean",
-             geom = "crossbar",
-             color = "red") +
-  # geom_boxplot(width=0.1) +
-  labs(title = "Education and confidence to abstain") +
-  # facet_wrap(vars(SUD.uses_illegal)) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size=10))
+  ggplot(aes(social, no_social_qol.BL, color=gender)) +
+  geom_point() +
+  geom_abline(slope=coef_social, intercept = intercept + 
+                stress_to_subj_slope * stress_to_subj_mean +
+                aana_positive_slope * aana_positive_mean +
+                religion_pos_slope * religion_pos_mean, linewidth=1) +
+  facet_wrap(vars(gender)) +
+  labs(title="Quality of life adjusted for stress, AANA positive, positive religious coping")
+```
 
+\newpage
+# Looking at Model Diagnostics 
+
+```{r}
+interaction_model <- lm(no_social_qol.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + rel.is_religious * religion_pos
+                + aana_past_year
+                + aana_positive
+                + social
+                + stress_to_subj
+                ,cleaned_addiction_data)
+
+social_only_model <- lm(no_social_qol.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + social
+                ,cleaned_addiction_data)
+
+with_religion_model <- lm(no_social_qol.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + social
+                + rel.is_religious * religion_pos
+                ,cleaned_addiction_data)
+
+with_aana_model <- lm(no_social_qol.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + social
+                + aana_past_year
+                + aana_positive
+                ,cleaned_addiction_data)
+
+with_stress_model <- lm(no_social_qol.BL ~ age 
+                + gender
+                + education
+                + SUD.sum_illegal
+                + SUD.sum_legal
+                + social
+                + stress_to_subj
+                ,cleaned_addiction_data)
+```
+
+\newpage
+
+## Akaike Information Criterion (AIC) Scores of models predicting quality of life with perceived level of social support
+
+```{r}
+kable(AIC(qol_model, 
+          interaction_model, 
+          social_only_model, 
+          with_aana_model, 
+          with_religion_model, 
+          with_stress_model))
+```
+
+- **Original model that takes into account perceived level of social support with degree of positive religious coping, AA/NA positive regard, and number of types of stressful life circumstances has lowest AIC score.**
+  - `qol_model`
   
-```
-
-```{r}
-cleaned_addiction_data |>
-  ggplot(aes(age, abstain_total.BL, color=education)) +
-  geom_jitter() +
-  # scale_x_continuous(n.breaks=20) +
-  # scale_y_continuous(n.breaks=20) +
-  labs(title = "Abstain confidence baseline to discharge") +
-  facet_wrap(vars(education))
-  
-```
-
-```{r}
-cleaned_addiction_data |>
-  ggplot(aes(religion_pos, abstain_total.BL, color=rel.is_religious)) +
-  geom_jitter() +
-  # scale_x_continuous(n.breaks=20) +
-  # scale_y_continuous(n.breaks=20) +
-  labs(title = "Abstain confidence baseline to discharge") +
-  facet_wrap(vars(rel.is_religious))
-  
-```
-```{r}
-craving_model = lm(craving.BL ~
-                             + age 
-                             + gender
-                             + education
-                             # + treatment_days
-                             + SUD.sum_illegal
-                             + SUD.sum_legal
-                             # + aana_positive
-                             # + childhood_sum
-                             # + commit.BL
-                             + social
-                             + religion_pos
-                             + rel.is_religious
-                              # + aana_life 
-                   + aana_past_year
-                   + aana_positive
-                   
-                             # + religion_neg
-                             + stress_to_subj
-                             # + stress_wit,
-                   ,
-                             cleaned_addiction_data)
-```
-```{r}
-car::Anova(craving_model)
-
-```
-
-
-```{r}
-qol_model = lm(qol.BL ~
-                          + age 
-                             + gender
-                             + education
-                             # + treatment_days
-                             + SUD.sum_illegal
-                             + SUD.sum_legal
-                             # + aana_positive
-                             # + childhood_sum
-                             # + commit.BL
-                             + social
-                             + religion_pos
-                             + rel.is_religious 
-                   
-                             # + religion_neg
-                             + stress_to_subj
-                             # + stress_wit,
-                   ,
-                             cleaned_addiction_data)
-```
-```{r}
-car::Anova(qol_model)
-
-```
-```{r}
-cleaned_addiction_data |>
-  ggplot(aes(religion_pos, qol.BL, color=rel.is_religious)) +
-  geom_jitter() +
-  # scale_x_continuous(n.breaks=20) +
-  # scale_y_continuous(n.breaks=20) +
-  labs(title = "Abstain confidence baseline to discharge") +
-  facet_wrap(vars(rel.is_religious))
-  
-```
-
-```{r}
-cleaned_addiction_data |>
-  ggplot(aes(social, qol.BL, color=rel.is_religious)) +
-  geom_jitter() +
-  # scale_x_continuous(n.breaks=20) +
-  # scale_y_continuous(n.breaks=20) +
-  labs(title = "Abstain confidence baseline to discharge") +
-  facet_wrap(vars(rel.is_religious))
-  
-```
-
-
-##############################################################
-```{r}
-blah
-
-                             + age 
-                             + gender
-                             + education
-                             + treatment_days
-                             + SUD.sum_illegal
-                             + SUD.sum_legal
-                             + aana_positive
-                             + aana_negative
-                             + childhood_sum
-                             + commit.BL
-                             + abstain_total.BL
-                             + qol.BL
-                             + social
-                             + religion_pos
-                             + religion_neg
-                             + stress_to_subj
-                             + stress_wit
-                             + craving.BL,
-```
-```{r}
-age, treatment_days, SUD.sum_illegal, SUD.sum_legal, aana_positive, aana_negative, childhood_sum, commit.BL, abstain_total.BL, qol.BL, social, religion_pos, religion_neg, stress_to_subj, stress_wit, craving.BL
-```
-
-```{r}
-stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
-                               stressful_life.happened_to_you_total 
-                             + age 
-                             + gender
-                             + education
-                             + number_of_sober_days
-                             + number_of_days_in_treatment
-                             + SUD.sum
-                             + social_support.total
-                             + aana_affiliation.aaas_total
-                             + aana_affiliation.tspe_positive
-                             + childhood_total
-                             + religion.positive_spiritual_cope
-                             + religion.is_religious
-                             + SUD.does_illegal_drugs,
-                             cleaned_addiction_data)
-```
-
-```{r}
-car::Anova(stress_to_abstain_model)
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(x=aana_affiliation.tspe_positive, y=abstain_confidence_neg_mean_baseline, color=SUD.sum)) +
-  geom_jitter()
-```
-
-```{r}
-qol_model = lm(qol.mean_baseline ~
-                               stressful_life.happened_to_you_total 
-                             + age 
-                             + gender
-                             + education
-                             + number_of_sober_days
-                             + number_of_days_in_treatment
-                             + SUD.sum
-                             + social_support.total
-                             + aana_affiliation.aaas_total
-                             + aana_affiliation.tspe_positive
-                             + childhood_total
-                             + religion.positive_spiritual_cope 
-               + religion.is_religious 
-               +  SUD.does_illegal_drugs, 
-                             cleaned_addiction_data)
-```
-
-```{r}
-car::Anova(qol_model)
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(x=social_support.total, y=qol.mean_baseline, color=SUD.sum)) +
-  geom_jitter()
-```
-
-```{r}
-duration_model = lm(number_of_days_in_treatment ~
-                               stressful_life.happened_to_you_total
-                             + age 
-                             + gender
-                             + education
-                             + number_of_sober_days
-                             + number_of_days_in_treatment
-                             + SUD.sum
-                             + social_support.total
-                             + aana_affiliation.aaas_total
-                             + aana_affiliation.tspe_positive
-                             + childhood_total
-                             + religion.positive_spiritual_cope
-                    + religion.is_religious
-                             + SUD.does_illegal_drugs, 
-                             cleaned_addiction_data)
-```
-
-```{r}
-car::Anova(duration_model)
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(x=number_of_days_in_treatment, color=education,)) +
-  geom_density()
-```
-
-
-```{r}
-car::Anova(commitment_model)
-```
-
-```{r}
-stress_to_abstain_model = lm(abstain_confidence_neg_mean_baseline ~
-                               stressful_life.happened_to_you_total 
-                             + age 
-                             + gender
-                             + education
-                             + number_of_sober_days
-                             + number_of_days_in_treatment
-                             + SUD.sum
-                             + social_support.total
-                             + aana_affiliation.aaas_total
-                             + aana_affiliation.tspe_positive
-                             + childhood_total
-                             + religion.positive_spiritual_cope
-                             + religion.is_religious
-                             + SUD.does_illegal_drugs,
-                             cleaned_addiction_data)
-```
-
-  + SUD.is_Alchohol
-  + SUD.is_Opioid 
-  + SUD.is_Cannabis
-  + SUD.is_sedative_hypnotic_anxiolytic 
-  + SUD.is_Cocaine 
-  + SUD.is_Other_stimulant 
-  + SUD.is_Hallucinogen 
-  + SUD.is_Nicotine 
-  + SUD.is_Inhalant 
-  + SUD.is_psychoactive 
-
-```{r}
-car::Anova(stress_to_abstain_model)
-```
+- Other models were: 
+  - based on original model and included interactions terms between if a patient is religious or not with degree of positive religious coping (`interaction_model`)
+  - only considering perceived level of social support (`perceived level of social support`)
+  - additionally either only considered:
+    - degree of positive religious coping (`with_religion_model`)
+    - AA/NA positive regard (`with_aana_model`)
+    - number of types of stressful life circumstances (`with_stress_model`)**

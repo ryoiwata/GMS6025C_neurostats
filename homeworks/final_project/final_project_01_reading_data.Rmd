@@ -561,7 +561,7 @@ factored_addiction_data <- all_addiction_data |>
   mutate(commit.FU = commit_to_change.total.followup) |>
 
 
-  ## Cravings
+  ## Confidence in abstaining
   
   # Please read each statement 
   # and indicate how confident you are RIGHT NOW 
@@ -870,8 +870,17 @@ factored_addiction_data <- all_addiction_data |>
   # Other drug(s): Age you first tried any type of mood altering substance.	
   mutate(history.tobacco = as_factor(newace18a___1.baseline)) |>
   mutate(history.alcohol = as_factor(newace18a___2.baseline)) |>
-  mutate(history.other = as_factor(newace18a___10.baseline))
+  mutate(history.other = as_factor(newace18a___10.baseline)) |>
   
+  ## Other feature engineering
+  ### Calculating the difference of commitment to sobriety score between discharge and baseline
+  mutate(commit_change = (commit.DC - commit.BL)) |>
+  ### Recalculating quality of life scores without social component
+  mutate(no_social_qol.BL = (qol_general_health.BL 
+                             + qol_psych.BL 
+                             + qol_physical.BL 
+                             + qol_env.BL)/23)
+
 ```
 
 # Filtering redundant columns and removing rows with NANs

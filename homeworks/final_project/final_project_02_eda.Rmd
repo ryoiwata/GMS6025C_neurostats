@@ -37,7 +37,7 @@ options(scipen = 3, digits = 5)
 
 **Description:** Data are gathered from a residential treatment facility for substance use disorders. Data include item-level responses for all questionnaires listed below. Data are available at initiation of treatment, after one month of treatment, and at treatment discharge.
 
-# Overview of available datasets
+# Overview of variables in the data
 
 - Variables that end in `.BL`, `.FU`, `.DC` are indicating that the score was collected at baseline before treatment, 30 days following up after baseline, and during discharge respectively.
 
@@ -72,7 +72,7 @@ options(scipen = 3, digits = 5)
   
 - Number of substances being treated for
   - Total number of all substances that patient is being treated for
-    - `SUD.sum`    
+    - `SUD.sum`
   - Total number of legal substances that patient is being treated for. (SUD_is_Alchohol, SUD_is_Cannabis, SUD_is_Nicotine, SUD_is_Inhalant)
     - `SUD.sum_legal`
   - Total number of legal substances that patient is being treated for. (SUD_is_Opioid, SUD_is_depressants_anxiolytic, SUD_is_Cocaine, SUD_is_Other_stimulant, SUD_is_psychoactive, SUD_is_Hallucinogen)
@@ -108,29 +108,6 @@ options(scipen = 3, digits = 5)
   - `childhood.other_was_prisoned`
 - Sum of number of types of negative experiences that happened during patient's childhood
   - `childhood_sum`
-
-### Alcohol/Drug Abstinence Experiences (DAASE)
-- Total score of questions that assesses patient’s self-confidence in their ability to remain abstinent from alcohol in various situations.
-  - Negative Affect
-    - `abstain_neg.BL`
-    - `abstain_neg.FU`
-    - `abstain_neg.DC`
-  - Social/Positive
-    - `abstain_pos.BL`
-    - `abstain_pos.FU`
-    - `abstain_pos.DC`
-  - Physical ailments
-    - `abstain_phy.BL`
-    - `abstain_phy.FU`
-    - `abstain_phy.DC` 
-  - Situations associated with cravings
-    - `abstain_crv.BL`
-    - `abstain_crv.FU`
-    - `abstain_crv.DC` 
-  - All previously mentioned conditions
-    - `abstain_total.BL`
-    - `abstain_total.FU`
-    - `abstain_total.DC` 
 
 ### Social Support (MSPSS)
 - Total score for questions that measure the perceived level of social support the respondent receives from each of the three subcategories:
@@ -302,13 +279,43 @@ options(scipen = 3, digits = 5)
     - `qol_env.BL`
     - `qol_env.FU`
     - `qol_env.DC`
+  - Total scores
+    - `qol.BL`
+    - `qol.FU`
+    - `qol.DC`
+  - Recalculating quality of life scores without social component
+    - `no_social_qol.BL`
 
 ### Commitment to Sobriety (CSS-5)
 - Total score of questions gauging patient’s commitment to abstinence from alcohol and drug use
   - `commit.BL` 
   - `commit.DC` 
   - `commit.FU` 
+- The difference of commitment to sobriety score between discharge and baseline
+  - `commit_change`
 
+### Alcohol/Drug Abstinence Experiences (DAASE)
+- Total score of questions that assesses patient’s self-confidence in their ability to remain abstinent from alcohol in various situations.
+  - Negative Affect
+    - `abstain_neg.BL`
+    - `abstain_neg.FU`
+    - `abstain_neg.DC`
+  - Social/Positive
+    - `abstain_pos.BL`
+    - `abstain_pos.FU`
+    - `abstain_pos.DC`
+  - Physical ailments
+    - `abstain_phy.BL`
+    - `abstain_phy.FU`
+    - `abstain_phy.DC` 
+  - Situations associated with cravings
+    - `abstain_crv.BL`
+    - `abstain_crv.FU`
+    - `abstain_crv.DC` 
+  - All previously mentioned conditions
+    - `abstain_total.BL`
+    - `abstain_total.FU`
+    - `abstain_total.DC` 
 
 ```{r}
 cleaned_addiction_data = read_rds("./addiction.rds")
@@ -399,13 +406,27 @@ religion_count_df |> ggplot(aes(fill=gender, x=religion)) +
 ```{r}
 cleaned_addiction_data |>
   # select(ends_with("BL")) |> 
-  select(age, treatment_days, SUD.sum_illegal, SUD.sum_legal, aana_positive, aana_negative, childhood_sum, commit.BL, abstain_total.BL, qol.BL, social, religion_pos, religion_neg, stress_to_subj, stress_wit, craving.BL) |>
+  select(age, 
+         treatment_days, 
+         SUD.sum_illegal, 
+         SUD.sum_legal, 
+         aana_positive, 
+         aana_negative, 
+         childhood_sum, 
+         commit.BL, 
+         abstain_total.BL, 
+         qol.BL, 
+         social, 
+         religion_pos, 
+         religion_neg, 
+         stress_to_subj, 
+         stress_wit, 
+         craving.BL) |>
 
   cor() |>
   ggcorrplot(colors = c("red", "white", "blue"), 
              type = "upper",
              ggtheme = ggplot2::theme_gray,
-             # hc.order = TRUE
              ) +
   
   labs(title = "Correlation matrix of geneal features")
@@ -427,39 +448,36 @@ cleaned_addiction_data |>
 ```
 
 
-## Looking at relationship between craving levels to substances at baseline to discharge
+## Looking at distribution of craving levels for those that are being treated or not treated for illegal substances
 
 ```{r}
 cleaned_addiction_data |>
   ggplot(aes(SUD.uses_illegal, craving.BL, color=SUD.uses_illegal)) +
   geom_violin() + 
   geom_jitter(height = 0, width = 0.3) +
-  # geom_count() +
   stat_summary(fun = "mean",
              geom = "crossbar",
              color = "red") +
-  # geom_boxplot(width=0.1) +
   labs(title = "Craving distribution") 
 
 ```
 
-## Looking at distribution of craving levels for those that use and don't use illegal substances
+
+## Looking at distribution of length of treatment between those that are being treated or not treated for illegal substances
 
 ```{r}
 cleaned_addiction_data |> 
   ggplot(aes(SUD.uses_illegal, treatment_days, color=SUD.uses_illegal)) +
   geom_violin() +
-  # geom_jitter(height = 0, width = 0.1) +
   geom_count() +
   stat_summary(fun = "mean",
              geom = "crossbar",
              color = "red") +
-  # geom_boxplot(width=0.1) +
   labs(title = "Craving distribution") 
-  # facet_wrap(vars(SUD.uses_illegal))
 ```
 
-##
+
+## Looking at relationship between confidence of abstaining from substances at baseline to discharge
 
 ```{r}
 cleaned_addiction_data |>
@@ -467,13 +485,13 @@ cleaned_addiction_data |>
   geom_count() +
   # scale_x_continuous(n.breaks=20) +
   # scale_y_continuous(n.breaks=20) +
-  geom_abline(slope=1, intercept = 0, color="red", size=1, alpha=3) +
+  geom_abline(slope=1, intercept = 0, color="red", linewidth=1, alpha=3) +
   labs(title = "Abstain confidence baseline to discharge") +
   facet_wrap(vars(SUD.uses_illegal))
   
 ```
 
-##
+## Looking at relationship between scores of positive opinion of AA/NA to confidence of abstaining from substances at baseline
 
 ```{r}
 cleaned_addiction_data |>
@@ -486,41 +504,35 @@ cleaned_addiction_data |>
   
 ```
 
-##
+
+## Looking at relationship between quality of life to confidence of abstaining from substances at baseline
 
 ```{r}
 cleaned_addiction_data |>
   ggplot(aes(qol.BL, abstain_total.BL, color=SUD.uses_illegal)) +
   geom_count() +
-  # scale_x_continuous(n.breaks=20) +
-  # scale_y_continuous(n.breaks=20) +
   labs(title = "Quality of life and abstain confidence") +
   facet_wrap(vars(SUD.uses_illegal))
   
 ```
 
-## 
+## Looking at relationship between scores of the perceived level of social support to quality of life
 
 ```{r}
 cleaned_addiction_data |>
   ggplot(aes(social, qol.BL, color=SUD.uses_illegal)) +
-  # geom_count() +
   geom_jitter() +
-  # scale_x_continuous(n.breaks=20) +
-  # scale_y_continuous(n.breaks=20) +
   labs(title = "Abstain confidence baseline to discharge") +
   facet_wrap(vars(SUD.uses_illegal))
   
 ```
 
-## 
+## Looking at relationship between intensities of craving of substances to confidence of abstaining substances at baseline
 
 ```{r}
 cleaned_addiction_data |>
   ggplot(aes(craving.BL, abstain_total.BL, color=SUD.uses_illegal)) +
   geom_count() +
-  # scale_x_continuous(n.breaks=20) +
-  # scale_y_continuous(n.breaks=20) +
   labs(title = "Craving to abstain confidence") +
   facet_wrap(vars(SUD.uses_illegal))
   
