@@ -868,15 +868,6 @@ factored_addiction_data <- all_addiction_data |>
   # Age you first tried any tobacco/nicotine product.	
   # Alcohol: Age you first tried any type of alcohol.	
   # Other drug(s): Age you first tried any type of mood altering substance.	
-  # 19. Please indicate which substances you REGULARLY used 
-  # (for any consistent amount of time):	
-  # 1, Tobacco (including e-cigarettes or vaping) | 2, Alcohol | 10, Other drugs
-  # Tobacco (including e-cigarettes or vaping): 
-  # Age at which you began regular use of tobacco/nicotine product (even if you have since quit).	
-  # Alcohol: Age at which you began regular use of any type of alcohol product 
-  # (even if you have since quit).	
-  # Other drug(s): Age at which you began regular use of any type of mood altering substance 
-  # (even if you have since quit).	
   mutate(history.tobacco = as_factor(newace18a___1.baseline)) |>
   mutate(history.alcohol = as_factor(newace18a___2.baseline)) |>
   mutate(history.other = as_factor(newace18a___10.baseline))
