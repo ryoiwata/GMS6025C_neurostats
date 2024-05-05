@@ -31,27 +31,115 @@ library(ggcorrplot)
 options(scipen = 3, digits = 5) 
 ```
 
-```{r}
-cleaned_addiction_data = read_rds("./addiction.rds")
-```
-
 # About the data
 
 **Name:** Addiction Patient Assessment Measures
 
 **Description:** Data are gathered from a residential treatment facility for substance use disorders. Data include item-level responses for all questionnaires listed below. Data are available at initiation of treatment, after one month of treatment, and at treatment discharge.
 
-# Overview of what we're working with
+# Overview of available datasets
 
-### Things that can predict
-- number of sober days
-- days since baseline
+## Independent variables
+
+### Basic Demographics
+
 - age
+  - `age`
 - gender
+  - `gender`
 - education
-- drop out yes no
-- SUD is alcholoc
-- SUD is other
+  - `education`
+- number of days sober
+  - `sober_days`
+- number of days in treatment
+  - `treatment_days`
+- If a subject dropped out of the program or not
+  - `dropout_yn`
+  
+### Substance use disorders
+  
+- Flag of whether or not the subject is being treated for substance in name
+ - `SUD_is_Alchohol`
+ - `SUD_is_Opioid`
+ - `SUD_is_Cannabis`
+ - `SUD_is_depressants_anxiolytic`
+ - `SUD_is_Cocaine`
+ - `SUD_is_Other_stimulant`
+ - `SUD_is_Hallucinogen`
+ - `SUD_is_Nicotine`
+ - `SUD_is_Inhalant`
+ - `SUD_is_psychoactive`         
+  
+- Number of substances being treated for
+  - `SUD.sum`    
+    - Total number of all substances that subject is being treated for
+  - `SUD.sum_legal`
+    - Total number of legal substances that subject is being treated for. (SUD_is_Alchohol, SUD_is_Cannabis, SUD_is_Nicotine, SUD_is_Inhalant)
+  - `SUD.sum_illegal`
+    - Total number of legal substances that subject is being treated for. (SUD_is_Opioid, SUD_is_depressants_anxiolytic, SUD_is_Cocaine, SUD_is_Other_stimulant, SUD_is_psychoactive, SUD_is_Hallucinogen)
+
+- Flag of whether or not the subject is being treated for legal or illegals substances
+  - `SUD.uses_legal`
+    - If subject is being treated for any of the following: SUD_is_Alchohol, SUD_is_Cannabis, SUD_is_Nicotine, SUD_is_Inhalant
+  - `SUD.uses_illegal`  
+    - If subject is being treated for any of the following: SUD_is_Opioid, SUD_is_depressants_anxiolytic, SUD_is_Cocaine, SUD_is_Other_stimulant, SUD_is_psychoactive, SUD_is_Hallucinogen
+  
+### Beliefs about AA/NA (TSPEQ)
+- Categories based on number of AA/NA meetings attended throughout life
+  - `aana_life`
+- Categories based on number of AA/NA meetings attended last year
+  - `aana_pastyear`
+- Total score of questions gauging positive opinions of AA/NA
+  - `aana_positive`
+- Total score of questions gauging negative opinions of AA/NA
+  - `aana_negative`
+    
+### Childhood Experiences (ACE)
+- Binary flags of whether the specified type of negative experience happened during childhood of subject
+  - `childhood.verbal_abuse`
+  - `childhood.physical_abuse`
+  - `childhood.sexual_abuse`
+  - `childhood.alone`
+  - `childhood.neglected`
+  - `childhood.divorced`
+  - `childhood.parent_was_abused`
+  - `childhood.other_was_addicted`
+  - `childhood.other_was_stressed`
+  - `childhood.other_was_prisoned`
+- Sum of number of types of negative experiences that happened during subject's childhood
+  - `childhood_sum`
+  
+### Commitment to Sobriety (CSS-5)
+- Total score of questions gauging patient’s commitment to abstinence from alcohol and drug use
+  - `commit.BL` (baseline)
+  - `commit.DC` (discharge)
+  - `commit.FU` (followup)
+
+### Alcohol/Drug Abstinence Experiences (DAASE)
+- Total score of questions that assesses patient’s self-confidence in their ability to remain abstinent from alcohol in various situations.
+  - Negative Affect
+    - `abstain_neg.BL`
+    - `abstain_neg.FU`
+    - `abstain_neg.DC`
+  - Social/Positive
+    - `abstain_pos.BL`
+    - `abstain_pos.FU`
+    - `abstain_pos.DC`
+  - Physical ailments
+    - `abstain_phy.BL`
+    - `abstain_phy.FU`
+    - `abstain_phy.DC` 
+  - Situations associated with cravings
+    - `abstain_crv.BL`
+    - `abstain_crv.FU`
+    - `abstain_crv.DC` 
+  - All previously mentioned conditions
+    - `abstain_total.BL`
+    - `abstain_total.FU`
+    - `abstain_total.DC` 
+
+
+
 - Social support
   - family
   - friends
@@ -62,44 +150,53 @@ cleaned_addiction_data = read_rds("./addiction.rds")
   - Age of first use
   - Regular use
   - Age of regular use
-- AA/NA affiliation
-  - Lifetime number of meetings
-  - Last year number of meetings
-  - Degree of affiliation
-  - Positive thoughts
-  - Negative thoughts
+
 - Stressful life
   - happened
   - witnessed
   - learned about
   - exposed
   - total of all things
-- Childhood
 - Religion
   - Religious affiliation
   - Positive
   - Negative
 - Life quality
 
-### Things we can predict
+## Dependent variables
+
+### Quality of Life (WHOQOL-BREF)
+
+
 - impression change
 - length of stay
 - Life quality
 - Commitment to change
 - Cravings
-  - baseline
-  - baseline vs followup
-- Impression of change
+
+```{r}
+cleaned_addiction_data = read_rds("./addiction.rds")
+```
+
+```{r}
+colnames(select(cleaned_addiction_data, starts_with("commit")))
+```
+
 
 # Looking at the basic demographics
+
+
+## Education distribution
 
 ```{r}
 cleaned_addiction_data |> ggplot(aes(fill=education, x=gender)) +
   geom_bar() +
   labs(title = "Subject education and gender count")
 
-
 ```
+
+## Age distribution
+
 ```{r}
 cleaned_addiction_data |>
   ggplot(aes(gender, age, color=gender)) +
@@ -112,19 +209,26 @@ cleaned_addiction_data |>
   labs(title = "Age distribution") 
 
 ```
+
+## Distribution of number of addicted substances
+
 ```{r}
 cleaned_addiction_data |> ggplot(aes(SUD.sum, color=gender, fill=gender)) +
   geom_histogram(bins = 8) +
   facet_wrap(vars(gender)) + 
   scale_x_continuous(n.breaks=10) +
   scale_y_continuous(n.breaks=20) +
-
   labs(title = "Number of addicted substances")
+
 ```
+
+## Number of subjects addicted to each substance
+
 ```{r}
 
 SUD_count_df <- cleaned_addiction_data |>
-  pivot_longer(colnames(select(cleaned_addiction_data, starts_with("SUD_is"))), names_to = "SUD", values_to = "SUD_yn") |>
+  pivot_longer(colnames(select(cleaned_addiction_data, starts_with("SUD_is"))), 
+               names_to = "SUD", values_to = "SUD_yn") |>
   filter(SUD_yn == "1") |>
   mutate(SUD = str_replace(SUD, "SUD_is_", "")) |>
   mutate(SUD = str_replace(SUD, "_", "\n"))
@@ -137,16 +241,17 @@ SUD_count_df |> ggplot(aes(fill=gender, x=SUD)) +
   
 ```
 
+## Number of subjects practicing each religion
+
 ```{r}
 
 religion_count_df <- cleaned_addiction_data |>
-  pivot_longer(colnames(select(cleaned_addiction_data, starts_with("rel.is_"))), names_to = "religion", values_to = "religion_yn") |>
+  pivot_longer(colnames(select(cleaned_addiction_data, starts_with("rel.is_"))),
+               names_to = "religion", values_to = "religion_yn") |>
   filter(religion_yn == "1") |>
   mutate(religion = str_replace(religion, "rel.is_", "")) |>
   mutate(religion = str_replace(religion, "_", "\n")) |>
   mutate(religion = str_replace(religion, "_", "\n")) 
-
-
 
 religion_count_df |> ggplot(aes(fill=gender, x=religion)) +
   geom_bar() +
@@ -155,7 +260,12 @@ religion_count_df |> ggplot(aes(fill=gender, x=religion)) +
 
   
 ```
+
+# Looking at correlations
 ```{r}
+
+# TODO STARTING FROM HERE
+
 cleaned_addiction_data |>
   ggplot(aes(commit.BL, commit.DC)) +
   geom_count() +
@@ -275,336 +385,3 @@ cleaned_addiction_data |>
   facet_wrap(vars(SUD.uses_illegal))
   
 ```
-
-################################################
-
-```{r}
-blah
-```
-
-```{r}
-SUD_counts <- colSums(select(cleaned_addiction_data, starts_with("SUD_is")) == 1)
-
-counts_df <- as.data.frame(SUDg_counts) |>
-  rownames_to_column() |>
-  # filter(row) |>
-  mutate(rowname = str_replace(rowname, "SUD_is_", "")) |>
-  mutate(rowname = str_replace_all(rowname, "_", " "))
-
-counts_df |>
-  ggplot(aes(rowname, SUD_counts)) +
-  geom_bar(stat="identity") +
-  theme(axis.text.x = element_text(angle = 90)) +
-  labs(title = "Distribution of addicted substances")
-
-```
-
-  
-
-counts_df |> ggplot(aes(column_names, counts)) +
-  geom_bar(stat="identity") +
-  theme(axis.text.x = element_text(angle = 90)) +
-  labs(title = "Distribution of addicted substances")
-```
-
-```{r}
-counts
-```
-
-##############################################################################
-
-```{r}
-
-age_mean <- cleaned_addiction_data |>
-  group_by(gender) %>%
-  summarize(mean = mean(age))
-
-cleaned_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
-  geom_density(alpha=.4) +
-
-```
-
-
-```{r}
-cleaned_addiction_data |>
-  select(ends_with("baseline")) |> 
-  cor() |>
-  ggcorrplot()
-  
-```
-
-
-```{r}
-# donut plot
-p2=ggrosepie(cleaned_addiction_data, group_key = "gender", count_type = "full", label_info = "all",
-             donut_frac=0.3,donut_label_size=3) + 
-  labs(title = "Sex distribution")
-
-cowplot::plot_grid(p2)
-```
-
-```{r}
-#donut plot
-p2=ggrosepie(cleaned_addiction_data, group_key = c("gender","education"),
-             count_type = "full",
-             show_tick=F, donut_frac=NULL) +
-  theme(plot.margin = unit(c(1,1,1,1), "cm")) + # Adjust top, right, bottom, left margins
-  labs(title = "Distribution of education")
-
-cowplot::plot_grid(p2) 
-
-```
-
-
-
-
-
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(age,  group=gender, fill=gender)) +
-  geom_histogram(alpha=0.4, binwidth = 10) +
-  facet_wrap(vars(education))
-```
-```{r}
-
-# Function to calculate co-occurrences
-co_occurrence <- function(df) {
-  n <- ncol(df)
-  mat <- matrix(0, n, n, dimnames = list(colnames(df), colnames(df)))
-
-  for (i in 1:n) {
-    for (j in i:n) {
-      if (i == j) {
-        mat[i, j] <- sum(df[[i]] == 1)
-      } else {
-        mat[i, j] <- sum(df[[i]] == 1 & df[[j]] == 1)
-        mat[j, i] <- mat[i, j]  # Symmetric matrix
-      }
-    }
-  }
-  mat
-}
-
-# co_occurrence_modified <- function(df) {
-#   n <- ncol(df)
-#   mat <- matrix(0, n, n, dimnames = list(colnames(df), colnames(df)))
-#   
-#   for (i in 1:(n-1)) {  # Adjust loop to stop before the last column
-#     for (j in (i+1):n) {  # Start from the next column to avoid repeats and self-comparison
-#       # Calculate co-occurrence only for unique pairs (i != j)
-#       mat[i, j] <- sum(df[[i]] == 1 & df[[j]] == 1)
-#       mat[j, i] <- mat[i, j]  # Ensure the matrix is symmetric
-#     }
-#   }
-#   
-#   # Ensure diagonal and any revisited pairs are set to zero
-#   # This step is somewhat redundant with the above control but ensures no self-pair counts
-#   diag(mat) <- 0
-#   
-#   mat
-# }
-
-# Create the matrix
-matrix_for_chord <- cleaned_addiction_data |>
-  select(starts_with("SUD")) |>
-  select(-ends_with("sum")) |>
-  rename_all(~stringr::str_replace(., "SUD.is_", "")) |>
-  co_occurrence()
-```
-
-```{r}
-grid.col <- setNames(rainbow(length(unlist(dimnames(matrix_for_chord)))), union(rownames(matrix_for_chord), colnames(matrix_for_chord)))
-
-chordDiagram(matrix_for_chord, annotationTrack = "grid", preAllocateTracks = 1, grid.col = grid.col) 
-
-circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
-  xlim = get.cell.meta.data("xlim")
-  ylim = get.cell.meta.data("ylim")
-  sector.name = get.cell.meta.data("sector.index")
-  circos.text(mean(xlim), ylim[1] + .5, sector.name, facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
-  circos.axis(h = "top", labels.cex = 0.5, sector.index = sector.name, track.index = 2)
-}, bg.border = NA)
-```
-
-
-```{r}
-# install.packages("reshape2")
-library(reshape2)
-melted_cormat <- melt(matrix_for_chord)
-
-ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
-  geom_tile() +
-  scale_colour_gradientn(colours="Blues")
-```
-
-```{r}
-# ggheat(matrix_for_chord)
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(number_of_days_in_treatment)) +
-  geom_histogram() +
-  facet_wrap(vars(dropout_yn))
-```
-
-
-
-```{r}
-filtered_alcohol_data <- cleaned_addiction_data |>
-  # Getting only the people that are addicted to alcohol
-  filter(SUD.is_Alchohol == 1) |>
-  filter(SUD.sum == 1) 
-
-filtered_alcohol_data
-
-filtered_cocaine_data <- cleaned_addiction_data |>
-  # Getting only the people that are addicted to alcohol
-  filter(SUD.is_Cocaine == 1)
-
-filtered_cocaine_data
-
-```
-
-```{r}
-filtered_alcohol_data |> ggplot(aes(abstain_confidence_pos_mean_baseline)) +
-  geom_histogram()
-
-filtered_alcohol_data |> ggplot(aes(abstain_confidence_neg_mean_baseline)) +
-  geom_histogram()
-```
-
-```{r}
-filtered_cocaine_data |> ggplot(aes(abstain_confidence_pos_mean_baseline)) +
-  geom_histogram()
-
-filtered_cocaine_data |> ggplot(aes(abstain_confidence_neg_mean_baseline)) +
-  geom_histogram()
-
-filtered_cocaine_data |> ggplot(aes(abstain_confidence_crv_mean_baseline)) +
-  geom_histogram()
-
-filtered_cocaine_data |> ggplot(aes(abstain_confidence_crv_mean_followup)) +
-  geom_histogram()
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(social_support.total)) +
-  geom_histogram() 
-
-cleaned_addiction_data |> ggplot(aes(social_support.fam_sub_total)) +
-  geom_histogram() 
-
-cleaned_addiction_data |> ggplot(aes(social_support.friends_sub_total)) +
-  geom_histogram() 
-
-cleaned_addiction_data |> ggplot(aes(social_support.sig_other_sub_total)) +
-  geom_histogram() 
-```
-```{r}
-cleaned_addiction_data |> ggplot(aes(qol.general_health_baseline)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.psychological_health_baseline)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.physical_health_baseline)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.social_health_baseline)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.environmental_health_baseline)) +
-  geom_histogram()
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(qol.general_health_followup)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.psychological_health_followup)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.physical_health_followup)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.social_health_followup)) +
-  geom_histogram()
-
-cleaned_addiction_data |> ggplot(aes(qol.environmental_health_followup)) +
-  geom_histogram()
-```
-
-
-
-```{r}
-cleaned_addiction_data |> 
-  ggplot(aes(number_of_days_in_treatment)) +
-  geom_histogram() +
-  facet_wrap(vars(SUD.does_illegal_drugs))
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(x=social_support.fam_sub_total, y=qol.psychological_health_baseline)) +
-  geom_jitter() +
-  facet_wrap(vars(SUD.is_Cocaine))
-
-cleaned_addiction_data |> ggplot(aes(x=social_support.fam_sub_total, y=qol.psychological_health_followup)) +
-  geom_jitter() +
-  facet_wrap(vars(SUD.is_Cocaine))
-  
-```
-
-```{r}
-filtered_cocaine_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=qol.psychological_health_baseline)) +
-  geom_jitter() 
-
-filtered_cocaine_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=qol.psychological_health_followup)) +
-  geom_jitter() 
-  
-```
-
-```{r}
-cleaned_addiction_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=SUD.sum)) +
-  geom_jitter() 
-```
-
-```{r}
-filtered_alcohol_data |> ggplot(aes(x=stressful_life.happened_to_you_and_witnessed_total, y=number_of_days_in_treatment)) +
-  geom_jitter() 
-```
-
-```{r}
-filtered_alcohol_data |> ggplot(aes(x=aana_affiliation.tspe_positive, y=number_of_days_in_treatment)) +
-  geom_jitter() 
-```
-
-```{r}
-filtered_alcohol_data |> ggplot(aes(x=aana_affiliation.tspe_negative, y=number_of_days_in_treatment)) +
-  geom_jitter() 
-```
-
-```{r}
-cleaned_addiction_data |> 
-  filter(stressful_life.physical_assault.happened_to_you == 1) |>
-  ggplot(aes(qol.mean_baseline)) +
-  geom_histogram()
-
-cleaned_addiction_data |> 
-  filter(stressful_life.happened_to_you_total == 0) |>
-  ggplot(aes(qol.mean_baseline)) +
-  geom_histogram()
-
-```
-
-```{r}
-filtered_cocaine_data |> 
-  ggplot(aes(x=stressful_life.happened_to_you_total, y=abstain_confidence_neg_mean_baseline)) +
-  geom_jitter()
-```
-
-```{r}
-cleaned_addiction_data |> 
-  ggplot(aes(x=stressful_life.happened_to_you_total, y=abstain_confidence_crv_mean_baseline)) +
-  geom_jitter()
-```
-
